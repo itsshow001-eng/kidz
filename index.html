@@ -26,7 +26,7 @@
     /* 폰을 가로로 눕힌 경우: 화면 높이가 낮아 맨 아래 내용이 하단 버튼 줄에 가리므로 여백을 더 줌 */
     @media (max-width: 1023px) and (orientation: landscape) and (max-height: 500px) { body { padding-bottom: calc(env(safe-area-inset-bottom) + 64px); } }
   </style>
-  <title>이츠쇼 ERP v2.4</title>
+  <title>이츠쇼 ERP v2.5</title>
   <!-- v2.3 오프라인판: Vue 3.4.38 · Chart.js 4.4.4 · SheetJS 0.18.5 · Tailwind(미리 빌드)를 파일 안에 내장 — 인터넷 없이도 열립니다 -->
   <!-- ERP-INLINE:BEGIN vue 3.4.38 -->
   <script>/**
@@ -195,7 +195,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div class="flex items-center space-x-1.5">
               <span class="text-sm sm:hidden font-black text-white tracking-tight truncate">이츠쇼 ERP</span>
               <span class="hidden sm:inline text-base font-black text-white tracking-tight">이츠쇼 & 키즈니버스 ERP</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold shrink-0">v2.4</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold shrink-0">v2.5</span>
             </div>
             <p class="text-[11px] text-slate-400 hidden md:block truncate">스케줄 · 5일 브리핑 · To-Do · 정산 · 단골 CRM</p>
           </div>
@@ -205,7 +205,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <!-- Top Right Quick Controls (Zero wrapping on 360px portrait) -->
       <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
         <button @click="pullFromCloud(false)" class="px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center space-x-1.5 cursor-pointer transition-all" :title="'클라우드 실시간 동기화 (' + syncStatusText + ')'">
-          <span class="w-2 h-2 rounded-full shrink-0" :class="isSyncing ? 'bg-amber-400 animate-ping' : 'bg-emerald-400'"></span>
+          <span class="w-2 h-2 rounded-full shrink-0" :class="isSyncing ? 'bg-amber-400 animate-ping' : ((hasUnsent && cloudSyncUrl.trim()) ? 'bg-amber-400' : 'bg-emerald-400')"></span>
+          <span v-if="hasUnsent && cloudSyncUrl.trim() && !isSyncing" title="아직 구글 시트로 보내지 못한 수정이 있어요">📤</span>
           <span class="hidden md:inline">{{ syncStatusText }}</span>
           <span class="md:hidden text-[11px]">☁️</span>
         </button>
@@ -315,6 +316,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <span class="font-bold">⚠️ 다른 기기에서 먼저 저장한 내용이 있어요.</span>
           <span class="flex-1 min-w-[12rem]">덮어쓰지 않으려고 이 기기의 저장을 멈췄어요{{ syncConflictStamp ? ' (시트 저장 ' + syncConflictStamp + ')' : '' }}. [지금 불러오기]로 최신을 받으면, 이 기기의 방금 수정은 설정 탭의 자동 백업에 남아요.</span>
           <button @click="pullFromCloud(false)" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold cursor-pointer whitespace-nowrap">지금 불러오기</button>
+          <button v-if="hasUnsent" @click="pushToCloud(false)" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-amber-500/50 text-amber-200 font-bold cursor-pointer whitespace-nowrap">이 기기 내용으로 저장</button>
+        </div>
+        <!-- ★ v2.5 (1-1): 아직 구글 시트로 보내지 못한 수정이 있을 때 -->
+        <div v-else-if="hasUnsent && !isSyncing" class="rounded-2xl border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-xs text-amber-200 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span class="font-bold">📤 아직 구글 시트로 보내지 못한 수정이 있어요.</span>
+          <span class="flex-1 min-w-[12rem]">이 기기에는 안전하게 저장되어 있어요. 인터넷이 연결되면 [지금 보내기]를 눌러 주세요.</span>
+          <button @click="pushToCloud(false)" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold cursor-pointer whitespace-nowrap">지금 보내기</button>
         </div>
 
         <!-- ======================================================================= -->
@@ -3437,6 +3445,24 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const isSyncing = ref(false);
         const syncStatusText = ref('구글 시트 연결 전');
 
+        // ★ v2.5 (1-1): '아직 구글 시트로 보내지 못한 수정'이 있는지 기억합니다.
+        //   (인터넷이 끊겼을 때 고친 내용이, 다음에 앱을 열 때 구글 시트의 옛 내용으로 덮이지 않도록)
+        const UNSENT_KEY = 'itsshow_v23_cloud_unsent';
+        const hasUnsent = ref(!!localStorage.getItem(UNSENT_KEY));
+        const markUnsent = () => {
+          hasUnsent.value = true;
+          try { localStorage.setItem(UNSENT_KEY, new Date().toISOString()); } catch (e) {}
+        };
+        // sentAt을 주면: 그 시각 '이후'에 또 고친 내용이 있으면 표시를 지우지 않습니다.
+        const clearUnsent = (sentAt) => {
+          try {
+            const markedAt = localStorage.getItem(UNSENT_KEY) || '';
+            if (sentAt && markedAt > sentAt) return;
+            localStorage.removeItem(UNSENT_KEY);
+          } catch (e) {}
+          hasUnsent.value = false;
+        };
+
         let pushDebounceTimer = null;
 
         const saveAllToStorage = (triggerCloud = true) => {
@@ -3459,6 +3485,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const shrinkNow = checkShrink(countsNow, baselineCounts.value);
           if (shrinkNow.ok) saveBaseline(countsNow);
           else warnOnce('⚠️ 데이터 건수가 마지막 정상 상태보다 줄었어요: ' + shrinkNow.reasons.join(', ') + ' — 설정 탭의 자동 백업 목록에서 되돌릴 수 있어요.');
+
+          if (triggerCloud) markUnsent();
 
           if (triggerCloud && autoCloudSync.value && cloudSyncUrl.value.trim()) {
             if (pushDebounceTimer) clearTimeout(pushDebounceTimer);
@@ -4849,6 +4877,8 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
             if (!confirm('⚠️ 저장하려는 데이터가 마지막 정상 상태보다 줄었어요.\n' + shrink.reasons.join('\n') + '\n\n그래도 클라우드에 저장할까요?')) return;
             takeSnapshot('건수 감소 상태로 클라우드 저장 직전');
           }
+          // ★ v2.5 (1-2): 사용자가 '덮어쓰기'를 직접 고른 경우에만 구글 시트 쪽 충돌 검사를 건너뜁니다.
+          let forceOverwrite = !!opts.initial;
           // ★ 8-D: 다른 기기가 먼저 저장했는지 확인합니다. (구글 시트가 비어 있어 처음 올리는 경우는 건너뜀)
           if (!opts.initial) {
             const cc = await checkCloudConflict();
@@ -4865,6 +4895,7 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
                 showToast('저장하지 않았어요. [클라우드에서 불러오기]로 최신을 먼저 받아 주세요.', 8000);
                 return;
               }
+              forceOverwrite = true;
             } else if (cc.state === 'denied') {
               syncStatusText.value = '⚠️ 접속 거부 (비밀키 확인)';
               const m = '⚠️ 구글이 접속을 거부해서 클라우드에 저장되지 않았어요. 설정 탭의 비밀키를 확인해 주세요. (이 기기에는 저장되어 있어요)';
@@ -4882,31 +4913,68 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
             syncStatusText.value = '자동 저장중...';
             if (!silent) showToast('클라우드로 데이터를 저장하는 중...');
             const sentAt = new Date().toISOString();
+            // ★ v2.5 (1-2): '이 기기가 마지막으로 본 구글 시트 저장 시각'을 함께 보냅니다.
+            //   구글 시트 쪽(Apps Script v3)이 자물쇠를 건 상태에서 지금 시각과 비교해, 다르면 저장하지 않고 'conflict'로 돌려보냅니다.
+            //   (PC와 폰이 몇 초 차이로 동시에 저장해도 한쪽이 다른 쪽을 덮지 않게)
+            const known = readKnownStamp();
+            const baseList = [known.stamp].concat(known.own).filter(Boolean).join(',');
             rememberOwnSent(sentAt); // 보냈는데 확인이 늦어져도, 나중에 '내가 보낸 것'임을 알아보기 위해 적어 둡니다.
-            await fetch(cloudApiUrl(), {
-              method: 'POST',
-              mode: 'no-cors',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({
-                shows: shows.value,
-                customers: customers.value,
-                payables: payables.value,
-                taxRecords: taxRecords.value,
-                cashAccounts: cashAccounts.value,
-                todoItems: todoItems.value,
-                updatedAt: sentAt
-              })
+            const extra = forceOverwrite ? { force: '1' } : { base: baseList };
+            const bodyText = JSON.stringify({
+              shows: shows.value,
+              customers: customers.value,
+              payables: payables.value,
+              taxRecords: taxRecords.value,
+              cashAccounts: cashAccounts.value,
+              todoItems: todoItems.value,
+              updatedAt: sentAt
             });
-            // ★ 6-B: 보내기만 하고 끝내지 않고, 구글 시트에서 다시 읽어 '정말 저장됐는지' 확인합니다.
-            const verdict = await verifyCloudSave(sentAt);
+            // ★ v2.5 (C): 구글의 답장(ok / conflict / denied / busy …)을 직접 읽습니다.
+            //   답장을 읽지 못하는 환경이면(예전 방식), 저장한 뒤 다시 읽어 확인하는 예전 방법으로 넘어갑니다.
+            let reply = null;
+            try {
+              const ctl = new AbortController();
+              const timer = setTimeout(() => ctl.abort(), 30000);
+              const res = await fetch(cloudApiUrl(extra), {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: bodyText,
+                redirect: 'follow',
+                signal: ctl.signal
+              });
+              const replyText = await res.text();
+              clearTimeout(timer);
+              const parsed = JSON.parse(replyText);
+              if (parsed && typeof parsed.status === 'string') reply = parsed;
+            } catch (eReply) {
+              reply = null;
+            }
+            let verdict;
+            if (reply && reply.status === 'ok') verdict = 'ok';
+            else if (reply && reply.status === 'conflict') verdict = 'conflict';
+            else if (reply && reply.status === 'denied') verdict = 'denied';
+            else if (reply && reply.status === 'busy') verdict = 'busy';
+            else if (reply) verdict = 'notsaved';
+            else verdict = await verifyCloudSave(sentAt); // ★ 6-B: 답장을 못 읽었으면 다시 읽어 '정말 저장됐는지' 확인
             const nowTime = new Date().toTimeString().slice(0, 5);
             if (verdict === 'ok') {
               syncStatusText.value = `자동동기화 됨 (${nowTime})`;
               setKnownStamp(sentAt);
               syncConflict.value = false;
+              clearUnsent(sentAt);
               saveBaseline(nowCounts);
               if (opts.initial) markCloudPulled();
               if (!silent) showToast('☁️ 클라우드(구글 시트)에 저장되었고, 저장된 것을 확인했습니다!');
+            } else if (verdict === 'conflict') {
+              syncConflict.value = true;
+              syncConflictStamp.value = reply && reply.current ? fmtStamp(reply.current) : '';
+              syncStatusText.value = '⚠️ 다른 기기에서 먼저 저장됨';
+              const m = '⚠️ 거의 같은 시각에 다른 기기가 먼저 저장해서, 구글 시트가 이 기기의 저장을 받지 않았어요. 위쪽 노란 안내에서 골라 주세요. (이 기기에는 저장되어 있어요)';
+              if (silent) warnOnce(m, 12000); else showToast(m, 9000);
+            } else if (verdict === 'busy') {
+              syncStatusText.value = '⚠️ 저장 대기 (구글 시트 사용중)';
+              const m = '⚠️ 구글 시트가 다른 저장을 처리하는 중이라 이번 저장은 받지 않았어요. 잠시 뒤 [클라우드로 저장하기]를 다시 눌러 주세요. (이 기기에는 저장되어 있어요)';
+              if (silent) warnOnce(m, 12000); else showToast(m, 8000);
             } else if (verdict === 'denied') {
               syncStatusText.value = '⚠️ 접속 거부 (비밀키 확인)';
               const m = '⚠️ 구글이 접속을 거부해서 클라우드에 저장되지 않았어요. 설정 탭의 비밀키를 확인해 주세요. (이 기기에는 저장되어 있어요)';
@@ -4933,6 +5001,28 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
           if (!cloudSyncUrl.value.trim()) {
             if (!silent) showToast('먼저 구글 웹앱 URL을 입력해 주세요.');
             return;
+          }
+          // ★ v2.5 (1-1): 이 기기에 아직 보내지 못한 수정이 있으면, 무작정 불러와서 덮어쓰지 않습니다.
+          if (hasUnsent.value && cloudPulled.value) {
+            if (silent) {
+              // 앱을 열 때 자동 확인: 그 사이 다른 기기가 저장하지 않았다면 → 이 기기 수정을 먼저 저장
+              const cc = await checkCloudConflict();
+              if (cc.state === 'ok') {
+                syncStatusText.value = '📤 안 보낸 수정 저장중...';
+                await pushToCloud(true);
+                return;
+              }
+              if (cc.state === 'conflict') {
+                syncConflict.value = true;
+                syncConflictStamp.value = fmtStamp(cc.cloudStamp);
+                syncStatusText.value = '⚠️ 양쪽 모두 수정됨 (선택 필요)';
+                warnOnce('⚠️ 이 기기에 안 보낸 수정이 있는데, 다른 기기도 그 사이 저장했어요. 위쪽 노란 안내에서 어느 쪽을 남길지 골라 주세요.', 12000);
+                return;
+              }
+              syncStatusText.value = cc.state === 'denied' ? '⚠️ 접속 거부 (비밀키 확인)' : '📤 안 보낸 수정 있음 (인터넷 확인)';
+              return;
+            }
+            if (!confirm('📤 이 기기에 아직 구글 시트로 보내지 못한 수정이 있어요.\n\n지금 불러오면 그 수정은 화면에서 사라지고, 설정 탭의 자동 백업에만 남아요.\n\n그래도 구글 시트 내용으로 불러올까요?\n(취소를 누르고 [클라우드로 저장하기]를 먼저 하는 것을 추천해요)')) return;
           }
           try {
             isSyncing.value = true;
@@ -4995,6 +5085,7 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
               syncShowsAndCustomers(true);
               saveBaseline(currentCounts()); // 확인을 거친 건수를 새 기준으로 삼습니다.
               markCloudPulled(); // 이제 이 주소로 저장해도 안전합니다.
+              clearUnsent(); // 구글 시트 내용으로 바꿨으니, 안 보낸 수정 표시도 지웁니다(그 수정은 자동 백업에 남아 있음).
               setKnownStamp(data.updatedAt || ''); // ★ 8-D: 이 기기가 '시트의 이 저장 시점'까지 봤다고 기억
               syncConflict.value = false;
               saveAllToStorage(false);
@@ -5583,7 +5674,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           hometaxModalOpen, hometaxPreviewList, hometaxSyncShowsToo, openHometaxModal, triggerHometaxFileSelect, handleHometaxFileUpload, applyHometaxImport, downloadSampleHometaxTemplate,
           customerModalOpen, isEditingCustomer, editingCustomerForm, openNewCustomerModal, openEditCustomerModal, saveCustomerModal,
           markShowPaid, toggleShowPayStatus, togglePayableStatus, goToUnpaidView, switchTab, toggleTheme,
-          formatCompactDate, cloudSyncUrl, cloudKey, showCloudKey, cloudPulled, syncConflict, syncConflictStamp, autoCloudSync, isSyncing, syncStatusText, saveCloudUrl, pushToCloud, pullFromCloud, appInstallModalOpen, deferredInstallPrompt, openAppInstallModal, triggerNativeInstall, blogOutputTab, selectedBlogShowNo, savedBlogPosts, blogForm, generatedBlog, officialContactBlock, fullNaverCopyText,
+          formatCompactDate, hasUnsent, cloudSyncUrl, cloudKey, showCloudKey, cloudPulled, syncConflict, syncConflictStamp, autoCloudSync, isSyncing, syncStatusText, saveCloudUrl, pushToCloud, pullFromCloud, appInstallModalOpen, deferredInstallPrompt, openAppInstallModal, triggerNativeInstall, blogOutputTab, selectedBlogShowNo, savedBlogPosts, blogForm, generatedBlog, officialContactBlock, fullNaverCopyText,
           generateBlogContent, onSelectShowForBlog, openBlogStudioWithShow, copyTextToClipboard, saveCurrentBlogPost, loadSavedBlogPost, deleteSavedBlogPost,
           openMobileCalendarView, openMobileListView,
           formatKoreanCurrency, getThemeBadgeClass, saveAllToStorage, exportToExcel, exportBackupJSON, resetToOriginalData,
