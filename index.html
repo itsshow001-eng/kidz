@@ -26,7 +26,7 @@
     /* 폰을 가로로 눕힌 경우: 화면 높이가 낮아 맨 아래 내용이 하단 버튼 줄에 가리므로 여백을 더 줌 */
     @media (max-width: 1023px) and (orientation: landscape) and (max-height: 500px) { body { padding-bottom: calc(env(safe-area-inset-bottom) + 64px); } }
   </style>
-  <title>이츠쇼 ERP v2.6</title>
+  <title>이츠쇼 ERP v2.7</title>
   <!-- v2.3 오프라인판: Vue 3.4.38 · Chart.js 4.4.4 · SheetJS 0.18.5 · Tailwind(미리 빌드)를 파일 안에 내장 — 인터넷 없이도 열립니다 -->
   <!-- ERP-INLINE:BEGIN vue 3.4.38 -->
   <script>/**
@@ -195,7 +195,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div class="flex items-center space-x-1.5">
               <span class="text-sm sm:hidden font-black text-white tracking-tight truncate">이츠쇼 ERP</span>
               <span class="hidden sm:inline text-base font-black text-white tracking-tight">이츠쇼 & 키즈니버스 ERP</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold shrink-0">v2.6</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold shrink-0">v2.7</span>
             </div>
             <p class="text-[11px] text-slate-400 hidden md:block truncate">스케줄 · 5일 브리핑 · To-Do · 정산 · 단골 CRM</p>
           </div>
@@ -347,6 +347,111 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
 
+          <!-- ★ v2.7 ① 오늘 · 내일 공연 (시간순 한 줄씩 · 누르면 상세 요약 카드) -->
+          <div class="rounded-2xl bg-slate-800/90 border-2 border-amber-500/60 p-4 space-y-3 shadow-xl">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="text-sm sm:text-base font-black text-white">🎪 오늘 · 내일 공연</h3>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold badge-nowrap">{{ todayShows.length + tomorrowShows.length }}건</span>
+            </div>
+            <div v-for="g in dayGroups" :key="g.key" class="space-y-2">
+              <div class="flex items-center gap-2 text-xs font-bold">
+                <span class="px-2 py-0.5 rounded-full" :class="g.key === 'today' ? 'bg-amber-500 text-black' : 'bg-indigo-600 text-white'">{{ g.label }}</span>
+                <span class="font-mono text-slate-300">{{ shortDateLabel(g.date) }}</span>
+                <span class="text-slate-400 font-normal">{{ g.shows.length }}건</span>
+              </div>
+              <button v-for="s in g.shows" :key="g.key + '-' + (s.uid || s.no)" @click="openShowSummary(s)" type="button"
+                class="w-full text-left p-3 rounded-xl bg-slate-900/90 border flex items-start gap-3 cursor-pointer transition-all"
+                :class="g.key === 'today' ? 'border-slate-700 hover:border-amber-400' : 'border-slate-800 hover:border-indigo-500/50'">
+                <span class="font-mono font-black text-base shrink-0" :class="g.key === 'today' ? 'text-amber-300' : 'text-indigo-300'">{{ s.showTime || '--:--' }}</span>
+                <span class="min-w-0 flex-1 space-y-0.5">
+                  <span class="flex items-center gap-1.5 min-w-0">
+                    <span class="font-bold text-white truncate">{{ s.client }}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span>
+                  </span>
+                  <span class="block text-[11px] text-slate-400 truncate">📍 {{ s.region || '지역미정' }} · 🎭 {{ s.performer || '공연자 미정' }}</span>
+                  <span v-if="memoFirstLine(s)" class="block text-[11px] text-slate-300 truncate">📝 {{ memoFirstLine(s) }}</span>
+                  <span v-else class="block text-[11px] text-amber-300">⚠️ 협의 메모 없음</span>
+                </span>
+                <span class="text-slate-500 shrink-0">›</span>
+              </button>
+              <div v-if="g.shows.length === 0" class="text-xs text-slate-400">{{ g.label }}은 공연이 없어요.</div>
+            </div>
+            <div v-if="todayShows.length === 0 && tomorrowShows.length === 0 && (weekShows[0] || nextShowAfterWeek)" class="text-xs text-slate-400 pt-1 border-t border-slate-700/60">
+              다음 공연: <button @click="openShowSummary(weekShows[0] || nextShowAfterWeek)" class="font-bold text-amber-300 underline cursor-pointer">{{ shortDateLabel((weekShows[0] || nextShowAfterWeek).showDate) }} {{ (weekShows[0] || nextShowAfterWeek).showTime }} {{ (weekShows[0] || nextShowAfterWeek).client }}</button>
+            </div>
+          </div>
+
+          <!-- ★ v2.7 ② 확인 필요 (할 일이 있을 때만) -->
+          <div v-if="dashAlerts.length > 0" class="rounded-2xl bg-slate-800/90 border border-rose-500/40 p-4 space-y-2">
+            <h3 class="text-sm font-black text-white">🔔 확인 필요 <span class="text-[11px] font-normal text-slate-400">· 누르면 해당 화면으로 가요</span></h3>
+            <div v-for="a in dashAlerts" :key="a.key" class="rounded-xl bg-slate-900/80 border border-slate-800 px-3 py-2 text-xs">
+              <button v-if="a.go" @click="goDashAlert(a)" type="button" class="w-full flex items-center justify-between gap-2 text-left cursor-pointer">
+                <span class="min-w-0" :class="a.urgent ? 'text-rose-300 font-bold' : 'text-slate-200'">{{ a.icon }} {{ a.text }}</span>
+                <span class="text-slate-500 shrink-0">›</span>
+              </button>
+              <template v-else>
+                <div class="text-slate-200">{{ a.icon }} {{ a.text }}</div>
+                <div class="flex flex-wrap gap-1.5 mt-1.5">
+                  <button v-for="s in a.shows" :key="'am-' + (s.uid || s.no)" @click="openShowSummary(s)" type="button" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold cursor-pointer">{{ shortDateLabel(s.showDate) }} {{ s.client }}</button>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- ★ v2.7 ③ 이번 주 일정 (내일부터 7일 · 한 줄씩) -->
+          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-4 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="text-sm font-black text-white">📅 이번 주 일정 <span class="text-[11px] font-normal text-slate-400">(모레부터 7일)</span></h3>
+              <button @click="switchTab('schedule')" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold cursor-pointer">전체 일정 ➔</button>
+            </div>
+            <div v-if="weekShows.length > 0" class="divide-y divide-slate-800">
+              <button v-for="s in weekShows" :key="'wk-' + (s.uid || s.no)" @click="openShowSummary(s)" type="button"
+                class="w-full text-left py-2 flex items-start gap-3 hover:bg-slate-700/35 cursor-pointer">
+                <span class="font-mono text-xs shrink-0 text-indigo-300 font-bold">{{ shortDateLabel(s.showDate) }}<span class="block text-slate-400 font-normal">{{ s.showTime }}</span></span>
+                <span class="min-w-0 flex-1">
+                  <span class="flex items-center gap-1.5 min-w-0">
+                    <span class="font-bold text-sm text-white truncate">{{ s.client }}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span>
+                  </span>
+                  <span v-if="memoFirstLine(s)" class="block text-[11px] text-slate-400 truncate">📝 {{ memoFirstLine(s) }}</span>
+                  <span v-else class="block text-[11px] text-amber-300">⚠️ 협의 메모 없음</span>
+                </span>
+                <span class="text-slate-500 shrink-0">›</span>
+              </button>
+            </div>
+            <div v-else class="text-xs text-slate-400">앞으로 7일 동안 잡힌 공연이 없어요.</div>
+          </div>
+
+          <!-- ★ v2.7 ④ 숫자 4개 (작게) -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-3 space-y-0.5">
+              <div class="text-[11px] font-bold text-indigo-300">이번 달 매출 ({{ Number(monthRevenue.ym.slice(5)) }}월 · {{ monthRevenue.count }}건)</div>
+              <div class="text-lg font-black text-white font-mono">₩{{ monthRevenue.total.toLocaleString() }}</div>
+              <div class="text-[10px] text-slate-400 font-mono">지난 ₩{{ monthRevenue.done.toLocaleString() }} · 예정 ₩{{ monthRevenue.plan.toLocaleString() }}</div>
+            </div>
+            <div @click="goToUnpaidView" class="rounded-2xl bg-slate-800/90 border border-rose-500/40 p-3 space-y-0.5 cursor-pointer hover:border-rose-400 transition-all">
+              <div class="text-[11px] font-bold text-rose-300">받을 돈 (미입금 {{ unpaidShows.length }}건)</div>
+              <div class="text-lg font-black text-rose-400 font-mono">₩{{ totalUnpaidAmount.toLocaleString() }}</div>
+              <div class="text-[10px] text-slate-400">누르면 완납 처리 화면</div>
+            </div>
+            <div @click="openSettlementTab" class="rounded-2xl bg-slate-800/90 border border-amber-500/40 p-3 space-y-0.5 cursor-pointer hover:border-amber-400 transition-all">
+              <div class="text-[11px] font-bold text-amber-300">줄 돈 (공연자 {{ settleSummary.count }}건 + 지급예정 {{ pendingPayables.length }}건)</div>
+              <div class="text-lg font-black text-amber-400 font-mono">₩{{ (settleSummary.total + totalPendingPayables).toLocaleString() }}</div>
+              <div class="text-[10px] text-slate-400 font-mono">공연자 ₩{{ settleSummary.total.toLocaleString() }} · 기타 ₩{{ totalPendingPayables.toLocaleString() }}</div>
+            </div>
+            <div @click="switchTab('settings')" class="rounded-2xl bg-slate-800/90 border border-emerald-500/40 p-3 space-y-0.5 cursor-pointer hover:border-emerald-400 transition-all">
+              <div class="text-[11px] font-bold text-emerald-300">통장 잔고 합계</div>
+              <div class="text-lg font-black text-emerald-400 font-mono">₩{{ totalCashBalance.toLocaleString() }}</div>
+              <div class="text-[10px] text-slate-400 font-mono">받을 돈 − 줄 돈 반영 시 ₩{{ (totalCashBalance + totalUnpaidAmount - totalPendingPayables - settleSummary.total).toLocaleString() }}</div>
+            </div>
+          </div>
+
+          <!-- ★ v2.7 ⑤ 자세히 보기 (예전 대시보드 내용 — 눌러야 펼쳐짐) -->
+          <button @click="toggleDashDetail" type="button" class="w-full py-2.5 rounded-2xl bg-slate-900/80 border border-slate-700 hover:border-indigo-500/50 text-xs font-bold text-slate-300 cursor-pointer">
+            {{ dashDetailOpen ? '▾ 자세히 보기 접기' : '▸ 자세히 보기 (5일 카드 · 긴급 할 일 · 재섭외 골든타임 · 미입금 목록 · 차트)' }}
+          </button>
+          <div v-show="dashDetailOpen" class="space-y-6">
+
           <!-- ★ FEATURE 4: 오늘 기준 5일간 예정된 일정 집중 강조 배너 ★ -->
           <div class="rounded-3xl bg-gradient-to-r from-indigo-950/90 via-slate-900 to-amber-950/40 border-2 border-amber-500/60 p-5 shadow-2xl space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-amber-500/30 pb-3">
@@ -371,7 +476,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
             <!-- 5-Day Cards Grid -->
             <div v-if="next5DaysShows.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-              <div v-for="item in next5DaysShows" :key="item.no" @click="openEditShowModal(item)"
+              <div v-for="item in next5DaysShows" :key="item.no" @click="openShowSummary(item)"
                 class="p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-2.5 hover:scale-[1.01]"
                 :class="item.dday === 0 ? 'bg-amber-500/20 border-amber-400 shadow-lg shadow-amber-500/10' : 'bg-slate-900/90 border-indigo-500/50 hover:border-amber-400'">
                 <div class="space-y-1.5">
@@ -526,7 +631,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-800">
-                    <tr v-for="s in upcomingShows.slice(0, 12)" :key="s.no" @click="openEditShowModal(s)"
+                    <tr v-for="s in upcomingShows.slice(0, 12)" :key="s.no" @click="openShowSummary(s)"
                       class="hover:bg-slate-700/40 cursor-pointer"
                       :class="isWithin5Days(s.showDate) ? 'bg-amber-500/10' : ''">
                       <td class="py-2 px-1.5 sm:px-2.5 font-bold text-indigo-300 whitespace-nowrap"><span class="sm:hidden">{{ formatCompactDate(s.showDate) }}</span><span class="hidden sm:inline">{{ s.showDate }}</span> <span class="text-slate-400 block sm:inline">{{ s.showTime }}</span></td>
@@ -679,6 +784,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </div>
             </div>
           </div>
+          </div><!-- /v2.7 자세히 보기 -->
         </div>
 
         <!-- ======================================================================= -->
@@ -2431,6 +2537,66 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     </div>
 
     <!-- ======================================================================= -->
+    <!-- MODAL v2.7: 📋 공연 상세 요약 카드 (대시보드에서 공연을 누르면 뜸 · 읽기 전용) -->
+    <!-- ======================================================================= -->
+    <div v-if="summaryShow" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" @click.self="closeShowSummary">
+      <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-1.5 text-xs font-mono">
+              <span class="px-2 py-0.5 rounded-full font-black" :class="getDdayLabel(summaryShow.showDate) === 'D-DAY' ? 'bg-amber-500 text-black' : 'bg-indigo-600 text-white'">{{ getDdayLabel(summaryShow.showDate) }}</span>
+              <span class="font-bold text-amber-300">{{ shortDateLabel(summaryShow.showDate) }} {{ summaryShow.showTime }}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold font-sans" :class="summaryShow.status === '완료' ? 'bg-slate-700 text-slate-300' : 'bg-emerald-500/20 text-emerald-300'">{{ summaryShow.status }}</span>
+            </div>
+            <h3 class="text-lg font-black text-white mt-1 break-words">{{ summaryShow.client }}</h3>
+          </div>
+          <button @click="closeShowSummary" class="text-slate-400 hover:text-white text-sm cursor-pointer shrink-0">✕</button>
+        </div>
+
+        <div class="space-y-2 text-xs">
+          <div class="p-3 rounded-xl bg-slate-950/90 border border-slate-800 space-y-1.5">
+            <div class="flex items-start justify-between gap-2">
+              <span class="text-slate-200 break-words min-w-0">📍 {{ summaryShow.address || summaryShow.region || '장소 미정' }}<span v-if="summaryShow.address && summaryShow.region" class="text-slate-400"> ({{ summaryShow.region }})</span></span>
+              <button @click="openMapNavigation(summaryShow.address || summaryShow.client, summaryShow.region)" type="button" class="px-2 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white font-bold shrink-0 cursor-pointer">🗺️ 길찾기</button>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-slate-200 min-w-0 truncate">📞 {{ summaryShow.manager || '담당자' }} <span class="font-mono text-slate-400">{{ summaryShow.phone || '연락처 없음' }}</span></span>
+              <span class="flex items-center gap-1 shrink-0">
+                <a v-if="summaryShow.phone" :href="'tel:' + summaryShow.phone" class="px-2 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white font-bold">📞 전화</a>
+                <button @click="openSmsModal(summaryShow)" type="button" class="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black font-bold cursor-pointer">💬 문자</button>
+              </span>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-950/90 border border-slate-800 space-y-1.5">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="getThemeBadgeClass(summaryShow.theme)">{{ summaryShow.theme }}</span>
+              <span class="text-slate-300">{{ summaryShow.audience || '관객 정보 없음' }}</span>
+            </div>
+            <div class="text-slate-200">🎭 {{ summaryShow.performer || '공연자 미정' }}
+              <span v-if="summaryPerformerKind" class="px-1.5 py-0.5 rounded text-[10px] font-bold ml-1" :class="performerKindClass(summaryPerformerKind)">{{ performerKindLabel(summaryPerformerKind) }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-2 font-mono">
+              <span class="text-slate-200">💰 ₩{{ (Number(summaryShow.amount) || 0).toLocaleString() }} <span class="font-sans text-slate-400">· {{ summaryShow.issuer }}</span></span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold font-sans" :class="summaryShow.payStatus === '미입금' ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'">{{ summaryShow.payStatus }}</span>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl border space-y-1" :class="memoFirstLine(summaryShow) ? 'bg-slate-950/90 border-slate-800' : 'bg-amber-500/10 border-amber-500/40'">
+            <div class="font-bold" :class="memoFirstLine(summaryShow) ? 'text-slate-300' : 'text-amber-300'">📝 협의 메모</div>
+            <div v-if="memoFirstLine(summaryShow)" class="text-white break-words leading-relaxed" style="white-space: pre-wrap">{{ summaryShow.memo }}</div>
+            <div v-else class="text-amber-200">아직 협의 메모가 없어요. [✏️ 수정]에서 메모를 적어 주세요.</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button @click="showInLedger(summaryShow)" type="button" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold cursor-pointer">📒 공연장부에서 보기</button>
+          <button @click="editFromSummary" type="button" class="py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer">✏️ 수정</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
     <!-- MODAL v2.6: 🎭 공연자 추가 / 수정 -->
     <!-- ======================================================================= -->
     <div v-if="performerModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" @click.self="performerModalOpen = false">
@@ -3798,6 +3964,109 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             }))
             .sort((a, b) => (a.showDate + a.showTime).localeCompare(b.showDate + b.showTime));
         });
+
+        // ===== v2.7 대시보드 (BEGIN DASHBOARD) =====
+        // 오늘 공연 · 확인 필요 · 이번 주 일정 · 숫자 4개만 먼저 보여주고, 나머지는 '자세히 보기' 안에 둠
+        const dashDetailOpen = ref(false);
+        const toggleDashDetail = () => {
+          dashDetailOpen.value = !dashDetailOpen.value;
+          if (dashDetailOpen.value) nextTick(() => renderCharts()); // 숨겨져 있던 차트는 펼칠 때 다시 그림
+        };
+        const byDateTime = (a, b) => ((a.showDate || '') + (a.showTime || '')).localeCompare((b.showDate || '') + (b.showTime || ''));
+        const memoFirstLine = (s) => String((s && s.memo) || '').split('\n').map(x => x.trim()).find(Boolean) || '';
+        const shortDateLabel = (d) => d ? `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}(${getDayOfWeekKorean(d)})` : '';
+
+        const todayShows = computed(() => shows.value.filter(s => s.status !== '취소' && s.showDate === referenceToday.value).sort(byDateTime));
+        const tomorrowShows = computed(() => {
+          const tm = addDaysToDateStr(referenceToday.value, 1);
+          return shows.value.filter(s => s.status !== '취소' && s.showDate === tm).sort(byDateTime);
+        });
+        const dayGroups = computed(() => [
+          { key: 'today', label: '오늘', date: referenceToday.value, shows: todayShows.value },
+          { key: 'tomorrow', label: '내일', date: addDaysToDateStr(referenceToday.value, 1), shows: tomorrowShows.value }
+        ]);
+        // 이번 주 일정: 오늘·내일은 위에서 보여주므로 '모레부터 7일'
+        const weekShows = computed(() => {
+          const start = addDaysToDateStr(referenceToday.value, 1);
+          const end = addDaysToDateStr(referenceToday.value, 8);
+          return shows.value.filter(s => s.status !== '취소' && s.showDate > start && s.showDate <= end).sort(byDateTime);
+        });
+        const nextShowAfterWeek = computed(() => {
+          const end = addDaysToDateStr(referenceToday.value, 8);
+          return shows.value.filter(s => s.status !== '취소' && s.showDate > end).sort(byDateTime)[0] || null;
+        });
+
+        // 확인 필요: 할 일이 있는 항목만 돌려줌 (없으면 빈 목록 → 화면에서 숨김)
+        const dashAlerts = computed(() => {
+          const today = referenceToday.value;
+          const list = [];
+          const in5 = addDaysToDateStr(today, 4);
+          const noMemo = shows.value.filter(s => s.status !== '취소' && s.showDate >= today && s.showDate <= in5 && !memoFirstLine(s)).sort(byDateTime);
+          if (noMemo.length) list.push({ key: 'memo', icon: '⚠️', text: `협의 메모가 없는 공연 ${noMemo.length}건 (5일 이내)`, shows: noMemo });
+          const before30 = addDaysToDateStr(today, -30);
+          const lateUnpaid = unpaidShows.value.filter(s => s.showDate && s.showDate <= before30);
+          if (lateUnpaid.length) list.push({ key: 'unpaid', icon: '💸', text: `입금 안 된 지난 공연 ${lateUnpaid.length}건 (30일 넘음) · ₩${lateUnpaid.reduce((a, s) => a + (Number(s.amount) || 0), 0).toLocaleString()}`, go: 'unpaid' });
+          const pastSettle = shows.value.filter(s => isSettleOpen(s) && s.showDate < today);
+          if (pastSettle.length) list.push({ key: 'settle', icon: '🎭', text: `공연자 미지급 ${pastSettle.length}건 (지난 공연) · ₩${pastSettle.reduce((a, s) => a + (Number(s.settleAmt) || 0), 0).toLocaleString()}`, go: 'settle' });
+          if (settleSummary.value.invoicePending > 0) list.push({ key: 'invoice', icon: '🧾', text: `사업자 공연자 계산서 미수취 ${settleSummary.value.invoicePending}건`, go: 'settle' });
+          const waitTax = taxRecords.value.filter(t => t.reportStatus === '신고대기');
+          if (waitTax.length) {
+            // 원천세는 지급한 달의 다음 달 10일까지 신고 → 가장 빠른 기한을 보여줌
+            const dues = waitTax.map(t => {
+              const [y, m] = String(t.payDate || today).split('-').map(Number);
+              const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
+              return `${ny}-${String(nm).padStart(2, '0')}-10`;
+            }).sort();
+            list.push({ key: 'tax', icon: '🧾', text: `원천세 신고대기 ${waitTax.length}건 (가장 빠른 기한 ${Number(dues[0].slice(5, 7))}/10)`, go: 'tax', urgent: dues[0] <= addDaysToDateStr(today, 5) });
+          }
+          if (highPriorityTodos.value.length) list.push({ key: 'todo', icon: '🔥', text: `급한 할 일·구매 ${highPriorityTodos.value.length}건`, go: 'todo' });
+          if (settleSummary.value.undecided > 0) list.push({ key: 'perf', icon: '❓', text: `정산할 공연자 중 개인/사업자 미정 ${settleSummary.value.undecided}건`, go: 'performers' });
+          return list;
+        });
+        const goDashAlert = (a) => {
+          if (a.go === 'unpaid') goToUnpaidView();
+          else if (a.go === 'settle') openSettlementTab();
+          else if (a.go === 'tax') { switchTab('finance'); financeSubTab.value = 'payables'; }
+          else if (a.go) switchTab(a.go);
+        };
+
+        // 이번 달 매출: 지난(오늘 포함) 공연 / 앞으로 할 공연 나눠서
+        const monthRevenue = computed(() => {
+          const today = referenceToday.value;
+          const ym = today.slice(0, 7);
+          const list = shows.value.filter(s => s.status !== '취소' && String(s.showDate || '').startsWith(ym));
+          const done = list.filter(s => s.showDate <= today).reduce((a, s) => a + (Number(s.amount) || 0), 0);
+          const plan = list.filter(s => s.showDate > today).reduce((a, s) => a + (Number(s.amount) || 0), 0);
+          return { ym, count: list.length, done, plan, total: done + plan };
+        });
+
+        // --- 상세 요약 카드 (대시보드에서 공연을 누르면 수정 창 대신 이 카드가 뜸) ---
+        const summaryShow = ref(null);
+        const openShowSummary = (s) => {
+          const real = shows.value.find(x => (s.uid && x.uid === s.uid) || x.no === s.no) || s; // 5일 카드는 복사본이라 원본을 찾아 연결
+          summaryShow.value = real;
+        };
+        const closeShowSummary = () => { summaryShow.value = null; };
+        const editFromSummary = () => { const s = summaryShow.value; summaryShow.value = null; if (s) openEditShowModal(s); };
+        const showInLedger = (s) => {
+          summaryShow.value = null;
+          selectedYearMonth.value = 'ALL';
+          filterStatus.value = 'ALL';
+          filterDivision.value = 'ALL';
+          filterTheme.value = 'ALL';
+          filterPayStatus.value = 'ALL';
+          filterDocIssued.value = 'ALL';
+          filterSearch.value = s.client || '';
+          scheduleViewMode.value = 'table';
+          switchTab('schedule');
+        };
+        const summaryPerformerKind = computed(() => {
+          const s = summaryShow.value;
+          if (!s) return '';
+          const p = findPerformerById(s.performerId) || findPerformerByName(s.performer);
+          return p ? p.kind : '';
+        });
+        // ===== v2.7 대시보드 (END DASHBOARD) =====
 
         const availableYearMonths = computed(() => {
           const set = new Set();
@@ -6266,6 +6535,8 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           performerKindLabel, performerKindClass, seedPerformersFromShows,
           performerModalOpen, isEditingPerformer, editingPerformerForm, openNewPerformerModal, openEditPerformerModal, savePerformerModal, deletePerformer,
           onSelectPerformerInShowModal, showModalSettleHint,
+          dashDetailOpen, toggleDashDetail, memoFirstLine, shortDateLabel, todayShows, tomorrowShows, dayGroups, weekShows, nextShowAfterWeek, dashAlerts, goDashAlert, monthRevenue,
+          summaryShow, openShowSummary, closeShowSummary, editFromSummary, showInLedger, summaryPerformerKind,
           settleFilter, settlementRows, settleSummary, openSettlementTab, openPerformerForRow, toggleInvoiceRecv, markSettlementPaid, markSettlementAlreadyPaid, undoSettlementPaid, toggleTaxReportStatus,
           toastMsg
         };
