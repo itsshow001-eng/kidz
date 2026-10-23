@@ -26,7 +26,7 @@
     /* 폰을 가로로 눕힌 경우: 화면 높이가 낮아 맨 아래 내용이 하단 버튼 줄에 가리므로 여백을 더 줌 */
     @media (max-width: 1023px) and (orientation: landscape) and (max-height: 500px) { body { padding-bottom: calc(env(safe-area-inset-bottom) + 64px); } }
   </style>
-  <title>이츠쇼 ERP v2.7</title>
+  <title>이츠쇼 ERP v2.8</title>
   <!-- v2.3 오프라인판: Vue 3.4.38 · Chart.js 4.4.4 · SheetJS 0.18.5 · Tailwind(미리 빌드)를 파일 안에 내장 — 인터넷 없이도 열립니다 -->
   <!-- ERP-INLINE:BEGIN vue 3.4.38 -->
   <script>/**
@@ -195,7 +195,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div class="flex items-center space-x-1.5">
               <span class="text-sm sm:hidden font-black text-white tracking-tight truncate">이츠쇼 ERP</span>
               <span class="hidden sm:inline text-base font-black text-white tracking-tight">이츠쇼 & 키즈니버스 ERP</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold shrink-0">v2.7</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold shrink-0">v2.8</span>
             </div>
             <p class="text-[11px] text-slate-400 hidden md:block truncate">스케줄 · 5일 브리핑 · To-Do · 정산 · 단골 CRM</p>
           </div>
@@ -1495,6 +1495,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <option value="보통">🟡 재계약 가능성 보통</option>
                 <option value="낮음">🔴 재계약 가능성 낮음</option>
               </select>
+              <button @click="openDupModal" class="px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all border"
+                :class="duplicateGroups.length > 0 ? 'bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black border-amber-500/40' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'"
+                title="이름이 비슷하거나 전화번호·사업자번호가 같은 고객을 찾아 하나로 합칩니다">
+                🔍 중복 의심 ({{ duplicateGroups.length }})
+              </button>
               <button @click="syncShowsAndCustomers(false)" class="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 text-xs font-bold cursor-pointer transition-all" title="고객번호(CUST-ID) 및 기관명 기준으로 공연장부와 단골고객 사업자정보·이메일·실적을 양방향 동기화합니다">
                 🔄 장부↔고객 동기화
               </button>
@@ -2364,16 +2369,32 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div>
             <label class="text-slate-400 block mb-1 flex items-center justify-between">
               <span>업체·기관명 *</span>
-              <span v-if="editingShowForm.custId" class="text-[10px] font-mono text-indigo-300 font-bold">{{ editingShowForm.custId }}</span>
+              <span v-if="editingShowForm.custId" class="text-[10px] font-mono text-indigo-300 font-bold">
+                🔗 {{ editingShowForm.custId }}
+                <button v-if="!isEditingShow" @click="unlinkCustomerInShowModal" type="button" class="ml-1 text-slate-400 hover:text-rose-300 cursor-pointer" title="연결 풀기 (다른 업체일 때)">✕</button>
+              </span>
             </label>
             <input type="text" v-model="editingShowForm.client" @blur="autoMatchCustomerForShowForm" placeholder="예: OO유치원, OO센터" class="w-full px-3 py-2 rounded-xl border font-bold" />
+            <!-- ★ v2.8: 치는 동안 비슷한 단골고객 추천 (누르면 그 고객번호로 연결) -->
+            <div v-if="customerSuggestions.length > 0" class="mt-1.5 rounded-xl border border-indigo-500/50 bg-slate-950/95 overflow-hidden">
+              <div class="px-3 py-1 text-[10px] text-indigo-300 font-bold border-b border-slate-800">🤝 혹시 이 단골고객인가요? 누르면 연결돼요</div>
+              <button v-for="sg in customerSuggestions" :key="'sg-' + sg.c.custId" @click="pickSuggestedCustomer(sg.c)" type="button"
+                class="w-full text-left px-3 py-1.5 hover:bg-slate-700/35 cursor-pointer flex items-center justify-between gap-2 text-[11px]">
+                <span class="min-w-0 truncate">
+                  <span class="font-mono text-indigo-300">[{{ sg.c.custId }}]</span>
+                  <span class="font-bold text-white">{{ sg.c.client }}</span>
+                  <span class="text-slate-400"> · {{ sg.c.region || '지역' }}<template v-if="sg.c.phone"> · {{ sg.c.phone }}</template> · 공연 {{ sg.count }}회</span>
+                </span>
+                <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold shrink-0">{{ sg.reason }}</span>
+              </button>
+            </div>
           </div>
           <div>
             <label class="text-indigo-300 block mb-1 font-bold">🤝 단골고객(고객번호) 불러오기</label>
             <select v-model="editingShowForm.custId" @change="onSelectCustomerInShowModal" class="w-full px-2.5 py-2 rounded-xl border text-xs cursor-pointer font-mono">
               <option value="">-- 신규 또는 기관명 자동매칭 --</option>
-              <option v-for="c in customers" :key="c.custId" :value="c.custId">
-                [{{ c.custId }}] {{ c.client }} {{ c.bizNo ? '(' + c.bizNo + ')' : '' }}
+              <option v-for="c in customersSorted" :key="c.custId" :value="c.custId">
+                {{ c.client }} [{{ c.custId }}] {{ c.bizNo ? '(' + c.bizNo + ')' : '' }}
               </option>
             </select>
           </div>
@@ -2531,6 +2552,44 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <button type="button" @click="saveShowModal" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer shadow-lg">
               {{ (!isEditingShow && showModalMode === 'bulk') ? ('🔁 ' + bulkPreviewDates.length + '건 일괄 등록하기') : '💾 저장하기' }}
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL v2.8: 🔍 중복 의심 고객 찾기 · 합치기 -->
+    <!-- ======================================================================= -->
+    <div v-if="dupModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" @click.self="dupModalOpen = false">
+      <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-xl w-full p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="text-base font-bold text-white">🔍 중복 의심 고객 ({{ duplicateGroups.length }}묶음)</h3>
+          <button @click="dupModalOpen = false" class="text-slate-400 hover:text-white text-sm cursor-pointer">✕</button>
+        </div>
+        <p class="text-[11px] text-slate-400 leading-relaxed">이름이 비슷하거나 전화번호·사업자번호가 같은 고객끼리 묶었어요. 같은 업체면 <strong class="text-white">남길 고객번호</strong>를 고르고 [합치기]를 누르세요. 다른 업체면 [다른 업체예요]를 누르면 다음부터 안 나와요.</p>
+
+        <div v-if="duplicateGroups.length === 0" class="p-4 text-center text-xs text-emerald-300">✅ 중복으로 보이는 고객이 없어요.</div>
+        <div v-for="(g, gi) in duplicateGroups" :key="g.key" class="rounded-2xl bg-slate-950/90 border border-slate-800 p-3 space-y-2">
+          <div class="text-xs font-bold text-amber-300">묶음 {{ gi + 1 }}</div>
+          <label v-for="m in g.members" :key="g.key + m.c.custId" class="flex items-start gap-2 p-2 rounded-xl border cursor-pointer text-[11px]"
+            :class="dupKeepChoice[g.key] === m.c.custId ? 'border-emerald-500/50 bg-emerald-950/40' : 'border-slate-800'">
+            <input type="radio" :name="'keep-' + gi" :value="m.c.custId" v-model="dupKeepChoice[g.key]" class="mt-0.5 accent-emerald-500" />
+            <span class="min-w-0 flex-1">
+              <span class="flex flex-wrap items-center gap-1.5">
+                <span class="font-mono text-indigo-300">[{{ m.c.custId }}]</span>
+                <span class="font-bold text-white">{{ m.c.client }}</span>
+                <span v-if="dupKeepChoice[g.key] === m.c.custId" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">남길 번호</span>
+              </span>
+              <span class="block text-slate-400">{{ m.c.region || '지역 없음' }} · {{ m.c.manager || '담당자 없음' }} · {{ m.c.phone || '전화 없음' }}<template v-if="m.c.bizNo"> · {{ m.c.bizNo }}</template></span>
+              <span class="block text-slate-400">공연 {{ m.count }}회<template v-if="m.c.lastDate"> · 최근 {{ m.c.lastDate }}</template></span>
+              <span class="flex flex-wrap gap-1 mt-0.5">
+                <span v-for="r in m.reasons" :key="r" class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">{{ r }}</span>
+              </span>
+            </span>
+          </label>
+          <div class="flex items-center justify-end gap-2 pt-1">
+            <button @click="markGroupNotDuplicate(g)" type="button" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold cursor-pointer">다른 업체예요</button>
+            <button @click="mergeDuplicateGroup(g)" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer shadow">합치기</button>
           </div>
         </div>
       </div>
@@ -4860,6 +4919,169 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           }
         };
 
+        // ===== v2.8 비슷한 고객 찾기 · 중복 합치기 (BEGIN CUSTOMER DEDUPE) =====
+        // 이름에서 '어린이집·유치원' 같은 흔한 단어를 빼고 핵심 이름만 비교 (예: '풍무어린이집' ↔ '장기어린이집'을 같다고 보지 않게)
+        const COMMON_ORG_WORDS = ['국공립', '시립', '구립', '공립', '사립', '병설', '직장', '어린이집', '유치원', '초등학교', '중학교', '고등학교', '학교', '도서관', '주민센터', '복지관', '센터', '구청', '시청', '군청', '축제팀', '축제', '사무소', '본점', '지점'];
+        const coreName = (name) => {
+          let n = normalizeName(name).replace(/[()\[\]·.,\-_]/g, '');
+          COMMON_ORG_WORDS.forEach(w => { n = n.split(w).join(''); });
+          return n;
+        };
+        // 기관 종류: 둘 다 종류가 있는데 서로 다르면(예: 도서관 ↔ 어린이집) 이름이 비슷해도 다른 곳으로 봄
+        const ORG_TYPES = ['어린이집', '유치원', '초등학교', '중학교', '고등학교', '도서관', '주민센터', '복지관', '구청', '시청', '군청'];
+        const orgType = (name) => { const n = normalizeName(name); return ORG_TYPES.find(t => n.includes(t)) || ''; };
+        const bigrams = (s) => { const out = []; for (let i = 0; i < s.length - 1; i++) out.push(s.slice(i, i + 2)); return out; };
+        const dice = (a, b) => {
+          if (a.length < 2 || b.length < 2) return 0;
+          const A = bigrams(a), B = bigrams(b).slice();
+          let hit = 0;
+          A.forEach(x => { const k = B.indexOf(x); if (k >= 0) { hit++; B.splice(k, 1); } });
+          return (2 * hit) / (A.length + B.length);
+        };
+        const digitsOnly = (v) => String(v || '').replace(/\D/g, '');
+        // 두 고객(또는 입력 중인 정보)이 같은 업체일 가능성: 점수와 이유
+        const similarity = (a, b) => {
+          const bizA = digitsOnly(a.bizNo), bizB = digitsOnly(b.bizNo);
+          if (bizA.length === 10 && bizA === bizB) return { score: 100, reason: '사업자번호 같음' };
+          const phA = digitsOnly(a.phone), phB = digitsOnly(b.phone);
+          if (phA.length >= 9 && phA === phB) return { score: 90, reason: '전화번호 같음' };
+          const ta = orgType(a.client), tb = orgType(b.client);
+          if (ta && tb && ta !== tb) return { score: 0, reason: '' };
+          const ca = coreName(a.client), cb = coreName(b.client);
+          if (ca.length >= 2 && ca === cb) return { score: 85, reason: '이름 거의 같음' };
+          if (ca.length >= 2 && cb.length >= 2 && (ca.includes(cb) || cb.includes(ca))) return { score: 70, reason: '이름 일부 같음' };
+          const ds = dice(ca, cb);
+          if (ds >= 0.6) return { score: Math.round(50 + ds * 15), reason: '이름 비슷' };
+          return { score: 0, reason: '' };
+        };
+        const showCountByCust = computed(() => {
+          const m = {};
+          shows.value.forEach(s => { if (s.custId && s.status !== '취소') m[s.custId] = (m[s.custId] || 0) + 1; });
+          return m;
+        });
+
+        // --- ① 공연 등록 창: 업체명을 치는 동안 비슷한 단골고객 추천 ---
+        const customerSuggestions = computed(() => {
+          const f = editingShowForm.value || {};
+          if (!showModalOpen.value || f.custId) return [];
+          const q = String(f.client || '').trim();
+          if (normalizeName(q).length < 2 && digitsOnly(f.phone).length < 9) return [];
+          const qn = normalizeName(q);
+          return customers.value
+            .map(c => {
+              let r = similarity({ client: q, phone: f.phone, bizNo: f.bizNo }, c);
+              // 치는 중인 글자가 고객 이름에 그대로 들어 있으면 추천 (예: '풍무' → '풍무어린이집')
+              if (r.score < 60 && qn.length >= 2 && normalizeName(c.client).includes(qn)) r = { score: 60, reason: '이름에 포함' };
+              return { c, ...r, count: showCountByCust.value[c.custId] || 0 };
+            })
+            .filter(x => x.score >= 60)
+            .sort((a, b) => b.score - a.score || b.count - a.count)
+            .slice(0, 5);
+        });
+        const pickSuggestedCustomer = (c) => {
+          editingShowForm.value.custId = c.custId;
+          onSelectCustomerInShowModal();
+        };
+        const unlinkCustomerInShowModal = () => { editingShowForm.value.custId = ''; };
+        const customersSorted = computed(() => customers.value.slice().sort((a, b) => String(a.client).localeCompare(String(b.client), 'ko')));
+
+        // 저장 직전: 새 고객번호가 생기려 할 때 비슷한 고객이 있으면 먼저 물어봄 (확인=연결 / 취소=새 고객으로 등록)
+        const confirmLinkSimilarCustomer = (form) => {
+          if (form.custId) return;
+          const n = normalizeName(form.client);
+          if (customers.value.some(c => normalizeName(c.client) === n || (c.bizName && normalizeName(c.bizName) === n))) return; // 이름이 똑같으면 원래대로 자동 연결
+          const best = customers.value
+            .map(c => ({ c, ...similarity({ client: form.client, phone: form.phone, bizNo: form.bizNo }, c) }))
+            .filter(x => x.score >= 60)
+            .sort((a, b) => b.score - a.score)[0];
+          if (!best) return;
+          const cnt = showCountByCust.value[best.c.custId] || 0;
+          const ok = confirm(`🤝 비슷한 단골고객이 있어요.\n\n입력한 이름: ${form.client}\n기존 고객: [${best.c.custId}] ${best.c.client} (${best.reason} · 공연 ${cnt}회)\n\n[확인] → 이 기존 고객으로 연결 (업체명도 '${best.c.client}'(으)로 맞춤 · 새 고객번호 안 만듦)\n[취소] → 다른 업체예요. 새 고객번호로 등록`);
+          if (ok) {
+            form.custId = best.c.custId;
+            form.client = best.c.client;
+            if (!form.phone && best.c.phone) form.phone = best.c.phone;
+            if (!form.manager && best.c.manager) form.manager = best.c.manager;
+          }
+        };
+
+        // --- ② 이미 생긴 중복 찾기 · 합치기 (단골 고객 탭) ---
+        const dupModalOpen = ref(false);
+        const dupKeepChoice = ref({}); // 묶음 번호 → 남길 고객번호
+        const isMarkedNotDup = (a, b) => (Array.isArray(a.notDupWith) && a.notDupWith.includes(b.custId)) || (Array.isArray(b.notDupWith) && b.notDupWith.includes(a.custId));
+        const duplicateGroups = computed(() => {
+          const list = customers.value;
+          const parent = list.map((_, i) => i);
+          const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+          const reasons = {};
+          for (let i = 0; i < list.length; i++) {
+            for (let j = i + 1; j < list.length; j++) {
+              if (isMarkedNotDup(list[i], list[j])) continue;
+              const r = similarity(list[i], list[j]);
+              if (r.score >= 60) {
+                parent[find(i)] = find(j);
+                (reasons[i] = reasons[i] || new Set()).add(r.reason);
+                (reasons[j] = reasons[j] || new Set()).add(r.reason);
+              }
+            }
+          }
+          const groups = {};
+          list.forEach((c, i) => { const r = find(i); (groups[r] = groups[r] || []).push({ c, reasons: [...(reasons[i] || [])], count: showCountByCust.value[c.custId] || 0 }); });
+          return Object.values(groups)
+            .filter(g => g.length > 1)
+            .map(g => {
+              g.sort((a, b) => b.count - a.count || String(a.c.custId).localeCompare(String(b.c.custId)));
+              return { key: g.map(x => x.c.custId).join('|'), members: g };
+            });
+        });
+        const openDupModal = () => {
+          dupKeepChoice.value = {};
+          duplicateGroups.value.forEach(g => { dupKeepChoice.value[g.key] = g.members[0].c.custId; }); // 공연이 가장 많은 번호를 기본으로
+          dupModalOpen.value = true;
+        };
+
+        const MERGE_FILL_FIELDS = ['manager', 'phone', 'email', 'region', 'bizName', 'bizNo', 'bizAddress', 'bizOwner', 'bizType', 'favTheme', 'company', 'nextContact'];
+        const VIP_RANK = { '일반': 0, '⭐ VIP': 1, '💎 VVIP': 2 };
+        const mergeDuplicateGroup = (g) => {
+          const keepId = dupKeepChoice.value[g.key] || g.members[0].c.custId;
+          const keep = customers.value.find(c => c.custId === keepId);
+          const others = g.members.map(m => m.c).filter(c => c.custId !== keepId);
+          if (!keep || others.length === 0) return;
+          const moved = shows.value.filter(s => others.some(o => o.custId === s.custId)).length;
+          if (!confirm(`[${keep.custId}] ${keep.client} 하나로 합칠까요?\n\n합쳐지는 번호: ${others.map(o => `[${o.custId}] ${o.client}`).join(', ')}\n옮겨지는 공연: ${moved}건\n\n· 비어 있는 연락처·이메일·사업자정보는 서로 채워 넣어요.\n· 합치기 전에 자동 백업을 남겨요 (설정 탭에서 되돌릴 수 있음).`)) return;
+          if (!takeSnapshot('고객 합치기 직전 자동 백업')) {
+            showToast('⚠️ 자동 백업을 만들지 못해 합치기를 멈췄어요. 설정 탭에서 JSON 백업을 먼저 받아 주세요.', 9000);
+            return;
+          }
+          others.forEach(o => {
+            MERGE_FILL_FIELDS.forEach(k => { if (!keep[k] && o[k]) keep[k] = o[k]; });
+            if (o.isBiz) keep.isBiz = true;
+            if ((VIP_RANK[o.vip] || 0) > (VIP_RANK[keep.vip] || 0)) keep.vip = o.vip;
+            if (o.memo && !String(keep.memo || '').includes(o.memo)) keep.memo = [keep.memo, o.memo].filter(Boolean).join(' / ');
+            const alias = `예전 이름: ${o.client}`;
+            if (o.client && normalizeName(o.client) !== normalizeName(keep.client) && !String(keep.memo || '').includes(alias)) keep.memo = [keep.memo, alias].filter(Boolean).join(' / ');
+            if (Array.isArray(o.notDupWith)) keep.notDupWith = [...new Set([...(keep.notDupWith || []), ...o.notDupWith])];
+          });
+          shows.value.forEach(s => { if (others.some(o => o.custId === s.custId)) { s.custId = keepId; s.updatedAt = nowStamp(); } });
+          customers.value = customers.value.filter(c => !others.some(o => o.custId === c.custId));
+          syncShowsAndCustomers(true); // 공연 횟수·매출 다시 계산
+          saveAllToStorage();
+          showToast(`✅ [${keepId}] ${keep.client}(으)로 합쳤어요. 공연 ${moved}건을 옮겼어요.`, 6000);
+          if (duplicateGroups.value.length === 0) dupModalOpen.value = false;
+        };
+        const markGroupNotDuplicate = (g) => {
+          if (!confirm('이 묶음은 서로 다른 업체로 표시할까요?\n다음부터 중복 의심 목록에 나오지 않아요.')) return;
+          const ids = g.members.map(m => m.c.custId);
+          g.members.forEach(m => {
+            const c = customers.value.find(x => x.custId === m.c.custId);
+            if (c) c.notDupWith = [...new Set([...(c.notDupWith || []), ...ids.filter(id => id !== c.custId)])];
+          });
+          saveAllToStorage();
+          showToast('다른 업체로 표시했어요.');
+          if (duplicateGroups.value.length === 0) dupModalOpen.value = false;
+        };
+        // ===== v2.8 비슷한 고객 찾기 · 중복 합치기 (END CUSTOMER DEDUPE) =====
+
         // ★ FEATURE 2: 일정 복사 (수정 모달 내부 & 테이블 원클릭) ★
         const copyFromEditModal = () => {
           const nextNo = shows.value.length > 0 ? Math.max(...shows.value.map(s => Number(s.no) || 0)) + 1 : 1;
@@ -4954,6 +5176,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             const prevRec = isEditingShow.value ? shows.value.find(x => x.no === editingShowForm.value.no) : null;
             normalizeCancelFields(editingShowForm.value, prevRec ? prevRec.status : undefined, referenceToday.value);
           }
+
+          // ★ v2.8: 새 고객번호를 만들기 전에, 비슷한 기존 고객이 있으면 연결할지 먼저 물어봄
+          confirmLinkSimilarCustomer(editingShowForm.value);
 
           // Ensure custId is linked or generated
           if (!editingShowForm.value.custId) {
@@ -6535,6 +6760,8 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           performerKindLabel, performerKindClass, seedPerformersFromShows,
           performerModalOpen, isEditingPerformer, editingPerformerForm, openNewPerformerModal, openEditPerformerModal, savePerformerModal, deletePerformer,
           onSelectPerformerInShowModal, showModalSettleHint,
+          customerSuggestions, pickSuggestedCustomer, unlinkCustomerInShowModal, customersSorted,
+          dupModalOpen, dupKeepChoice, duplicateGroups, openDupModal, mergeDuplicateGroup, markGroupNotDuplicate,
           dashDetailOpen, toggleDashDetail, memoFirstLine, shortDateLabel, todayShows, tomorrowShows, dayGroups, weekShows, nextShowAfterWeek, dashAlerts, goDashAlert, monthRevenue,
           summaryShow, openShowSummary, closeShowSummary, editFromSummary, showInLedger, summaryPerformerKind,
           settleFilter, settlementRows, settleSummary, openSettlementTab, openPerformerForRow, toggleInvoiceRecv, markSettlementPaid, markSettlementAlreadyPaid, undoSettlementPaid, toggleTaxReportStatus,
