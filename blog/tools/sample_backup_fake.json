@@ -1,0 +1,9 @@
+{"_설명": "시험용 가짜 데이터. 실제 고객 정보가 아니다.",
+ "shows": [
+  {"showDate": "2026-10-17", "status": "완료", "client": "가짜햇살어린이집", "manager": "원장님", "phone": "010-1234-5678", "email": "fake@example.com", "region": "충남", "theme": "매직버블쇼", "performer": "버블케이", "amount": 650000, "memo": "버블 터널 환호. 담당 010-1234-5678, 65만원 입금", "channel": "네이버", "bizNo": "123-45-67890"},
+  {"showDate": "2026-10-20", "status": "취소", "client": "가짜별유치원", "phone": "010-5555-0000", "region": "충남", "theme": "매직쉐도우", "performer": "버블케이", "amount": 0, "memo": "우천 취소", "channel": "재계약"},
+  {"showDate": "2026-10-21", "status": "확정", "client": "가짜키자니아", "phone": "010-2222-3333", "region": "서울", "theme": "강연/체험", "performer": "다른사람", "amount": 300000, "memo": "2회차 / 1,200,000", "channel": "기타"},
+  {"showDate": "2026-11-14", "status": "확정", "client": "가짜시민공원 축제", "phone": "010-7777-1111", "region": "충남", "theme": "매직벌룬쇼", "performer": "버블케이", "amount": 1500000, "memo": "야외 2회 / 풍선선물 약 300명", "channel": "홈페이지"},
+  {"showDate": "2026-11-20", "status": "확정", "client": "테스트", "phone": "", "region": "", "theme": "기타", "performer": "", "amount": 0, "memo": "", "channel": ""},
+  {"showDate": "2026-12-01", "status": "확정", "client": "가짜컴퍼니", "phone": "010-9999-8888", "region": "경기", "theme": "더윈터", "performer": "버블케이", "amount": 800000, "memo": "itsfake@naver.com 로 견적", "channel": "지인소개"}
+ ]}

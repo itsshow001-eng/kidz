@@ -17,6 +17,8 @@
 - blog/drafts/ : 초안. 파일 이름은 블로그초안_날짜_주제.txt (예: 블로그초안_2026-10-24_천안어린이집버블후기.txt)
 - blog/photos/ : 글별 사진. 아이 얼굴이 있을 수 있으므로 git에 올리지 않는다(.gitignore).
 - blog/reports/ : 월간 현황 리포트
+- blog/tools/ : 보조 프로그램. erp_to_csv.py는 ERP JSON 백업 복사본(blog/data/)을 읽어 blog/data/공연목록_<기준일>.csv를 만든다. 취소·테스트 공연과 기관명·연락처·금액·정산 정보는 빼고, 메모 속 전화번호·이메일·금액도 지운다. sample_backup_fake.json은 시험용 가짜 데이터다.
+  python3 -I blog/tools/erp_to_csv.py blog/data/<백업 파일>.json [기준일]
 
 ## 반드시 지킬 것
 
