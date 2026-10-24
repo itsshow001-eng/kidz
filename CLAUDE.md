@@ -17,7 +17,10 @@
 - blog/drafts/ : 초안. 파일 이름은 블로그초안_날짜_주제.txt (예: 블로그초안_2026-10-24_천안어린이집버블후기.txt)
 - blog/photos/ : 글별 사진. 아이 얼굴이 있을 수 있으므로 git에 올리지 않는다(.gitignore).
 - blog/reports/ : 월간 현황 리포트
-- blog/app/이츠쇼_블로그ERP.html : 블로그 전용 화면. 대표님 PC 크롬에서 파일로 열면 같은 크롬의 ERP 기록(localStorage itsshow_v23_data)을 읽기만 한다. 쓰기는 itsshow_blog_* 이름에만 한다. 기능: 공연 고르기, 글 재료 만들기(Claude에게 붙여넣기), 초안 점검(check_draft.py와 같은 규칙, 고치면 둘 다 고친다), 글 관리판.
+- blog/app/이츠쇼_SNS_ERP.html : 블로그·SNS 전용 화면(예전 이름 이츠쇼_블로그ERP.html). 대표님 PC 크롬에서 파일로 열면 같은 크롬의 ERP 기록(localStorage itsshow_v23_data)을 읽기만 한다. 쓰기는 itsshow_blog_* 이름에만 한다.
+  기능: 공연 고르기 / 글 만들기(후기·예정 안내·상품 소개는 화면에서 틀로 원고와 인스타 캡션을 만들고 바로 점검, 정보글·소식은 Claude에게 재료로) / 초안 점검(check_draft.py와 같은 규칙, 고치면 둘 다 고친다) / 글 관리판 / 설정(문의처 수정).
+  화면의 원고 틀은 재료(ERP 기록, 대표님 메모, 공연 종류의 일반 설명)만 쓰고 구성·발언·숫자를 지어내지 않는다. 틀을 고칠 때도 이 원칙을 지킨다.
+  다음 할 일(2차): 15초 쇼츠 영상 만들기. 대표님 예시 영상 구성(첫 장면 → 장르 4개 → 올인원 묶음 → 문의 화면, 사선 색 띠 전환), 효과음만 넣기(음악은 대표님이 인스타에서), 사진·영상이 없으면 소재 보관함 → '지난 공연 모습' 표시, 그것도 없으면 글자·그래픽만.
 - blog/tools/ : 보조 프로그램. erp_to_csv.py는 ERP JSON 백업 복사본(blog/data/)을 읽어 blog/data/공연목록_<기준일>.csv를 만든다. 취소·테스트 공연과 기관명·연락처·금액·정산 정보는 빼고, 메모 속 전화번호·이메일·금액도 지운다. sample_backup_fake.json은 시험용 가짜 데이터다.
   python3 -I blog/tools/erp_to_csv.py blog/data/<백업 파일>.json [기준일]
 
