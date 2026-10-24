@@ -1,0 +1,5 @@
+# 블로그 시스템: 고객 정보·사진은 git에 올리지 않는다
+blog/data/*
+!blog/data/.gitkeep
+blog/photos/*
+!blog/photos/.gitkeep
