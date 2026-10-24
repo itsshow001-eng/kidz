@@ -38,7 +38,13 @@ ORG_RULES = [
     ("교회", "교회"),
     ("마켓", "마켓·야외 행사"),
     ("키자니아", "어린이 체험시설"),
+    ("교육지원센터", "공공기관"),
+    ("현대캐피코", "기업 행사"),
+    ("개인", "개인 행사"),
 ]
+# 위 단어가 없는 곳은 대부분 공연 기획사를 거쳐 맡은 공연이다(대표님 확인 2026-10-24).
+# 실제 행사장(어린이집, 축제 등)은 ERP에 없으므로 글에 쓰려면 대표님께 여쭤본다.
+AGENCY_LABEL = "기획사 경유"
 # 실적 기업명: 글에 쓰려면 글마다 대표님 확인이 필요하다(brand-and-rules.md).
 NAMED_CLIENTS = ["키자니아", "삼성", "현대캐피코", "현대케피코", "KB"]
 
@@ -57,7 +63,7 @@ def org_type(client):
     for word, label in ORG_RULES:
         if word in name:
             return label
-    return "기타"
+    return AGENCY_LABEL
 
 
 def clean_memo(memo):
@@ -101,8 +107,8 @@ def convert(src_path, today):
 
         checks = []
         org = org_type(client)
-        if org == "기타":
-            checks.append("기관 유형 확인")
+        if org == AGENCY_LABEL:
+            checks.append("실제 행사장 확인")
         if any(n in client for n in NAMED_CLIENTS):
             checks.append("실적 기업명이라 공개 여부 확인")
         if use.startswith("후기 후보"):
