@@ -3,3 +3,7 @@ blog/data/*
 !blog/data/.gitkeep
 blog/photos/*
 !blog/photos/.gitkeep
+
+# 파이썬 임시 파일
+__pycache__/
+*.pyc
