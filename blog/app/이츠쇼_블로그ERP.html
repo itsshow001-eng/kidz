@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>이츠쇼 블로그 ERP</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #ffffff; --ink: #1f2328; --muted: #6b7280; --line: #e5e2dc;
+    --accent: #c2410c; --accent-soft: #fff1e8; --ok: #15803d; --ok-soft: #e9f8ee;
+    --warn: #b45309; --warn-soft: #fff7e0; --fail: #b91c1c; --fail-soft: #fdecec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171a; --card: #1e2126; --ink: #e8e6e3; --muted: #9aa0a6; --line: #2f333a;
+      --accent: #fb923c; --accent-soft: #2a1d14; --ok: #4ade80; --ok-soft: #12261a;
+      --warn: #fbbf24; --warn-soft: #2a2312; --fail: #f87171; --fail-soft: #2b1616;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.55 "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+  header { padding: 16px 24px; border-bottom: 1px solid var(--line); background: var(--card); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  header h1 { margin: 0; font-size: 18px; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  .conn { font-size: 13px; padding: 6px 10px; border-radius: 8px; background: var(--ok-soft); color: var(--ok); }
+  .conn.bad { background: var(--warn-soft); color: var(--warn); }
+  nav { display: flex; gap: 4px; padding: 0 24px; background: var(--card); border-bottom: 1px solid var(--line); overflow-x: auto; }
+  nav button { border: 0; background: none; padding: 12px 14px; font: inherit; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+  nav button.on { color: var(--ink); font-weight: 700; border-bottom-color: var(--accent); }
+  main { max-width: 1200px; margin: 0 auto; padding: 20px 24px 60px; }
+  section { display: none; }
+  section.on { display: block; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .card h2 { margin: 0 0 10px; font-size: 16px; }
+  .help { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
+  label { font-size: 13px; color: var(--muted); }
+  input, select, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; }
+  textarea { width: 100%; min-height: 110px; resize: vertical; }
+  .btn { display: inline-block; font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+  .btn.main { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--card); }
+  tr.pick { cursor: pointer; }
+  tr.pick:hover td { background: var(--accent-soft); }
+  .tablewrap { max-height: 520px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+  .tag { display: inline-block; font-size: 12px; padding: 1px 7px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); white-space: nowrap; }
+  .tag.review { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+  .tag.plan { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+  .tag.check { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+  .small { font-size: 12px; color: var(--muted); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+  .result div { padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; white-space: pre-wrap; }
+  .result .OK { background: var(--ok-soft); color: var(--ok); }
+  .result .WARN { background: var(--warn-soft); color: var(--warn); }
+  .result .FAIL { background: var(--fail-soft); color: var(--fail); }
+  .final { font-weight: 700; margin-top: 8px; }
+  pre.material { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 0 0 10px; font: inherit; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: .95; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .stats span { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>이츠쇼 블로그 ERP</h1>
+    <div class="sub">ERP 공연 기록은 읽기만 합니다. 이 화면의 기록은 ERP와 따로 저장됩니다.</div>
+  </div>
+  <div id="conn" class="conn bad">ERP 연결 확인 중…</div>
+</header>
+<nav id="tabs">
+  <button data-tab="shows" class="on">1. 공연 고르기</button>
+  <button data-tab="material">2. 글 재료 만들기</button>
+  <button data-tab="check">3. 초안 점검·붙여넣기</button>
+  <button data-tab="board">4. 글 관리판</button>
+</nav>
+<main>
+
+<!-- 1. 공연 고르기 -->
+<section id="shows" class="on">
+  <div class="card">
+    <h2>ERP 공연 목록</h2>
+    <p class="help">취소 공연은 보이지 않습니다. 기관 이름 대신 기관 유형만 보여 드려요. 줄을 누르면 그 공연으로 글 재료를 만듭니다.</p>
+    <div class="row">
+      <label>기준일 <input type="date" id="today"></label>
+      <label>쓰임
+        <select id="fUse">
+          <option value="">전체</option><option>후기</option><option>예정 안내</option><option>후기 후보(완료 확인 필요)</option>
+        </select>
+      </label>
+      <label>달 <select id="fMonth"><option value="">전체</option></select></label>
+      <label>기관 유형 <select id="fOrg"><option value="">전체</option></select></label>
+      <label><input type="checkbox" id="fHideNamed" checked> 키자니아 등 실적 기업명 숨기기</label>
+      <button class="btn" id="btnReload">ERP 다시 읽기</button>
+      <label class="btn" style="cursor:pointer">백업 파일 불러오기<input type="file" id="fileBackup" accept=".json" hidden></label>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>날짜</th><th>쓰임</th><th>기관 유형</th><th>지역</th><th>공연 종류</th><th>회차·메모</th><th>문의 경로</th><th>확인 필요</th><th>글</th></tr></thead>
+        <tbody id="showRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 글 재료 만들기 -->
+<section id="material">
+  <div class="grid2">
+    <div class="card">
+      <h2>재료 입력</h2>
+      <p class="help">공연이 없는 글(정보글·상품 소개·소식)은 공연을 고르지 않고 바로 써도 됩니다.</p>
+      <div class="row"><label>고른 공연</label> <span id="mShow" class="small">없음</span> <button class="btn" id="btnClearShow">공연 빼기</button></div>
+      <div class="row">
+        <label>글 종류
+          <select id="mType">
+            <option>공연 후기</option><option>예정 공연 안내</option><option>공연 상품 소개</option><option>행사 담당자용 정보글</option><option>소식·공지</option>
+          </select>
+        </label>
+        <label>게시 예정일 <input type="date" id="mDate"></label>
+      </div>
+      <div class="row">
+        <label>주제(한 줄) <input type="text" id="mTopic" size="40" placeholder="예: 겨울 테마 공연 소개"></label>
+      </div>
+      <div class="row">
+        <label><input type="checkbox" id="mOpenName"> 기관·행사 이름 공개를 허락받았어요</label>
+      </div>
+      <label>대표님 메모 (기억에 남는 장면, 구성, 시간 등. 있는 것만)</label>
+      <textarea id="mMemo" placeholder="예: 버블 터널에서 아이들이 줄을 서서 기다림. 공연 50분."></textarea>
+      <div class="row" style="margin-top:10px">
+        <label>사진 장수 <input type="number" id="mPhotos" min="0" max="10" value="3" style="width:70px"></label>
+        <label>사진 설명 <input type="text" id="mPhotoDesc" size="34" placeholder="예: 무대 전체, 버블 터널, 아이들 뒷모습"></label>
+      </div>
+      <button class="btn main" id="btnMake">재료 만들기</button>
+    </div>
+    <div class="card">
+      <h2>Claude에게 보낼 글 재료</h2>
+      <p class="help">[재료 복사]를 누르고 Claude 대화창에 붙여넣으세요. 연락처·금액·정산 정보는 들어가지 않습니다.</p>
+      <pre class="material" id="mOut">왼쪽에서 재료를 입력하고 [재료 만들기]를 누르세요.</pre>
+      <div class="row">
+        <button class="btn main" id="btnCopyMat" disabled>재료 복사</button>
+        <button class="btn" id="btnSaveMat" disabled>글 관리판에 추가</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 초안 점검 -->
+<section id="check">
+  <div class="grid2">
+    <div class="card">
+      <h2>초안 붙여넣기</h2>
+      <p class="help">Claude가 준 초안 파일 내용을 통째로 붙여넣으세요. 직접 고친 글도 됩니다. 점검 규칙은 check_draft.py와 같습니다.</p>
+      <textarea id="cIn" style="min-height:360px" placeholder="[제목 후보]&#10;...&#10;[본문]&#10;...&#10;[태그]&#10;..."></textarea>
+      <div class="row" style="margin-top:10px"><button class="btn main" id="btnCheck">점검하기</button></div>
+    </div>
+    <div class="card">
+      <h2>점검 결과</h2>
+      <div class="result" id="cOut"><div class="small">아직 점검하지 않았어요.</div></div>
+      <h2 style="margin-top:16px">네이버에 붙여넣기</h2>
+      <p class="help">점검을 통과하면 버튼이 켜집니다. 제목 → 본문 순서로 복사해 글쓰기 화면에 붙여넣고 저장(임시저장)하세요. 태그는 발행할 때 넣으세요.</p>
+      <div class="row">
+        <select id="cTitle" disabled><option>제목 후보</option></select>
+        <button class="btn" id="btnCopyTitle" disabled>제목 복사</button>
+      </div>
+      <div class="row">
+        <button class="btn main" id="btnCopyBody" disabled>본문 복사</button>
+        <button class="btn" id="btnCopyTags" disabled>태그 복사</button>
+      </div>
+      <div id="cConfirm" class="small"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 글 관리판 -->
+<section id="board">
+  <div class="card">
+    <h2>글 관리판</h2>
+    <p class="help">글마다 진행 상태를 바꿔 두세요. 이 기록은 이 PC의 크롬에만 저장되니, 가끔 [관리판 백업]으로 파일을 받아 두세요.</p>
+    <div class="row">
+      <button class="btn" id="btnAddPost">빈 글 추가</button>
+      <button class="btn" id="btnPresetNov">11월 캘린더 불러오기</button>
+      <button class="btn" id="btnExport">관리판 백업</button>
+      <label class="btn" style="cursor:pointer">관리판 복원<input type="file" id="fileBoard" accept=".json" hidden></label>
+      <label>달 <select id="bMonth"><option value="">전체</option></select></label>
+    </div>
+    <div class="stats" id="bStats"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>게시 예정일</th><th>글 종류</th><th>제목·주제</th><th>공연</th><th>상태</th><th>발행일</th><th>글 주소</th><th></th></tr></thead>
+        <tbody id="postRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  'use strict';
+  // ── 저장 규칙 ────────────────────────────────────────────
+  // ERP 기록(itsshow_v23_data)은 getItem으로 읽기만 한다. 쓰기는 이 화면 전용 이름(itsshow_blog_*)에만 한다.
+  const ERP_KEY = 'itsshow_v23_data';
+  const BLOG_KEY = 'itsshow_blog_v1';
+  const readErpRaw = () => { try { return localStorage.getItem(ERP_KEY); } catch (e) { return null; } };
+  const saveBlog = (key, value) => {
+    if (!key.startsWith('itsshow_blog_')) throw new Error('ERP 저장 공간에는 쓰지 않습니다.');
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch (e) { toast('저장하지 못했어요. [관리판 백업]으로 파일을 받아 두세요.'); return false; }
+  };
+  const loadBlog = () => {
+    try { const v = JSON.parse(localStorage.getItem(BLOG_KEY) || '{}'); return { posts: Array.isArray(v.posts) ? v.posts : [] }; }
+    catch (e) { return { posts: [] }; }
+  };
+
+  // ── 브랜드 규칙 (brand-and-rules.md, check_draft.py와 같게) ──
+  const COMPANY_PHONE = '010-2485-8561';
+  const COMPANY_EMAIL = 'itsshow001@naver.com';
+  const ORG_RULES = [
+    ['어린이집', '어린이집'], ['유치원', '유치원'], ['초등학교', '초등학교'], ['중학교', '중학교'], ['고등학교', '고등학교'],
+    ['도서관', '도서관'], ['태권도', '태권도장'], ['주민센터', '주민센터'], ['복지관', '복지관'],
+    ['구청', '지자체'], ['시청', '지자체'], ['군청', '지자체'], ['재단', '지자체·공공기관'], ['공원', '지자체·공공 행사'],
+    ['축제', '축제'], ['교회', '교회'], ['마켓', '마켓·야외 행사'], ['키자니아', '어린이 체험시설'],
+    ['교육지원센터', '공공기관'], ['현대캐피코', '기업 행사'], ['개인', '개인 행사'],
+  ];
+  const AGENCY_LABEL = '기획사 경유'; // 위 단어가 없는 곳은 대부분 기획사를 거친 공연 (대표님 확인 2026-10-24)
+  const NAMED_CLIENTS = ['키자니아', '삼성', '현대캐피코', '현대케피코', 'KB'];
+  const WEEKDAYS = '일월화수목금토';
+
+  const orgType = (client) => {
+    const n = String(client || '').replace(/\s/g, '');
+    for (const [w, label] of ORG_RULES) if (n.includes(w)) return label;
+    return AGENCY_LABEL;
+  };
+  const cleanMemo = (memo) => String(memo || '')
+    .replace(/0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}/g, '')
+    .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '')
+    .replace(/\d[\d,]*\s*(?:만\s?원|천\s?원|원)|₩\s*\d[\d,]*|\d{1,3}(?:,\d{3})+/g, '')
+    .replace(/\s{2,}/g, ' ').replace(/^[\s/,·]+|[\s/,·]+$/g, '');
+  const weekday = (iso) => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? '' : WEEKDAYS[d.getDay()]; };
+  const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+  // ── 화면 공통 ─────────────────────────────────────────────
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let toastTimer = null;
+  const toast = (msg) => { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200); };
+  const copy = async (text, what) => {
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) {
+      const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+    }
+    toast(what + ' 복사했어요. 붙여넣기(Ctrl+V) 하세요.');
+  };
+  const showTab = (name) => {
+    document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
+    document.querySelectorAll('section').forEach((s) => s.classList.toggle('on', s.id === name));
+  };
+  $('tabs').addEventListener('click', (e) => { if (e.target.dataset.tab) showTab(e.target.dataset.tab); });
+
+  // ── 1. 공연 고르기 ────────────────────────────────────────
+  let rawShows = [];   // ERP 원본 (화면 밖으로 내보내지 않음)
+  let shows = [];      // 블로그용으로 정리한 목록
+  let source = '';
+  let blog = loadBlog();
+  let picked = null;
+
+  const usageOf = (status, date, today) => {
+    if (status === '완료') return '후기';
+    if (status === '확정') return date >= today ? '예정 안내' : '후기 후보(완료 확인 필요)';
+    return '';
+  };
+
+  const buildShows = () => {
+    const today = $('today').value || localToday();
+    shows = [];
+    rawShows.forEach((s, i) => {
+      const status = String(s.status || '').trim();
+      const client = String(s.client || '');
+      if (status === '취소') return;
+      if (client.includes('테스트') || client.trim().toLowerCase() === 'test') return;
+      const date = String(s.showDate || '').slice(0, 10);
+      const use = usageOf(status, date, today);
+      if (!use) return;
+      const org = orgType(client);
+      const named = NAMED_CLIENTS.some((n) => client.includes(n));
+      const checks = [];
+      if (org === AGENCY_LABEL) checks.push('실제 행사장 확인');
+      if (named) checks.push('실적 기업명이라 공개 여부 확인');
+      if (use.startsWith('후기 후보')) checks.push('ERP에서 완료로 바꿨는지 확인');
+      shows.push({
+        key: `${s.no ?? 'i' + i}|${date}`, idx: i, date, wd: weekday(date), use, status, org, named,
+        region: String(s.region || '').trim(), theme: String(s.theme || '').trim(),
+        memo: cleanMemo(s.memo), channel: String(s.channel || '').trim(), checks,
+      });
+    });
+    shows.sort((a, b) => b.date.localeCompare(a.date)); // 최근 공연이 위로
+  };
+
+  const fillSelect = (sel, values) => {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">전체</option>' + values.map((v) => `<option>${esc(v)}</option>`).join('');
+    if (values.includes(cur)) sel.value = cur;
+  };
+
+  const renderShows = () => {
+    buildShows();
+    fillSelect($('fMonth'), [...new Set(shows.map((s) => s.date.slice(0, 7)))].sort().reverse());
+    fillSelect($('fOrg'), [...new Set(shows.map((s) => s.org))].sort());
+    const fu = $('fUse').value, fm = $('fMonth').value, fo = $('fOrg').value, hide = $('fHideNamed').checked;
+    const list = shows.filter((s) => (!fu || s.use === fu) && (!fm || s.date.startsWith(fm)) && (!fo || s.org === fo) && !(hide && s.named));
+    const used = new Set(blog.posts.map((p) => p.showKey).filter(Boolean));
+    const cnt = (u) => shows.filter((s) => s.use === u).length;
+    $('stats').innerHTML = source ? `<span>읽은 곳: ${esc(source)}</span><span>후기 ${cnt('후기')}</span><span>예정 안내 ${cnt('예정 안내')}</span><span>확인 필요 ${cnt('후기 후보(완료 확인 필요)')}</span><span>지금 보이는 것 ${list.length}</span>` : '';
+    const cls = (u) => u === '후기' ? 'review' : u === '예정 안내' ? 'plan' : 'check';
+    $('showRows').innerHTML = list.length ? list.map((s) => `
+      <tr class="pick" data-key="${esc(s.key)}">
+        <td>${esc(s.date)} (${esc(s.wd)})</td><td><span class="tag ${cls(s.use)}">${esc(s.use)}</span></td>
+        <td>${esc(s.org)}</td><td>${esc(s.region)}</td><td>${esc(s.theme)}</td><td>${esc(s.memo)}</td>
+        <td>${esc(s.channel)}</td><td class="small">${esc(s.checks.join(' / '))}</td><td>${used.has(s.key) ? '✔' : ''}</td>
+      </tr>`).join('') : `<tr><td colspan="9" class="small">${source ? '조건에 맞는 공연이 없어요.' : 'ERP 기록을 아직 읽지 못했어요. 위의 연결 상태를 확인하세요.'}</td></tr>`;
+  };
+
+  const setConn = (ok, msg) => { const c = $('conn'); c.textContent = msg; c.classList.toggle('bad', !ok); };
+
+  const loadFromErp = () => {
+    const raw = readErpRaw();
+    if (!raw) { rawShows = []; source = ''; setConn(false, 'ERP 기록을 찾지 못했어요 → [백업 파일 불러오기]를 쓰세요'); renderShows(); return; }
+    try {
+      const d = JSON.parse(raw);
+      rawShows = Array.isArray(d.shows) ? d.shows : [];
+      source = '이 PC의 ERP (자동)';
+      setConn(true, `ERP 연결됨 · 공연 ${rawShows.length}건 읽음 (읽기 전용)`);
+    } catch (e) { rawShows = []; source = ''; setConn(false, 'ERP 기록을 읽지 못했어요 → [백업 파일 불러오기]를 쓰세요'); }
+    renderShows();
+  };
+
+  $('fileBackup').addEventListener('change', (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const d = JSON.parse(r.result);
+        if (!Array.isArray(d.shows)) throw new Error();
+        rawShows = d.shows; source = '백업 파일 ' + f.name;
+        setConn(true, `백업 파일에서 공연 ${rawShows.length}건 읽음 (읽기 전용)`);
+        renderShows();
+      } catch (err) { toast('ERP 백업(JSON) 파일이 아닌 것 같아요.'); }
+    };
+    r.readAsText(f, 'utf-8'); e.target.value = '';
+  });
+  ['fUse', 'fMonth', 'fOrg', 'fHideNamed', 'today'].forEach((id) => $(id).addEventListener('change', renderShows));
+  $('btnReload').addEventListener('click', loadFromErp);
+  $('showRows').addEventListener('click', (e) => {
+    const tr = e.target.closest('tr[data-key]'); if (!tr) return;
+    picked = shows.find((s) => s.key === tr.dataset.key) || null;
+    if (!picked) return;
+    $('mType').value = picked.use === '예정 안내' ? '예정 공연 안내' : '공연 후기';
+    $('mOpenName').checked = false;
+    renderPicked(); showTab('material');
+    if (picked.use.startsWith('후기 후보')) toast('ERP에서 아직 확정 상태예요. 실제로 끝난 공연인지 먼저 확인하세요.');
+  });
+
+  // ── 2. 글 재료 만들기 ─────────────────────────────────────
+  let material = '';
+  const renderPicked = () => {
+    $('mShow').textContent = picked ? `${picked.date}(${picked.wd}) ${picked.org} · ${picked.region} · ${picked.theme}` : '없음';
+  };
+  $('btnClearShow').addEventListener('click', () => { picked = null; renderPicked(); });
+
+  $('btnMake').addEventListener('click', () => {
+    const type = $('mType').value, date = $('mDate').value, topic = $('mTopic').value.trim();
+    const memo = $('mMemo').value.trim(), photos = Number($('mPhotos').value) || 0, pdesc = $('mPhotoDesc').value.trim();
+    if ((type === '공연 후기' || type === '예정 공연 안내') && !picked) { toast('후기·예정 안내는 1번 탭에서 공연을 먼저 고르세요.'); return; }
+    if (type === '공연 후기' && picked && picked.use === '예정 안내') { toast('아직 하지 않은 공연이에요. 글 종류를 예정 공연 안내로 바꾸세요.'); return; }
+    if (type === '예정 공연 안내' && picked && picked.use !== '예정 안내') { toast('이미 날짜가 지난 공연이에요. 글 종류를 후기로 바꾸세요.'); return; }
+    const L = ['[이츠쇼 블로그 글 재료]', `글 종류: ${type}`];
+    if (date) L.push(`게시 예정일: ${date} (${weekday(date)})`);
+    if (topic) L.push(`주제: ${topic}`);
+    if (picked) {
+      const raw = rawShows[picked.idx] || {};
+      const openName = $('mOpenName').checked;
+      L.push('', '[ERP 공연 기록]', `공연 날짜: ${picked.date} (${picked.wd})`, `ERP 상태: ${picked.status}`,
+        `기관: ${openName ? String(raw.client || '').trim() + ' (대표님이 이름 공개 허락)' : picked.org + ' (이름 비공개, 익명으로)'}`,
+        `지역: ${picked.region}`, `공연 종류: ${picked.theme}`);
+      if (picked.memo) L.push(`ERP 메모: ${picked.memo}`);
+      const checks = picked.checks.filter((c) => !(openName && c === '실제 행사장 확인'));
+      if (checks.length) L.push(`확인 필요: ${checks.join(' / ')}`);
+    }
+    L.push('', '[대표님 메모]', memo || '(없음. 분위기는 자유롭게, 특정 사건·발언·숫자는 쓰지 말 것)');
+    L.push('', `[사진] ${photos}장${pdesc ? ' · ' + pdesc : ''}`);
+    L.push('', '요청: itsshow-blog-ops 규칙대로 초안을 쓰고 check_draft.py 점검을 통과한 것만 주세요.');
+    material = L.join('\n');
+    $('mOut').textContent = material;
+    $('btnCopyMat').disabled = false; $('btnSaveMat').disabled = false;
+  });
+  $('btnCopyMat').addEventListener('click', () => copy(material, '글 재료를'));
+  $('btnSaveMat').addEventListener('click', () => {
+    blog.posts.push({
+      id: 'P' + Date.now(), date: $('mDate').value, type: $('mType').value,
+      title: $('mTopic').value.trim() || (picked ? `${picked.org} ${picked.theme}` : ''),
+      showKey: picked ? picked.key : '', showLabel: picked ? `${picked.date} ${picked.org} ${picked.theme}` : '',
+      status: '재료 준비', pubDate: '', url: '',
+    });
+    if (saveBlog(BLOG_KEY, blog)) { toast('글 관리판에 추가했어요.'); renderBoard(); renderShows(); }
+  });
+
+  // ── 3. 초안 점검 (check_draft.py와 같은 규칙) ─────────────
+  const HEADER_RE = /^\[(제목 후보|본문|태그|대표님 확인 필요|작성 메모|작성 가정|글 종류|작성일)[^\]]*\]/;
+  const DECOR_RE = /^\s*([=\-*_~])\1{2,}\s*$/;
+  const trimEdges = (lines) => {
+    lines = lines.slice();
+    while (lines.length && (!lines[0].trim() || DECOR_RE.test(lines[0]))) lines.shift();
+    while (lines.length && (!lines[lines.length - 1].trim() || DECOR_RE.test(lines[lines.length - 1]))) lines.pop();
+    return lines;
+  };
+  const splitSections = (text) => {
+    const sections = {}; let current = '';
+    text.split(/\r?\n/).forEach((line) => {
+      const m = line.trim().match(HEADER_RE);
+      if (m) { current = m[1]; sections[current] = sections[current] || []; return; }
+      (sections[current] = sections[current] || []).push(line);
+    });
+    Object.keys(sections).forEach((k) => { sections[k] = trimEdges(sections[k]); });
+    return sections;
+  };
+  const checkDraft = (text) => {
+    const sections = splitSections(text);
+    const results = [];
+    let scanLines, bodyLines;
+    if (!('본문' in sections)) {
+      results.push(['WARN', '[본문] 구간 표시가 없어 글 전체를 검사합니다.']);
+      scanLines = text.split(/\r?\n/); bodyLines = scanLines;
+    } else {
+      scanLines = (sections['제목 후보'] || []).concat(sections['본문']); bodyLines = sections['본문'];
+    }
+    const mdRules = [
+      [/^\s{0,3}#{1,6}\s/, '제목 기호(#)'], [/\*\*|__/, '굵은 글씨 기호(** 또는 __)'], [/^\s*[-*+]\s+\S/, '목록 기호(-, *, +)'],
+      [/^\s*\|.*\|\s*$/, '표 기호(|)'], [/```/, '코드 블록 기호(```)'], [/`/, '백틱(`)'], [/^\s*>\s/, '인용 기호(>)'],
+      [/\[[^\]]+\]\(https?:\/\//, '마크다운 링크'], [/^\s*([=\-*_~])\1{2,}\s*$/, '장식선(=== --- *** 등)'],
+    ];
+    const md = [];
+    scanLines.forEach((line) => { for (const [rx, label] of mdRules) if (rx.test(line)) { md.push(`  · ${label}: ${line.trim().slice(0, 50)}`); break; } });
+    results.push(md.length ? ['FAIL', '붙여넣을 글에 기호가 남아 있습니다:\n' + md.slice(0, 10).join('\n')] : ['OK', '마크다운·장식 기호가 없습니다.']);
+    const bodyText = bodyLines.join('\n'), scanText = scanLines.join('\n');
+    const missing = [['전화', COMPANY_PHONE], ['이메일', COMPANY_EMAIL]].filter(([, v]) => !bodyText.includes(v)).map(([n]) => n);
+    if (missing.length) results.push(['FAIL', '본문에 문의처가 빠졌습니다: ' + missing.join(', ')]);
+    else {
+      const tail = bodyLines.filter((l) => l.trim()).slice(-15).join('\n');
+      results.push(tail.includes(COMPANY_PHONE) || tail.includes(COMPANY_EMAIL) ? ['OK', '문의처(전화·이메일)가 본문 끝쪽에 있습니다.'] : ['WARN', '문의처는 있지만 글의 끝쪽이 아닙니다. 맨 끝으로 옮겨 주세요.']);
+    }
+    const ph = scanText.match(/\[[^\]]*(삽입|입력|넣기|채우|TODO|확인 필요|확인 후|※)[^\]]*\]/g) || [];
+    results.push(ph.length ? ['FAIL', '채우지 않은 자리표시가 있습니다: ' + ph.slice(0, 5).join(', ')] : ['OK', '빈칸 자리표시가 없습니다.']);
+    if (/○○|OOO|XXX|OO어린이집/.test(scanText)) results.push(['WARN', "'○○' 같은 임시 표시가 남아 있습니다."]);
+    const phones = [...new Set(scanText.match(/0\d{1,2}-\d{3,4}-\d{4}/g) || [])].filter((p) => p !== COMPANY_PHONE).sort();
+    results.push(phones.length ? ['FAIL', '이츠쇼가 아닌 전화번호가 있습니다(고객 연락처일 수 있음): ' + phones.join(', ')] : ['OK', '다른 전화번호가 없습니다.']);
+    const money = scanText.match(/\d[\d,]*\s*(?:만\s?원|원)/g) || [];
+    if (money.length) results.push(['WARN', '금액처럼 보이는 표현이 있습니다: ' + money.slice(0, 5).join(', ') + ' (공연 금액이면 삭제)']);
+    if (scanText.includes('단독 공연')) results.push(['FAIL', "'단독 공연'은 쓰지 않습니다. '콜라보 공연'으로 바꿔 주세요."]);
+    return { results, failed: results.some(([lv]) => lv === 'FAIL'), sections };
+  };
+
+  let checked = null;
+  const setPasteButtons = (on) => ['cTitle', 'btnCopyTitle', 'btnCopyBody', 'btnCopyTags'].forEach((id) => { $(id).disabled = !on; });
+  $('cIn').addEventListener('input', () => { checked = null; setPasteButtons(false); $('cConfirm').textContent = '글이 바뀌었어요. 다시 점검하세요.'; });
+  $('btnCheck').addEventListener('click', () => {
+    const text = $('cIn').value;
+    if (!text.trim()) { toast('초안을 먼저 붙여넣으세요.'); return; }
+    const r = checkDraft(text);
+    $('cOut').innerHTML = r.results.map(([lv, msg]) => `<div class="${lv}">${lv === 'OK' ? '통과' : lv === 'WARN' ? '주의' : '수정 필요'} · ${esc(msg)}</div>`).join('')
+      + `<div class="final">${r.failed ? '결과: 수정이 필요합니다. Claude에게 고쳐 달라고 하세요.' : '결과: 통과'}</div>`;
+    checked = r.failed ? null : r;
+    const titles = (r.sections['제목 후보'] || []).filter((l) => l.trim());
+    $('cTitle').innerHTML = titles.length ? titles.map((t) => `<option>${esc(t.trim())}</option>`).join('') : '<option value="">제목 후보 없음</option>';
+    setPasteButtons(!r.failed && '본문' in r.sections);
+    $('cConfirm').textContent = r.failed ? '' : (r.results.some(([lv]) => lv === 'WARN') ? '주의 항목을 한 번 읽어 보고 붙여넣으세요.' : '');
+  });
+  $('btnCopyTitle').addEventListener('click', () => { if (checked && $('cTitle').value) copy($('cTitle').value, '제목을'); });
+  $('btnCopyBody').addEventListener('click', () => { if (checked) copy(checked.sections['본문'].join('\n'), '본문을'); });
+  $('btnCopyTags').addEventListener('click', () => {
+    if (!checked) return;
+    const tags = (checked.sections['태그'] || []).join(' ').trim();
+    tags ? copy(tags, '태그를') : toast('[태그] 구간이 없어요.');
+  });
+
+  // ── 4. 글 관리판 ──────────────────────────────────────────
+  const STATUSES = ['기획', '재료 준비', '초안 받음', '임시저장', '발행'];
+  const NOV_PRESET = [
+    ['2026-11-03', '행사 담당자용 정보글', '어린이집 재롱잔치 공연 섭외, 원장님이 미리 챙기면 좋은 7가지'],
+    ['2026-11-06', '공연 후기', '천안 가을 축제 키즈니버스 더클래식 공연 후기'],
+    ['2026-11-10', '공연 상품 소개', '크리스마스 어린이 공연, 키즈니버스 더윈터'],
+    ['2026-11-13', '공연 후기', '서울숲 야외 행사 버블쇼 후기'],
+    ['2026-11-17', '행사 담당자용 정보글', '크리스마스 송년 행사 어린이 공연 고르는 법'],
+    ['2026-11-20', '예정 공연 안내', '12월 경기 어린이집 크리스마스 공연, 이렇게 준비하고 있어요'],
+    ['2026-11-24', '공연 후기', '아파트 야외 행사 벌룬쇼 후기'],
+    ['2026-11-27', '소식·공지', '12월 크리스마스 공연 일정 문의 안내'],
+  ];
+  const TYPES = ['공연 후기', '예정 공연 안내', '공연 상품 소개', '행사 담당자용 정보글', '소식·공지'];
+  const opt = (list, cur) => list.map((v) => `<option${v === cur ? ' selected' : ''}>${esc(v)}</option>`).join('');
+
+  const renderBoard = () => {
+    fillSelect($('bMonth'), [...new Set(blog.posts.map((p) => (p.date || '').slice(0, 7)).filter(Boolean))].sort().reverse());
+    const fm = $('bMonth').value;
+    const list = blog.posts.filter((p) => !fm || (p.date || '').startsWith(fm)).sort((a, b) => (a.date || '9').localeCompare(b.date || '9'));
+    $('bStats').innerHTML = STATUSES.map((s) => `<span>${s} ${list.filter((p) => p.status === s).length}</span>`).join('');
+    $('postRows').innerHTML = list.length ? list.map((p) => `
+      <tr data-id="${esc(p.id)}">
+        <td><input type="date" data-f="date" value="${esc(p.date)}"></td>
+        <td><select data-f="type">${opt(TYPES, p.type)}</select></td>
+        <td><input type="text" data-f="title" value="${esc(p.title)}" size="34"></td>
+        <td class="small">${esc(p.showLabel || '')}</td>
+        <td><select data-f="status">${opt(STATUSES, p.status)}</select></td>
+        <td><input type="date" data-f="pubDate" value="${esc(p.pubDate)}"></td>
+        <td><input type="text" data-f="url" value="${esc(p.url)}" placeholder="발행 후 글 주소" size="22"></td>
+        <td><button class="btn" data-del="1">지우기</button></td>
+      </tr>`).join('') : '<tr><td colspan="8" class="small">아직 글이 없어요. [11월 캘린더 불러오기]나 [빈 글 추가]를 눌러 보세요.</td></tr>';
+  };
+  $('postRows').addEventListener('change', (e) => {
+    const tr = e.target.closest('tr[data-id]'); const f = e.target.dataset.f; if (!tr || !f) return;
+    const p = blog.posts.find((x) => x.id === tr.dataset.id); if (!p) return;
+    p[f] = e.target.value;
+    if (f === 'status' && p.status === '발행' && !p.pubDate) p.pubDate = localToday();
+    saveBlog(BLOG_KEY, blog); renderBoard();
+  });
+  $('postRows').addEventListener('click', (e) => {
+    if (!e.target.dataset.del) return;
+    const tr = e.target.closest('tr[data-id]');
+    if (!confirm('이 글 기록을 관리판에서 지울까요? (블로그 글이나 ERP는 그대로예요)')) return;
+    blog.posts = blog.posts.filter((x) => x.id !== tr.dataset.id); saveBlog(BLOG_KEY, blog); renderBoard(); renderShows();
+  });
+  $('btnAddPost').addEventListener('click', () => {
+    blog.posts.push({ id: 'P' + Date.now(), date: '', type: '공연 후기', title: '', showKey: '', showLabel: '', status: '기획', pubDate: '', url: '' });
+    saveBlog(BLOG_KEY, blog); renderBoard();
+  });
+  $('btnPresetNov').addEventListener('click', () => {
+    const have = new Set(blog.posts.map((p) => p.date + '|' + p.title));
+    let n = 0;
+    NOV_PRESET.forEach(([date, type, title], i) => {
+      if (have.has(date + '|' + title)) return;
+      blog.posts.push({ id: 'P' + Date.now() + '_' + i, date, type, title, showKey: '', showLabel: '', status: date === '2026-11-10' ? '초안 받음' : '기획', pubDate: '', url: '' });
+      n++;
+    });
+    saveBlog(BLOG_KEY, blog); renderBoard(); toast(n ? `11월 글 ${n}편을 추가했어요.` : '이미 다 들어 있어요.');
+  });
+  $('bMonth').addEventListener('change', renderBoard);
+  $('btnExport').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(blog, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `이츠쇼_블로그관리판_${localToday()}.json`; a.click(); URL.revokeObjectURL(a.href);
+  });
+  $('fileBoard').addEventListener('change', (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const d = JSON.parse(r.result); if (!Array.isArray(d.posts)) throw new Error();
+        if (!confirm(`관리판을 이 파일(글 ${d.posts.length}편)로 바꿀까요? 지금 관리판 내용은 사라져요.`)) return;
+        blog = { posts: d.posts }; saveBlog(BLOG_KEY, blog); renderBoard(); renderShows(); toast('관리판을 복원했어요.');
+      } catch (err) { toast('관리판 백업 파일이 아닌 것 같아요.'); }
+    };
+    r.readAsText(f, 'utf-8'); e.target.value = '';
+  });
+
+  // ── 시작 ─────────────────────────────────────────────────
+  $('today').value = localToday();
+  loadFromErp();
+  renderBoard();
+})();
+</script>
+</body>
+</html>
