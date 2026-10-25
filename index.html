@@ -2160,7 +2160,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         </div>
 
         <!-- Common Show Details Form -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+        <!-- ★ v2.9: 통화 순서대로 묶음. ① 첫 통화에서 묻는 것 → ② 추가 통화·협의 → ③ 공연자·정산 → ④ 공연 직후 · 계산서 정보 -->
+        <div class="space-y-3 text-xs">
+        <div class="p-3 rounded-2xl bg-indigo-950/30 border border-indigo-500/40 space-y-2">
+          <div class="font-bold text-indigo-200">① 첫 통화 <span class="font-normal text-[10px] text-slate-400">(문의 받으면 여기부터 적어요)</span></div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div v-if="isEditingShow || showModalMode === 'single'">
             <label class="text-slate-400 block mb-1">공연일자 *</label>
             <input type="date" v-model="editingShowForm.showDate" class="w-full px-3 py-2 rounded-xl border font-mono" />
@@ -2176,15 +2180,6 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <option value="확정">🟢 확정 (예정)</option>
               <option value="완료">✅ 완료</option>
               <option value="취소">🚫 취소 (삭제안함·기록보존)</option>
-            </select>
-          </div>
-          <!-- ★ v2.9: 일 종류 (공연 / 강연 / 서브) -->
-          <div>
-            <label class="text-slate-400 block mb-1">일 종류 <span class="text-[10px] text-slate-500">(서브 = 다른 공연자의 공연을 도와주는 일)</span></label>
-            <select v-model="editingShowForm.workType" class="w-full px-3 py-2 rounded-xl border font-bold">
-              <option value="공연">🎪 공연</option>
-              <option value="강연">🎤 강연</option>
-              <option value="서브">🤝 서브 (내가 돕는 일 · 받는 돈을 금액에)</option>
             </select>
           </div>
           <div v-if="editingShowForm.status === '문의'" class="sm:col-span-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-[11px] text-amber-200">
@@ -2208,15 +2203,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <input type="text" v-model="editingShowForm.cancelReason" placeholder="예: 원 사정으로 취소 요청" class="w-full px-3 py-2 rounded-xl border" />
             </div>
           </div>
-
-          <div>
-            <label class="text-slate-400 block mb-1">발행 사업자 구분</label>
-            <select v-model="editingShowForm.issuer" class="w-full px-3 py-2 rounded-xl border">
-              <option value="이츠쇼컴퍼니">이츠쇼컴퍼니 (서울)</option>
-              <option value="키즈니버스랩">키즈니버스랩 (천안 면세)</option>
-            </select>
-          </div>
-          <div>
+          <div class="sm:col-span-2">
             <label class="text-slate-400 block mb-1 flex items-center justify-between">
               <span>업체·기관명 *</span>
               <span v-if="editingShowForm.custId" class="text-[10px] font-mono text-indigo-300 font-bold">
@@ -2240,14 +2227,6 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
           <div>
-            <label class="text-slate-400 block mb-1">실제 행사처 <span class="text-[10px] text-slate-500">(기획사·협업업체를 거친 공연일 때, 현장에서 알게 되면 적기)</span></label>
-            <input type="text" v-model="editingShowForm.venueName" placeholder="예: 햇살어린이집 · 롯데월드몰" class="w-full px-3 py-2 rounded-xl border" />
-          </div>
-          <div>
-            <label class="text-slate-400 block mb-1">행사 이름</label>
-            <input type="text" v-model="editingShowForm.eventName" placeholder="예: 가을 운동회 · 크리스마스 파티" class="w-full px-3 py-2 rounded-xl border" />
-          </div>
-          <div>
             <label class="text-indigo-300 block mb-1 font-bold">🤝 단골고객(고객번호) 불러오기</label>
             <select v-model="editingShowForm.custId" @change="onSelectCustomerInShowModal" class="w-full px-2.5 py-2 rounded-xl border text-xs cursor-pointer font-mono">
               <option value="">-- 신규 또는 기관명 자동매칭 --</option>
@@ -2256,20 +2235,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </option>
             </select>
           </div>
-
           <div>
-            <label class="text-slate-400 block mb-1">지역</label>
-            <input type="text" v-model="editingShowForm.region" placeholder="서울, 경기, 충남..." class="w-full px-3 py-2 rounded-xl border" />
+            <label class="text-slate-400 block mb-1">연락처</label>
+            <input type="text" v-model="editingShowForm.phone" placeholder="010-0000-0000" class="w-full px-3 py-2 rounded-xl border font-mono" />
           </div>
           <div>
             <label class="text-slate-400 block mb-1">담당자명</label>
             <input type="text" v-model="editingShowForm.manager" placeholder="원장님, 주임님..." class="w-full px-3 py-2 rounded-xl border" />
           </div>
           <div>
-            <label class="text-slate-400 block mb-1">연락처</label>
-            <input type="text" v-model="editingShowForm.phone" placeholder="010-0000-0000" class="w-full px-3 py-2 rounded-xl border font-mono" />
+            <label class="text-slate-400 block mb-1">지역</label>
+            <input type="text" v-model="editingShowForm.region" placeholder="서울, 경기, 충남..." class="w-full px-3 py-2 rounded-xl border" />
           </div>
-
           <div>
             <label class="text-slate-400 block mb-1">공연 테마</label>
             <select v-model="editingShowForm.theme" class="w-full px-3 py-2 rounded-xl border">
@@ -2287,8 +2264,47 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </select>
           </div>
           <div>
-            <label class="text-slate-400 block mb-1">견적/공연 금액 (원)</label>
+            <label class="text-slate-400 block mb-1">견적 금액 (원)</label>
             <input type="number" v-model.number="editingShowForm.amount" step="50000" class="w-full px-3 py-2 rounded-xl border font-mono font-bold text-white" />
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">문의 경로 * <span class="text-[10px] text-slate-500">(어디서 연락이 왔나요?)</span></label>
+            <select v-model="editingShowForm.channel" class="w-full px-3 py-2 rounded-xl border" :class="!isEditingShow && !editingShowForm.channel ? 'border-amber-500/60' : ''">
+              <option value="">-- 선택해 주세요 --</option>
+              <optgroup label="세부 경로 (앞으로 권장)">
+                <option value="네이버 블로그">네이버 블로그</option>
+                <option value="네이버 검색">네이버 검색(홈페이지·광고 등)</option>
+                <option value="네이버 지도·플레이스">네이버 지도·플레이스</option>
+                <option value="인스타그램">인스타그램</option>
+                <option value="유튜브">유튜브</option>
+                <option value="홈페이지">홈페이지 직접 문의</option>
+                <option value="지인소개">지인소개</option>
+                <option value="재계약">재계약</option>
+                <option value="기타">기타</option>
+              </optgroup>
+              <optgroup label="기존 분류 (예전 기록용)">
+                <option value="네이버">네이버 (세부 구분 전)</option>
+                <option value="SNS">SNS (세부 구분 전)</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+        </div>
+        <button type="button" @click="showFormOpen.talk = !showFormOpen.talk" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left cursor-pointer">
+          <span class="min-w-0 font-bold text-slate-200">② 추가 통화 · 협의 <span class="font-normal text-[10px] text-slate-400">(상세 주소 · 협의 메모 · 결제 · 서류)</span>
+            <span v-if="!showFormOpen.talk" class="block font-normal text-[10px] text-slate-400 truncate">{{ [editingShowForm.address ? '주소 적음' : '주소 없음', editingShowForm.memo ? '메모 있음' : '메모 없음', editingShowForm.payStatus, editingShowForm.issuer].join(' · ') }}</span>
+          </span>
+          <span class="shrink-0 text-[11px] text-slate-400">{{ showFormOpen.talk ? '접기 ▲' : '펼치기 ▼' }}</span>
+        </button>
+        <div v-show="showFormOpen.talk" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-3">
+            <label class="text-slate-400 block mb-1">상세 주소 (공연 장소)</label>
+            <input type="text" v-model="editingShowForm.address" placeholder="상세 공연 장소 (길찾기에 쓰여요)" class="w-full px-3 py-2 rounded-xl border" />
+          </div>
+          <!-- ★ v2.9: 협의 메모 칸 (대시보드 '협의 메모 없음' 알림이 보는 칸. v2.8에는 입력하는 곳이 없었음) -->
+          <div class="sm:col-span-3">
+            <label class="text-slate-400 block mb-1">📝 협의 메모 <span class="text-[10px] text-slate-500">(시간·회차·준비물·주차 등 고객과 정한 것. 적으면 '협의 메모 없음' 알림이 사라져요)</span></label>
+            <textarea v-model="editingShowForm.memo" rows="2" placeholder="예: 2회 공연(10:30, 11:30) · 강당 사용 · 주차 가능 · 마이크 기관 준비" class="w-full px-3 py-2 rounded-xl border"></textarea>
           </div>
           <div>
             <label class="text-slate-400 block mb-1">입금 상태</label>
@@ -2297,7 +2313,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <option value="완납">✅ 완납</option>
             </select>
           </div>
-
+          <div>
+            <label class="text-slate-400 block mb-1">발행 사업자 구분</label>
+            <select v-model="editingShowForm.issuer" class="w-full px-3 py-2 rounded-xl border">
+              <option value="이츠쇼컴퍼니">이츠쇼컴퍼니 (서울)</option>
+              <option value="키즈니버스랩">키즈니버스랩 (천안 면세)</option>
+            </select>
+          </div>
           <div>
             <label class="text-slate-400 block mb-1">행정 서류 종류 & 발행 상태</label>
             <div class="grid grid-cols-2 gap-1.5">
@@ -2314,6 +2336,31 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </select>
             </div>
           </div>
+          <!-- ★ v2.9: 일 종류 (공연 / 강연 / 서브) -->
+          <div>
+            <label class="text-slate-400 block mb-1">일 종류 <span class="text-[10px] text-slate-500">(서브 = 다른 공연자의 공연을 도와주는 일)</span></label>
+            <select v-model="editingShowForm.workType" class="w-full px-3 py-2 rounded-xl border font-bold">
+              <option value="공연">🎪 공연</option>
+              <option value="강연">🎤 강연</option>
+              <option value="서브">🤝 서브 (내가 돕는 일 · 받는 돈을 금액에)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">실제 행사처 <span class="text-[10px] text-slate-500">(기획사·협업업체를 거친 공연일 때, 현장에서 알게 되면 적기)</span></label>
+            <input type="text" v-model="editingShowForm.venueName" placeholder="예: 햇살어린이집 · 롯데월드몰" class="w-full px-3 py-2 rounded-xl border" />
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">행사 이름</label>
+            <input type="text" v-model="editingShowForm.eventName" placeholder="예: 가을 운동회 · 크리스마스 파티" class="w-full px-3 py-2 rounded-xl border" />
+          </div>
+        </div>
+        <button type="button" @click="showFormOpen.perf = !showFormOpen.perf" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left cursor-pointer">
+          <span class="min-w-0 font-bold text-slate-200">③ 공연자 · 정산 <span class="font-normal text-[10px] text-slate-400">(누가 나가는지 · 공연자 지급 · 정산 방식)</span>
+            <span v-if="!showFormOpen.perf" class="block font-normal text-[10px] text-slate-400 truncate">{{ (editingShowForm.performer || '공연자 미정') + ' · ' + (editingShowForm.settleMode || '회사 정산') }}</span>
+          </span>
+          <span class="shrink-0 text-[11px] text-slate-400">{{ showFormOpen.perf ? '접기 ▲' : '펼치기 ▼' }}</span>
+        </button>
+        <div v-show="showFormOpen.perf" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="text-slate-400 block mb-1">공연자 <span class="text-[10px] text-slate-500">(🎭 명부에서 고르면 정산 칸이 채워져요)</span></label>
             <select v-model="editingShowForm.performerId" @change="onSelectPerformerInShowModal" class="w-full px-3 py-2 rounded-xl border">
@@ -2326,7 +2373,6 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <label class="text-slate-400 block mb-1">외부 정산대상 (섭외시)</label>
             <input type="text" v-model="editingShowForm.settleTarget" placeholder="없으면 비워둠" class="w-full px-3 py-2 rounded-xl border" />
           </div>
-
           <div>
             <label class="text-slate-400 block mb-1">외부 정산금액 (원)</label>
             <input type="number" v-model.number="editingShowForm.settleAmt" step="10000" class="w-full px-3 py-2 rounded-xl border font-mono" />
@@ -2356,27 +2402,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </template>
             </div>
           </div>
-          <div>
-            <label class="text-slate-400 block mb-1">문의 경로 * <span class="text-[10px] text-slate-500">(어디서 연락이 왔나요?)</span></label>
-            <select v-model="editingShowForm.channel" class="w-full px-3 py-2 rounded-xl border" :class="!isEditingShow && !editingShowForm.channel ? 'border-amber-500/60' : ''">
-              <option value="">-- 선택해 주세요 --</option>
-              <optgroup label="세부 경로 (앞으로 권장)">
-                <option value="네이버 블로그">네이버 블로그</option>
-                <option value="네이버 검색">네이버 검색(홈페이지·광고 등)</option>
-                <option value="네이버 지도·플레이스">네이버 지도·플레이스</option>
-                <option value="인스타그램">인스타그램</option>
-                <option value="유튜브">유튜브</option>
-                <option value="홈페이지">홈페이지 직접 문의</option>
-                <option value="지인소개">지인소개</option>
-                <option value="재계약">재계약</option>
-                <option value="기타">기타</option>
-              </optgroup>
-              <optgroup label="기존 분류 (예전 기록용)">
-                <option value="네이버">네이버 (세부 구분 전)</option>
-                <option value="SNS">SNS (세부 구분 전)</option>
-              </optgroup>
-            </select>
-          </div>
+        </div>
+        <button type="button" @click="showFormOpen.after = !showFormOpen.after" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left cursor-pointer">
+          <span class="min-w-0 font-bold text-slate-200">④ 공연 직후 기록 <span class="font-normal text-[10px] text-slate-400">(완료 후 현장 메모 · 피드백 · 사진)</span>
+          </span>
+          <span class="shrink-0 text-[11px] text-slate-400">{{ showFormOpen.after ? '접기 ▲' : '펼치기 ▼' }}</span>
+        </button>
+        <div v-show="showFormOpen.after" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <!-- ★ v2.9: 공연 직후 기록 (완료로 바꿀 때 채우기) -->
           <div class="sm:col-span-3 p-3 rounded-2xl border space-y-2" :class="editingShowForm.status === '완료' ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-slate-950/60 border-slate-700'">
             <div class="text-xs font-bold" :class="editingShowForm.status === '완료' ? 'text-emerald-300' : 'text-slate-400'">🎤 공연 직후 기록 <span class="font-normal text-[10px]">(블로그 후기 재료와 다음 섭외 참고가 돼요)</span></div>
@@ -2408,15 +2440,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </div>
             </div>
           </div>
-          <div class="sm:col-span-3">
-            <label class="text-slate-400 block mb-1">상세 주소 (공연 장소)</label>
-            <input type="text" v-model="editingShowForm.address" placeholder="상세 공연 장소 (길찾기에 쓰여요)" class="w-full px-3 py-2 rounded-xl border" />
-          </div>
-          <!-- ★ v2.9: 협의 메모 칸 (대시보드 '협의 메모 없음' 알림이 보는 칸. v2.8에는 입력하는 곳이 없었음) -->
-          <div class="sm:col-span-3">
-            <label class="text-slate-400 block mb-1">📝 협의 메모 <span class="text-[10px] text-slate-500">(시간·회차·준비물·주차 등 고객과 정한 것. 적으면 '협의 메모 없음' 알림이 사라져요)</span></label>
-            <textarea v-model="editingShowForm.memo" rows="2" placeholder="예: 2회 공연(10:30, 11:30) · 강당 사용 · 주차 가능 · 마이크 기관 준비" class="w-full px-3 py-2 rounded-xl border"></textarea>
-          </div>
+        </div>
+        <button type="button" @click="showFormOpen.biz = !showFormOpen.biz" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left cursor-pointer">
+          <span class="min-w-0 font-bold text-slate-200">⑤ 계산서 정보 <span class="font-normal text-[10px] text-slate-400">(이메일 · 사업자 상호 · 등록번호)</span>
+          </span>
+          <span class="shrink-0 text-[11px] text-slate-400">{{ showFormOpen.biz ? '접기 ▲' : '펼치기 ▼' }}</span>
+        </button>
+        <div v-show="showFormOpen.biz" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <!-- ★ 고객번호(custId) 기반 단골고객 사업자·이메일 양방향 동기화 영역 ★ -->
           <div class="sm:col-span-3 p-3.5 rounded-2xl bg-slate-950/90 border border-emerald-500/40 space-y-2.5">
             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -2442,6 +2472,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </div>
             </div>
           </div>
+        </div>
         </div>
 
         <div v-if="isEditingShow && Array.isArray(editingShowForm.cancelLog) && editingShowForm.cancelLog.length" class="text-[11px] text-slate-400 space-y-0.5 break-words">
@@ -3369,6 +3400,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const cashAccounts = ref([]);
         const todoItems = ref([]);
         const performers = ref([]); // ★ v2.6: 공연자 명부
+        const showFormOpen = ref({ talk: true, perf: true, after: true, biz: true }); // ★ v2.9: 공연 입력창 묶음 펼침 상태
 
         // ★ v2.9: 상태·정산 방식에 따라 돈 계산을 나눕니다.
         //   문의(미정)는 일정에는 보이지만 매출·미수금·정산에서는 뺍니다.
@@ -4810,6 +4842,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
         const openNewShowModal = (mode = 'single') => {
           isEditingShow.value = false;
+          // ★ v2.9: 새 등록은 ① 첫 통화 칸만 펼쳐 두고 나머지는 접어 둡니다
+          showFormOpen.value = { talk: false, perf: false, after: false, biz: false };
           showModalMode.value = mode;
           const nextNo = shows.value.length > 0 ? Math.max(...shows.value.map(s => Number(s.no) || 0)) + 1 : 1;
           editingShowForm.value = {
@@ -4827,7 +4861,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             address: '',
             theme: '더클래식',
             performer: '버블케이',
-            status: '확정',
+            status: mode === 'bulk' ? '확정' : '문의',
             amount: 500000,
             payMethod: '계좌이체',
             payStatus: '미입금',
@@ -4865,6 +4899,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
         const openEditShowModal = (showItem) => {
           isEditingShow.value = true;
+          showFormOpen.value = { talk: true, perf: true, after: true, biz: true };
           showModalMode.value = 'single';
           const copy = JSON.parse(JSON.stringify(showItem));
           // Pull latest customer biz info if linked by custId
@@ -6850,7 +6885,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           mobileFilterOpen, calendarYear, calendarMonth, selectedCalendarDate, selectCalendarDate, selectedDateShows, openNewShowOnSelectedDate, getDayOfWeekKorean, calendarCells, calendarMonthShowsCount, changeCalendarMonth,
           navItems, availableYearMonths, uniqueThemes,
           periodShows, periodTotalRevenue, periodItsshowRevenue, periodKidsniverseRevenue, overallTotalRevenue,
-          periodPayout, periodNet, navSheet, navRemember, navLastApp, launchNav, resetNavApp, backupAgeDays, lastBackupAt, shareBackup, restoreFileInput, pickRestoreFile, restoreFromBackupFile, canAutoFolder, autoFolderName, autoFolderNeedsClick, chooseAutoFolder, runAutoBackup, openPerformerHistoryId, togglePerformerHistory, performerHistory, isInquiry, isDirectSettle, isMoneyShow, revenueOf, payoutOf, netOf, workTypeOf,
+          periodPayout, periodNet, showFormOpen, navSheet, navRemember, navLastApp, launchNav, resetNavApp, backupAgeDays, lastBackupAt, shareBackup, restoreFileInput, pickRestoreFile, restoreFromBackupFile, canAutoFolder, autoFolderName, autoFolderNeedsClick, chooseAutoFolder, runAutoBackup, openPerformerHistoryId, togglePerformerHistory, performerHistory, isInquiry, isDirectSettle, isMoneyShow, revenueOf, payoutOf, netOf, workTypeOf,
           unpaidShows, totalUnpaidAmount, pendingPayables, totalPendingPayables, totalCashBalance, projectedNetCash,
           upcomingShows, filteredShows, themeStats,
           newTaxForm, calcNatTax, calcLocTax, calcTaxTotal, calcNetPay, addTaxRecord,
