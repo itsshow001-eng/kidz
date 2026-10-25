@@ -1120,7 +1120,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                       <div v-if="s.settleTarget" class="text-[10px] leading-tight truncate" :title="s.settleTarget + ' (₩' + (s.settleAmt || 0).toLocaleString() + ')'">
                         <span class="font-bold text-amber-300">{{ s.settleTarget }}</span>
                         <span v-if="s.settleAmt > 0" class="font-mono text-[9px] text-slate-400 block">{{ Math.round(s.settleAmt / 10000) }}만</span>
+                        <span v-if="crewOf(s).length" class="font-mono text-[9px] text-amber-200 block">+{{ crewOf(s).length }}명 {{ Math.round(crewFeeOf(s) / 10000) }}만</span>
                       </div>
+                      <div v-else-if="crewOf(s).length" class="text-[10px] leading-tight truncate"><span class="font-bold text-amber-300">{{ crewOf(s)[0].name }}<template v-if="crewOf(s).length > 1"> 외 {{ crewOf(s).length - 1 }}명</template></span></div>
                       <span v-else class="text-slate-500 text-[10px]">{{ s.performer === '버블케이' ? '버블케이' : s.performer }}</span>
                     </td>
                     <!-- 관리 버튼 (문자 / 견적 / 글 / 복사 / 수정 / 취소) -->
@@ -1328,7 +1330,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
 
             <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 overflow-hidden">
-              <div v-if="settlementRows.length === 0" class="p-4 text-center text-xs text-slate-400">정산할 공연이 없어요. 공연 등록 창에서 '외부 정산대상'과 '외부 정산금액'을 넣으면 여기에 나타나요.</div>
+              <div v-if="settlementRows.length === 0" class="p-4 text-center text-xs text-slate-400">정산할 공연이 없어요. 공연 등록 창 ③에서 '외부 정산대상'·'외부 정산금액'이나 '함께한 사람'을 넣으면 여기에 나타나요.</div>
               <div class="divide-y divide-slate-800 max-h-[640px] overflow-y-auto">
                 <div v-for="row in settlementRows" :key="row.key" class="p-3.5 space-y-2" :class="row.paid ? 'opacity-50' : ''">
                   <div class="flex items-center justify-between gap-2">
@@ -1341,7 +1343,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                   </div>
                   <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div class="min-w-0 truncate text-slate-300">
-                      <span class="font-bold text-amber-300">{{ row.s.settleTarget }}</span>
+                      <span class="font-bold text-amber-300">{{ row.name }}</span>
+                      <span v-if="row.role" class="ml-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-200 text-[10px] font-bold">{{ row.role }}</span>
                       <a v-if="row.p && row.p.phone" :href="'tel:' + row.p.phone" class="font-mono text-emerald-300 underline ml-1">📞{{ row.p.phone }}</a>
                       <span v-if="row.p && row.p.bank" class="text-slate-400 ml-1">· 🏦 {{ row.p.bank }}</span>
                     </div>
@@ -1357,15 +1360,15 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                   <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
                     <div class="text-[11px]">
                       <button v-if="row.kind === '사업자'" @click="toggleInvoiceRecv(row)" class="px-2 py-0.5 rounded font-bold cursor-pointer"
-                        :class="row.s.invoiceRecv === '수취완료' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'">
-                        {{ row.s.invoiceRecv === '수취완료' ? '🧾 계산서 받음' : '🧾 계산서 아직 안 받음 (누르면 받음으로)' }}
+                        :class="row.t.invoiceRecv === '수취완료' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'">
+                        {{ row.t.invoiceRecv === '수취완료' ? '🧾 계산서 받음' : '🧾 계산서 아직 안 받음 (누르면 받음으로)' }}
                       </button>
                       <span v-else-if="row.kind === '개인'" class="text-indigo-300">지급완료를 누르면 3.3% 원천징수 장부에 자동 기록돼요</span>
                       <button v-else @click="openPerformerForRow(row)" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold cursor-pointer">❓ 개인/사업자 정하러 가기 ➔</button>
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
                       <template v-if="row.paid">
-                        <span class="text-[11px] font-bold text-emerald-300">✅ {{ row.s.settlePaidDate ? row.s.settlePaidDate + ' 지급완료' : '지급완료' }}</span>
+                        <span class="text-[11px] font-bold text-emerald-300">✅ {{ row.t.settlePaidDate ? row.t.settlePaidDate + ' 지급완료' : '지급완료' }}</span>
                         <button @click="undoSettlementPaid(row)" class="px-2.5 py-1 rounded-lg bg-slate-700 text-white text-xs font-bold cursor-pointer">되돌리기</button>
                       </template>
                       <template v-else>
@@ -2294,7 +2297,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         </div>
         </div>
         <button type="button" @click="showFormOpen.talk = !showFormOpen.talk" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left cursor-pointer">
-          <span class="min-w-0 font-bold text-slate-200">② 추가 통화 · 협의 <span class="font-normal text-[10px] text-slate-400">(상세 주소 · 협의 메모 · 결제 · 서류)</span>
+          <span class="flex-1 min-w-0 break-words font-bold text-slate-200">② 추가 통화 · 협의 <span class="font-normal text-[10px] text-slate-400">(상세 주소 · 협의 메모 · 결제 · 서류)</span>
             <span v-if="!showFormOpen.talk" class="block font-normal text-[10px] text-slate-400 truncate">{{ [editingShowForm.address ? '주소 적음' : '주소 없음', editingShowForm.memo ? '메모 있음' : '메모 없음', editingShowForm.payStatus, editingShowForm.issuer].join(' · ') }}</span>
           </span>
           <span class="shrink-0 text-[11px] text-slate-400">{{ showFormOpen.talk ? '접기 ▲' : '펼치기 ▼' }}</span>
@@ -2358,8 +2361,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
         </div>
         <button type="button" @click="showFormOpen.perf = !showFormOpen.perf" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left cursor-pointer">
-          <span class="min-w-0 font-bold text-slate-200">③ 공연자 · 정산 <span class="font-normal text-[10px] text-slate-400">(누가 나가는지 · 공연자 지급 · 정산 방식)</span>
-            <span v-if="!showFormOpen.perf" class="block font-normal text-[10px] text-slate-400 truncate">{{ (editingShowForm.performer || '공연자 미정') + ' · ' + (editingShowForm.settleMode || '회사 정산') }}</span>
+          <span class="flex-1 min-w-0 break-words font-bold text-slate-200">③ 공연자 · 정산 <span class="font-normal text-[10px] text-slate-400">(누가 나가는지 · 공연자 지급 · 정산 방식)</span>
+            <span v-if="!showFormOpen.perf" class="block font-normal text-[10px] text-slate-400 truncate">{{ (editingShowForm.performer || '공연자 미정') + (crewOf(editingShowForm).length ? ' 외 ' + crewOf(editingShowForm).length + '명' : '') + ' · ' + (editingShowForm.settleMode || '회사 정산') }}</span>
           </span>
           <span class="shrink-0 text-[11px] text-slate-400">{{ showFormOpen.perf ? '접기 ▲' : '펼치기 ▼' }}</span>
         </button>
@@ -2381,6 +2384,28 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <input type="number" v-model.number="editingShowForm.settleAmt" step="10000" class="w-full px-3 py-2 rounded-xl border font-mono" />
             <p v-if="showModalSettleHint" class="text-[10px] mt-1 leading-snug" :class="showModalSettleHint.cls">{{ showModalSettleHint.text }}</p>
           </div>
+          <!-- ★ v2.9: 함께한 사람 (서브 인원 등 여러 명 정산 · 각자 정산 탭에 따로 뜸) -->
+          <div class="sm:col-span-3 p-3 rounded-2xl bg-slate-950/70 border border-amber-500/40 space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-amber-300 font-bold">👥 함께한 사람 <span class="font-normal text-[10px] text-slate-400">(위 정산대상 말고 더 줄 사람 · 서브 인원 등 · 세전 페이)</span></span>
+              <button type="button" @click="addCrewRow" class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-200 font-bold cursor-pointer border border-amber-500/40">+ 함께한 사람 추가</button>
+            </div>
+            <div v-for="(c, i) in (editingShowForm.crew || [])" :key="c.id || i" class="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-slate-900/70 border border-slate-800">
+              <select v-model="c.performerId" @change="onPickCrewPerformer(c)" :disabled="c.settleStatus === '정산완료'" class="flex-1 min-w-[8rem] px-2 py-2 rounded-xl border">
+                <option value="">✏️ 직접 입력</option>
+                <option v-for="p in activePerformers" :key="'cr-' + p.id" :value="p.id">{{ p.name }} · {{ performerKindLabel(p.kind) }}</option>
+              </select>
+              <input v-if="!c.performerId" type="text" v-model="c.name" :disabled="c.settleStatus === '정산완료'" placeholder="이름" class="flex-1 min-w-[6rem] px-2 py-2 rounded-xl border" />
+              <select v-model="c.role" class="w-20 px-2 py-2 rounded-xl border">
+                <option value="서브">서브</option>
+                <option value="메인">메인</option>
+              </select>
+              <input type="number" v-model.number="c.fee" :disabled="c.settleStatus === '정산완료'" step="10000" placeholder="세전 페이" class="w-28 px-2 py-2 rounded-xl border font-mono" />
+              <span class="text-[10px] font-bold" :class="crewHint(c).cls">{{ crewHint(c).text }}</span>
+              <button type="button" @click="removeCrewRow(i)" class="ml-auto px-2 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-rose-300 cursor-pointer" title="이 줄 지우기">✕</button>
+            </div>
+            <p v-if="!(editingShowForm.crew || []).length" class="text-[11px] text-slate-500">대표님 공연에 서브 인원이 붙거나 공연자가 두 명 이상이면 추가해 주세요. 개인은 3.3%를 떼고, 사업자는 계산서를 받고 지급해요.</p>
+          </div>
           <!-- ★ v2.9: 정산 방식 · 수수료 · 실수익 -->
           <div class="sm:col-span-3 p-3 rounded-2xl bg-slate-950/70 border border-indigo-500/40 grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div>
@@ -2400,14 +2425,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 고객이 공연자에게 바로 줘요. 회사 매출·실수익은 <b class="text-emerald-300">수수료 ₩{{ (Number(editingShowForm.commission) || 0).toLocaleString() }}</b>만 잡히고, 미수금·공연자 정산·계산서 목록에는 뜨지 않아요.
               </template>
               <template v-else>
-                공연 총액 ₩{{ (Number(editingShowForm.amount) || 0).toLocaleString() }} − 공연자 지급(세전) ₩{{ (Number(editingShowForm.settleAmt) || 0).toLocaleString() }}
-                = <b class="text-emerald-300">실수익 ₩{{ ((Number(editingShowForm.amount) || 0) - (Number(editingShowForm.settleAmt) || 0)).toLocaleString() }}</b>
+                공연 총액 ₩{{ (Number(editingShowForm.amount) || 0).toLocaleString() }} − 공연자 지급(세전) ₩{{ ((Number(editingShowForm.settleAmt) || 0) + formCrewSum).toLocaleString() }}<template v-if="formCrewSum > 0"> (정산대상 {{ (Number(editingShowForm.settleAmt) || 0).toLocaleString() }} + 함께한 사람 {{ formCrewSum.toLocaleString() }})</template>
+                = <b class="text-emerald-300">실수익 ₩{{ ((Number(editingShowForm.amount) || 0) - (Number(editingShowForm.settleAmt) || 0) - formCrewSum).toLocaleString() }}</b>
               </template>
             </div>
           </div>
         </div>
         <button type="button" @click="showFormOpen.after = !showFormOpen.after" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left cursor-pointer">
-          <span class="min-w-0 font-bold text-slate-200">④ 공연 직후 기록 <span class="font-normal text-[10px] text-slate-400">(완료 후 현장 메모 · 피드백 · 사진)</span>
+          <span class="flex-1 min-w-0 break-words font-bold text-slate-200">④ 공연 직후 기록 <span class="font-normal text-[10px] text-slate-400">(완료 후 현장 메모 · 피드백 · 사진)</span>
           </span>
           <span class="shrink-0 text-[11px] text-slate-400">{{ showFormOpen.after ? '접기 ▲' : '펼치기 ▼' }}</span>
         </button>
@@ -2445,7 +2470,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
         </div>
         <button type="button" @click="showFormOpen.biz = !showFormOpen.biz" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left cursor-pointer">
-          <span class="min-w-0 font-bold text-slate-200">⑤ 계산서 정보 <span class="font-normal text-[10px] text-slate-400">(이메일 · 사업자 상호 · 등록번호)</span>
+          <span class="flex-1 min-w-0 break-words font-bold text-slate-200">⑤ 계산서 정보 <span class="font-normal text-[10px] text-slate-400">(이메일 · 사업자 상호 · 등록번호)</span>
           </span>
           <span class="shrink-0 text-[11px] text-slate-400">{{ showFormOpen.biz ? '접기 ▲' : '펼치기 ▼' }}</span>
         </button>
@@ -3412,7 +3437,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const isDirectSettle = (s) => !!s && s.settleMode === '공연자 직접';
         const isMoneyShow = (s) => !!s && s.status !== '취소' && s.status !== '문의';
         const revenueOf = (s) => isDirectSettle(s) ? (Number(s.commission) || 0) : (Number(s.amount) || 0);
-        const payoutOf = (s) => isDirectSettle(s) ? 0 : (Number(s.settleAmt) || 0);
+        // ★ v2.9: 함께한 사람(서브 인원 등). 첫 번째 정산대상은 예전처럼 settleTarget·settleAmt, 더 줄 사람은 s.crew 목록에 둡니다
+        const crewOf = (s) => (s && Array.isArray(s.crew)) ? s.crew.filter(c => c && String(c.name || '').trim() !== '') : [];
+        const crewFeeOf = (s) => crewOf(s).reduce((a, c) => a + (Number(c.fee) || 0), 0);
+        const payoutOf = (s) => isDirectSettle(s) ? 0 : (Number(s.settleAmt) || 0) + crewFeeOf(s);
         const netOf = (s) => revenueOf(s) - payoutOf(s);
         const workTypeOf = (s) => (s && s.workType) || '공연';
 
@@ -3747,8 +3775,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             });
             if (hits.length) warnings.push(`같은 공연자(${perf})의 같은 시간 일정이 이미 있어요 (중복 예약 가능성):\n     ${hits.slice(0, 3).join('\n     ')}${hits.length > 3 ? `\n     …외 ${hits.length - 3}건` : ''}`);
           }
-          if (okAmounts && settleAmt > 0 && (changed('settleAmt') || changed('amount'))) {
-            if (settleAmt > amount) warnings.push(`외부 정산금액(${settleAmt.toLocaleString()}원)이 공연 금액(${amount.toLocaleString()}원)보다 커요.`);
+          // ★ v2.9: 함께한 사람 — 이름·페이 확인, 지급 합계가 공연 금액보다 크면 물어봄
+          const crewList = Array.isArray(f.crew) ? f.crew : [];
+          let crewSum = 0;
+          crewList.forEach((cw, i) => {
+            const fee = vNum(cw.fee);
+            if (!Number.isFinite(fee) || fee < 0) errors.push(`함께한 사람 ${i + 1}번째 페이는 0 이상의 숫자로 입력해 주세요.`);
+            else { crewSum += fee; if (fee > 0 && vStr(cw.name) === '') errors.push(`함께한 사람 ${i + 1}번째의 이름을 적어 주세요.`); }
+          });
+          const crewChanged = !orig || JSON.stringify(orig.crew || []) !== JSON.stringify(crewList);
+          if (okAmounts && settleAmt + crewSum > 0 && vStr(f.settleMode) !== '공연자 직접' && (changed('settleAmt') || changed('amount') || crewChanged)) {
+            if (settleAmt + crewSum > amount) warnings.push(`공연자 지급 합계(${(settleAmt + crewSum).toLocaleString()}원)가 공연 금액(${amount.toLocaleString()}원)보다 커요.`);
           }
           if (okAmounts && settleAmt > 0 && vStr(f.settleTarget) === '' && (changed('settleAmt') || changed('settleTarget'))) {
             warnings.push('외부 정산금액은 있는데 "외부 정산대상"이 비어 있어요.');
@@ -4073,7 +4110,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const commissionDue = shows.value.filter(s => isMoneyShow(s) && isDirectSettle(s) && Number(s.commission) > 0 && !s.commissionReceived && s.showDate && s.showDate < today);
           if (commissionDue.length) list.push({ key: 'commission', icon: '🤝', text: `아직 못 받은 수수료 ${commissionDue.length}건 · ₩${commissionDue.reduce((a, s) => a + (Number(s.commission) || 0), 0).toLocaleString()}`, shows: commissionDue });
           const pastSettle = shows.value.filter(s => isSettleOpen(s) && s.showDate < today);
-          if (pastSettle.length) list.push({ key: 'settle', icon: '🎭', text: `공연자 미지급 ${pastSettle.length}건 (지난 공연) · ₩${pastSettle.reduce((a, s) => a + (Number(s.settleAmt) || 0), 0).toLocaleString()}`, go: 'settle' });
+          if (pastSettle.length) { const due = pastSettle.flatMap(openPayeesOf); list.push({ key: 'settle', icon: '🎭', text: `공연자 미지급 ${due.length}건 (지난 공연) · ₩${due.reduce((a, x) => a + x.gross, 0).toLocaleString()}`, go: 'settle' }); }
           if (settleSummary.value.invoicePending > 0) list.push({ key: 'invoice', icon: '🧾', text: `사업자 공연자 계산서 미수취 ${settleSummary.value.invoicePending}건`, go: 'settle' });
           const waitTax = taxRecords.value.filter(t => t.reportStatus === '신고대기');
           if (waitTax.length) {
@@ -4356,13 +4393,28 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const openPerformerHistoryId = ref('');
         const togglePerformerHistory = (p) => { openPerformerHistoryId.value = openPerformerHistoryId.value === p.id ? '' : p.id; };
         const performerHistory = (p) => shows.value
-          .filter(s => s.status !== '취소' && (s.performerId === p.id || (p.name && (s.performer === p.name || s.settleTarget === p.name))))
+          .filter(s => s.status !== '취소' && (s.performerId === p.id || (p.name && (s.performer === p.name || s.settleTarget === p.name)) || crewOf(s).some(c => c.performerId === p.id || (p.name && c.name === p.name))))
           .slice().sort((a, b) => String(b.showDate || '').localeCompare(String(a.showDate || '')));
         const activePerformers = computed(() => performers.value.filter(p => p.active !== false).slice().sort((a, b) => String(a.name).localeCompare(String(b.name), 'ko')));
         const undecidedPerformerCount = computed(() => performers.value.filter(p => p.active !== false && (!p.kind || p.kind === '미정')).length);
 
         // 정산이 남은 공연인지: 정산대상과 금액이 있고, 취소·정산완료·정산건없음이 아닌 것
-        const isSettleOpen = (s) => isMoneyShow(s) && !isDirectSettle(s) && Number(s.settleAmt) > 0 && String(s.settleTarget || '').trim() !== '' && s.settleStatus !== '정산완료' && s.settleStatus !== '정산건없음';
+        // ★ v2.9: 한 공연에서 돈을 줄 사람 목록. rec = 지급 상태(settleStatus·settlePaidDate·taxRecordId·invoiceRecv)를 적는 곳
+        //   (첫 번째 정산대상은 공연 기록 자체, 함께한 사람은 crew의 각 줄)
+        const payeesOf = (s) => {
+          if (!isMoneyShow(s) || isDirectSettle(s)) return [];
+          const list = [];
+          if (Number(s.settleAmt) > 0 && String(s.settleTarget || '').trim() !== '' && s.settleStatus !== '정산건없음') {
+            list.push({ key: 'main', name: s.settleTarget, gross: Number(s.settleAmt) || 0, rec: s, role: '', perfId: '' });
+          }
+          crewOf(s).forEach((c, i) => {
+            if (Number(c.fee) > 0) list.push({ key: 'crew-' + (c.id || i), name: c.name, gross: Number(c.fee) || 0, rec: c, role: c.role || '서브', perfId: c.performerId || '' });
+          });
+          return list;
+        };
+        const openPayeesOf = (s) => payeesOf(s).filter(x => x.rec.settleStatus !== '정산완료');
+        const payeePerformer = (x) => (x.perfId && findPerformerById(x.perfId)) || findPerformerByName(x.name);
+        const isSettleOpen = (s) => openPayeesOf(s).length > 0;
 
         // 공연자별 출연 횟수·미지급 금액
         const performerStats = computed(() => {
@@ -4376,16 +4428,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             const byTarget = findPerformerByName(s.settleTarget);
             if (byPerf) ids.add(byPerf.id);
             if (byTarget) ids.add(byTarget.id);
+            crewOf(s).forEach(c => { const cp = findPerformerById(c.performerId) || findPerformerByName(c.name); if (cp) ids.add(cp.id); });
             ids.forEach(id => {
               const st = get(id);
               st.total += 1;
               if (String(s.showDate || '').startsWith(ym)) st.month += 1;
             });
-            if (byTarget && isSettleOpen(s)) {
-              const st = get(byTarget.id);
-              st.unpaid += Number(s.settleAmt) || 0;
+            openPayeesOf(s).forEach(x => {
+              const pp = payeePerformer(x);
+              if (!pp) return;
+              const st = get(pp.id);
+              st.unpaid += x.gross;
               st.unpaidCount += 1;
-            }
+            });
           });
           return map;
         });
@@ -4402,7 +4457,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         // 이 공연자 이름을 쓰는 공연 수 (이름 변경·삭제 판단용)
         const countShowsUsingPerformer = (name, id) => {
           const n = normalizeName(name);
-          return shows.value.filter(s => (id && s.performerId === id) || (n && (normalizeName(s.performer) === n || normalizeName(s.settleTarget) === n))).length;
+          return shows.value.filter(s => (id && s.performerId === id) || (n && (normalizeName(s.performer) === n || normalizeName(s.settleTarget) === n)) || crewOf(s).some(c => (id && c.performerId === id) || (n && normalizeName(c.name) === n))).length;
         };
 
         const openNewPerformerModal = () => {
@@ -4439,11 +4494,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             // 이름을 바꾸면 장부에 적힌 예전 이름도 같이 바꿀지 물어봄 (안 바꾸면 그 공연들은 명부와 연결이 끊김)
             if (oldName && normalizeName(oldName) !== normalizeName(f.name)) {
               const on = normalizeName(oldName);
-              const hits = shows.value.filter(s => normalizeName(s.performer) === on || normalizeName(s.settleTarget) === on);
+              const hits = shows.value.filter(s => normalizeName(s.performer) === on || normalizeName(s.settleTarget) === on || crewOf(s).some(c => normalizeName(c.name) === on));
               if (hits.length > 0 && confirm(`공연 장부에 '${oldName}'(으)로 적힌 공연이 ${hits.length}건 있어요.\n모두 '${f.name}'(으)로 바꿀까요?`)) {
                 hits.forEach(s => {
                   if (normalizeName(s.performer) === on) s.performer = f.name;
                   if (normalizeName(s.settleTarget) === on) s.settleTarget = f.name;
+                  crewOf(s).forEach(c => { if (normalizeName(c.name) === on) c.name = f.name; });
                   s.updatedAt = nowStamp();
                 });
               }
@@ -4508,31 +4564,62 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           return { cls: 'text-amber-300', text: '❓ 이 공연자의 개인/사업자 구분이 아직 미정이에요. 공연자 명부에서 정해 주세요.' };
         });
 
+        // ★ v2.9: 공연 입력창의 '함께한 사람' 줄
+        const newCrewId = () => 'CR-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const addCrewRow = () => {
+          const f = editingShowForm.value;
+          if (!Array.isArray(f.crew)) f.crew = [];
+          f.crew.push({ id: newCrewId(), performerId: '', name: '', role: '서브', fee: 0, settleStatus: '미정산' });
+        };
+        const removeCrewRow = (i) => {
+          const f = editingShowForm.value;
+          const c = f.crew && f.crew[i];
+          if (c && c.settleStatus === '정산완료') { showToast('이미 지급완료한 사람이에요. 정산 탭에서 [되돌리기]를 먼저 눌러 주세요.', 5000); return; }
+          f.crew.splice(i, 1);
+        };
+        const onPickCrewPerformer = (c) => {
+          const p = findPerformerById(c.performerId);
+          if (!p) return;
+          c.name = p.name;
+          if (!Number(c.fee) && Number(p.fee) > 0) c.fee = Number(p.fee);
+        };
+        const crewHint = (c) => {
+          if (!String(c.name || '').trim()) return { cls: 'text-slate-500', text: '' };
+          if (c.settleStatus === '정산완료') return { cls: 'text-emerald-300', text: '✅ 지급완료' };
+          const amt = Number(c.fee) || 0;
+          const p = findPerformerById(c.performerId) || findPerformerByName(c.name);
+          if (!p) return { cls: 'text-amber-300', text: '❓ 명부에 없음' };
+          if (p.kind === '개인') { const tax = Math.round(amt * 0.03) + Math.round(amt * 0.003); return { cls: 'text-indigo-300', text: `👤 개인 · 이체 ₩${(amt - tax).toLocaleString()}` }; }
+          if (p.kind === '사업자') return { cls: 'text-emerald-300', text: '🏢 사업자 · 전액' };
+          return { cls: 'text-amber-300', text: '❓ 개인/사업자 미정' };
+        };
+        const formCrewSum = computed(() => crewOf(editingShowForm.value).reduce((a, c) => a + (Number(c.fee) || 0), 0));
+
         // --- 공연자 정산 (미수금 & 3.3% 정산 탭 → 🎭 공연자 정산) ---
         const settleFilter = ref('OPEN'); // 'OPEN' 미지급만 · 'ALL' 지급완료 포함
-        const settlementRows = computed(() => shows.value
-          .filter(s => s.status !== '취소' && Number(s.settleAmt) > 0 && String(s.settleTarget || '').trim() !== '' && s.settleStatus !== '정산건없음')
-          .filter(s => settleFilter.value === 'ALL' || s.settleStatus !== '정산완료')
-          .map(s => {
-            const p = findPerformerByName(s.settleTarget);
+        const settlementRows = computed(() => {
+          const rows = [];
+          shows.value.forEach(s => payeesOf(s).forEach(x => {
+            const paid = x.rec.settleStatus === '정산완료';
+            if (settleFilter.value !== 'ALL' && paid) return;
+            const p = payeePerformer(x);
             const kind = p ? (p.kind || '미정') : '미정';
-            const gross = Number(s.settleAmt) || 0;
+            const gross = x.gross;
             const nat = kind === '개인' ? Math.round(gross * 0.03) : 0;
             const loc = kind === '개인' ? Math.round(gross * 0.003) : 0;
-            return { key: s.uid || ('no-' + s.no), s, p, kind, gross, nat, loc, tax: nat + loc, net: gross - nat - loc, paid: s.settleStatus === '정산완료' };
-          })
-          .sort((a, b) => (a.s.showDate || '').localeCompare(b.s.showDate || '')));
+            rows.push({ key: (s.uid || ('no-' + s.no)) + '-' + x.key, s, t: x.rec, name: x.name, role: x.role, p, kind, gross, nat, loc, tax: nat + loc, net: gross - nat - loc, paid });
+          }));
+          return rows.sort((a, b) => (a.s.showDate || '').localeCompare(b.s.showDate || ''));
+        });
         const settleSummary = computed(() => {
-          const open = shows.value.filter(isSettleOpen).map(s => {
-            const p = findPerformerByName(s.settleTarget);
-            return { s, kind: p ? (p.kind || '미정') : '미정' };
-          });
+          const open = [];
+          shows.value.forEach(s => openPayeesOf(s).forEach(x => { const p = payeePerformer(x); open.push({ s, x, kind: p ? (p.kind || '미정') : '미정' }); }));
           return {
             count: open.length,
-            total: open.reduce((a, r) => a + (Number(r.s.settleAmt) || 0), 0),
+            total: open.reduce((a, r) => a + r.x.gross, 0),
             personal: open.filter(r => r.kind === '개인').length,
             business: open.filter(r => r.kind === '사업자').length,
-            invoicePending: open.filter(r => r.kind === '사업자' && r.s.invoiceRecv !== '수취완료').length,
+            invoicePending: open.filter(r => r.kind === '사업자' && r.x.rec.invoiceRecv !== '수취완료').length,
             undecided: open.filter(r => r.kind !== '개인' && r.kind !== '사업자').length
           };
         });
@@ -4543,18 +4630,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           if (row.p) openEditPerformerModal(row.p);
           else {
             openNewPerformerModal();
-            editingPerformerForm.value.name = row.s.settleTarget;
+            editingPerformerForm.value.name = row.name;
           }
         };
 
         const toggleInvoiceRecv = (row) => {
-          row.s.invoiceRecv = row.s.invoiceRecv === '수취완료' ? '미수취' : '수취완료';
+          row.t.invoiceRecv = row.t.invoiceRecv === '수취완료' ? '미수취' : '수취완료';
           row.s.updatedAt = nowStamp();
           saveAllToStorage();
         };
 
         const markSettlementPaid = (row) => {
-          const s = row.s;
+          const s = row.s, t = row.t;
+          const who = row.name + (row.role ? ` (${row.role})` : '');
           if (row.kind !== '개인' && row.kind !== '사업자') {
             showToast('먼저 공연자 명부에서 이 공연자가 개인인지 사업자인지 정해 주세요.', 6000);
             openPerformerForRow(row);
@@ -4562,19 +4650,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           }
           let msg;
           if (row.kind === '개인') {
-            msg = `👤 ${s.settleTarget} (개인) · ${s.showDate} ${s.client}\n\n세전 출연료  ₩${row.gross.toLocaleString()}\n3.3% 원천징수  -₩${row.tax.toLocaleString()} (국세 ${row.nat.toLocaleString()} + 지방세 ${row.loc.toLocaleString()})\n실제 이체할 금액  ₩${row.net.toLocaleString()}\n\n이체를 마쳤으면 [확인]을 눌러 주세요.\n3.3% 원천징수 장부에 자동으로 기록돼요.`;
+            msg = `👤 ${who} · 개인 · ${s.showDate} ${s.client}\n\n세전 출연료  ₩${row.gross.toLocaleString()}\n3.3% 원천징수  -₩${row.tax.toLocaleString()} (국세 ${row.nat.toLocaleString()} + 지방세 ${row.loc.toLocaleString()})\n실제 이체할 금액  ₩${row.net.toLocaleString()}\n\n이체를 마쳤으면 [확인]을 눌러 주세요.\n3.3% 원천징수 장부에 자동으로 기록돼요.`;
           } else {
-            if (s.invoiceRecv !== '수취완료' && !confirm(`🏢 ${s.settleTarget} (사업자)에게서 아직 계산서를 받지 않았어요.\n그래도 지급완료로 표시할까요?`)) return;
-            msg = `🏢 ${s.settleTarget} (사업자) · ${s.showDate} ${s.client}\n\n이체할 금액  ₩${row.gross.toLocaleString()} (전액)\n\n이체를 마쳤으면 [확인]을 눌러 주세요.`;
+            if (t.invoiceRecv !== '수취완료' && !confirm(`🏢 ${who} · 사업자에게서 아직 계산서를 받지 않았어요.\n그래도 지급완료로 표시할까요?`)) return;
+            msg = `🏢 ${who} · 사업자 · ${s.showDate} ${s.client}\n\n이체할 금액  ₩${row.gross.toLocaleString()} (전액)\n\n이체를 마쳤으면 [확인]을 눌러 주세요.`;
           }
           if (!confirm(msg)) return;
-          s.settleStatus = '정산완료';
-          s.settlePaidDate = getBrowserTodayStr();
+          t.settleStatus = '정산완료';
+          t.settlePaidDate = getBrowserTodayStr();
           if (row.kind === '개인') {
             const rec = {
               id: 'TAX-' + Date.now(),
-              payDate: s.settlePaidDate,
-              name: s.settleTarget,
+              payDate: t.settlePaidDate,
+              name: row.name,
               type: '사업소득(3.3%)',
               gross: row.gross,
               natTax: row.nat,
@@ -4582,13 +4670,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               totalTax: row.tax,
               netPay: row.net,
               reportStatus: '신고대기',
-              memo: `${s.showDate} ${s.client} 출연료 (공연자 정산에서 자동 기록)`,
+              memo: `${s.showDate} ${s.client} ${row.role === '서브' ? '서브 페이' : '출연료'} (공연자 정산에서 자동 기록)`,
               ssnMasked: '등록됨(비공개)',
               showUid: s.uid || '',
               showNo: s.no
             };
             taxRecords.value.unshift(rec);
-            s.taxRecordId = rec.id;
+            t.taxRecordId = rec.id;
           }
           s.updatedAt = nowStamp();
           saveAllToStorage();
@@ -4597,23 +4685,25 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
         // 예전에 이미 지급(및 3.3% 기록)한 공연: 새 원천징수 기록 없이 '정산완료'로만 표시 (중복 기록 방지)
         const markSettlementAlreadyPaid = (row) => {
-          const s = row.s;
-          if (!confirm(`'${s.settleTarget}' ${s.showDate} ${s.client}\n\n예전에 이미 지급한 건으로 표시할까요?\n(3.3% 원천징수 장부에는 새로 기록하지 않아요)`)) return;
-          s.settleStatus = '정산완료';
-          s.settlePaidDate = '';
+          const s = row.s, t = row.t;
+          const who = row.name + (row.role ? ` (${row.role})` : '');
+          if (!confirm(`'${who}' ${s.showDate} ${s.client}\n\n예전에 이미 지급한 건으로 표시할까요?\n(3.3% 원천징수 장부에는 새로 기록하지 않아요)`)) return;
+          t.settleStatus = '정산완료';
+          t.settlePaidDate = '';
           s.updatedAt = nowStamp();
           saveAllToStorage();
           showToast('이미 지급한 건으로 표시했어요.');
         };
 
         const undoSettlementPaid = (row) => {
-          const s = row.s;
-          const linked = s.taxRecordId ? taxRecords.value.find(t => t.id === s.taxRecordId) : null;
-          if (!confirm(`'${s.settleTarget}' ${s.showDate} 정산을 '미지급'으로 되돌릴까요?` + (linked ? '\n자동으로 만든 3.3% 원천징수 기록도 함께 지워요.' : ''))) return;
-          s.settleStatus = '미정산';
-          delete s.settlePaidDate;
-          if (linked) taxRecords.value = taxRecords.value.filter(t => t.id !== linked.id);
-          delete s.taxRecordId;
+          const s = row.s, t = row.t;
+          const who = row.name + (row.role ? ` (${row.role})` : '');
+          const linked = t.taxRecordId ? taxRecords.value.find(r => r.id === t.taxRecordId) : null;
+          if (!confirm(`'${who}' ${s.showDate} 정산을 '미지급'으로 되돌릴까요?` + (linked ? '\n자동으로 만든 3.3% 원천징수 기록도 함께 지워요.' : ''))) return;
+          t.settleStatus = '미정산';
+          delete t.settlePaidDate;
+          if (linked) taxRecords.value = taxRecords.value.filter(r => r.id !== linked.id);
+          delete t.taxRecordId;
           s.updatedAt = nowStamp();
           saveAllToStorage();
           showToast('미지급으로 되돌렸어요.');
@@ -4888,6 +4978,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             feedbackPerformer: '',
             nextNote: '',
             photoSource: '',
+            crew: [],
             memo: ''
           };
           showModalOpen.value = true;
@@ -4921,6 +5012,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           ['venueName', 'eventName', 'fieldMemo', 'feedbackClient', 'feedbackPerformer', 'nextNote', 'photoSource'].forEach(k => { if (copy[k] === undefined) copy[k] = ''; });
           if (copy.commission === undefined) copy.commission = 0;
           if (copy.commissionReceived === undefined) copy.commissionReceived = false;
+          if (!Array.isArray(copy.crew)) copy.crew = [];
           editingShowForm.value = copy;
           showModalOpen.value = true;
         };
@@ -5120,6 +5212,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
         // ===== v2.8 비슷한 고객 찾기 · 중복 합치기 (END CUSTOMER DEDUPE) =====
 
+        // ★ v2.9: 복사한 일정은 공연자 지급 기록(지급완료·원천징수 연결·계산서 받음)을 가져가지 않음. 함께한 사람·페이는 그대로
+        const resetSettleForCopy = (rec) => {
+          if (rec.settleStatus === '정산완료') rec.settleStatus = '미정산';
+          delete rec.settlePaidDate; delete rec.taxRecordId;
+          if (rec.invoiceRecv) rec.invoiceRecv = '미수취';
+          if (Array.isArray(rec.crew)) rec.crew = rec.crew.map(c => ({ id: newCrewId(), performerId: c.performerId || '', name: c.name || '', role: c.role || '서브', fee: Number(c.fee) || 0, settleStatus: '미정산' }));
+        };
+
         // ★ FEATURE 2: 일정 복사 (수정 모달 내부 & 테이블 원클릭) ★
         const copyFromEditModal = () => {
           const nextNo = shows.value.length > 0 ? Math.max(...shows.value.map(s => Number(s.no) || 0)) + 1 : 1;
@@ -5130,6 +5230,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           // ★ v2.9: 복사한 일정에는 지난 공연의 현장 기록·피드백·수수료 받음 표시를 가져가지 않음
           ['fieldMemo', 'feedbackClient', 'feedbackPerformer', 'nextNote', 'photoSource'].forEach(k => { copied[k] = ''; });
           copied.commissionReceived = false;
+          resetSettleForCopy(copied);
           stripRecordMeta(copied); clearCancelFields(copied);
           isEditingShow.value = false;
           showModalMode.value = 'single';
@@ -5146,6 +5247,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           // ★ v2.9: 복사한 일정에는 지난 공연의 현장 기록·피드백·수수료 받음 표시를 가져가지 않음
           ['fieldMemo', 'feedbackClient', 'feedbackPerformer', 'nextNote', 'photoSource'].forEach(k => { copied[k] = ''; });
           copied.commissionReceived = false;
+          resetSettleForCopy(copied);
           stripRecordMeta(copied); clearCancelFields(copied);
           isEditingShow.value = false;
           showModalMode.value = 'single';
@@ -5214,6 +5316,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           });
           if (!askAfterValidation(vr)) return;
           Object.assign(editingShowForm.value, vr.fixes);       // 시간·전화·금액 형식 자동 정리
+          // ★ v2.9: 함께한 사람 — 빈 줄은 빼고 페이는 숫자로
+          if (Array.isArray(editingShowForm.value.crew)) {
+            editingShowForm.value.crew = editingShowForm.value.crew
+              .filter(c => c && (String(c.name || '').trim() !== '' || Number(c.fee) > 0))
+              .map(c => ({ ...c, name: String(c.name || '').trim(), fee: Number(vNum(c.fee)) || 0, role: c.role || '서브', settleStatus: c.settleStatus || '미정산' }));
+          }
           editingShowForm.value.client = String(editingShowForm.value.client).trim();
           {
             // v2.3 기록 관리: 취소 ↔ 복구에 맞춰 취소 정보를 정리
@@ -5258,6 +5366,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               itemCopy.no = nextNo++;
               itemCopy.showDate = dt;
               stripRecordMeta(itemCopy);
+              if (Array.isArray(itemCopy.crew)) itemCopy.crew = itemCopy.crew.map(cw => ({ ...cw, id: newCrewId() }));
               itemCopy.uid = makeUid();
               itemCopy.createdAt = nowStamp();
               shows.value.unshift(itemCopy);
@@ -6888,7 +6997,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           mobileFilterOpen, calendarYear, calendarMonth, selectedCalendarDate, selectCalendarDate, selectedDateShows, openNewShowOnSelectedDate, getDayOfWeekKorean, calendarCells, calendarMonthShowsCount, changeCalendarMonth,
           navItems, availableYearMonths, uniqueThemes,
           periodShows, periodTotalRevenue, periodItsshowRevenue, periodKidsniverseRevenue, overallTotalRevenue,
-          periodPayout, periodNet, showFormOpen, navSheet, navRemember, navLastApp, launchNav, resetNavApp, backupAgeDays, lastBackupAt, shareBackup, restoreFileInput, pickRestoreFile, restoreFromBackupFile, canAutoFolder, autoFolderName, autoFolderNeedsClick, chooseAutoFolder, runAutoBackup, openPerformerHistoryId, togglePerformerHistory, performerHistory, isInquiry, isDirectSettle, isMoneyShow, revenueOf, payoutOf, netOf, workTypeOf,
+          periodPayout, periodNet, showFormOpen, crewOf, crewFeeOf, addCrewRow, removeCrewRow, onPickCrewPerformer, crewHint, formCrewSum, navSheet, navRemember, navLastApp, launchNav, resetNavApp, backupAgeDays, lastBackupAt, shareBackup, restoreFileInput, pickRestoreFile, restoreFromBackupFile, canAutoFolder, autoFolderName, autoFolderNeedsClick, chooseAutoFolder, runAutoBackup, openPerformerHistoryId, togglePerformerHistory, performerHistory, isInquiry, isDirectSettle, isMoneyShow, revenueOf, payoutOf, netOf, workTypeOf,
           unpaidShows, totalUnpaidAmount, pendingPayables, totalPendingPayables, totalCashBalance, projectedNetCash,
           upcomingShows, filteredShows, themeStats,
           newTaxForm, calcNatTax, calcLocTax, calcTaxTotal, calcNetPay, addTaxRecord,
