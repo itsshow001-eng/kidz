@@ -26,7 +26,7 @@
     /* 폰을 가로로 눕힌 경우: 화면 높이가 낮아 맨 아래 내용이 하단 버튼 줄에 가리므로 여백을 더 줌 */
     @media (max-width: 1023px) and (orientation: landscape) and (max-height: 500px) { body { padding-bottom: calc(env(safe-area-inset-bottom) + 64px); } }
   </style>
-  <title>이츠쇼 ERP v2.8</title>
+  <title>이츠쇼 ERP v2.9</title>
   <!-- v2.3 오프라인판: Vue 3.4.38 · Chart.js 4.4.4 · SheetJS 0.18.5 · Tailwind(미리 빌드)를 파일 안에 내장 — 인터넷 없이도 열립니다 -->
   <!-- ERP-INLINE:BEGIN vue 3.4.38 -->
   <script>/**
@@ -195,7 +195,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div class="flex items-center space-x-1.5">
               <span class="text-sm sm:hidden font-black text-white tracking-tight truncate">이츠쇼 ERP</span>
               <span class="hidden sm:inline text-base font-black text-white tracking-tight">이츠쇼 & 키즈니버스 ERP</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold shrink-0">v2.8</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold shrink-0">v2.9</span>
             </div>
             <p class="text-[11px] text-slate-400 hidden md:block truncate">스케줄 · 5일 브리핑 · To-Do · 정산 · 단골 CRM</p>
           </div>
@@ -300,6 +300,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <!-- ================= MAIN CONTENT CONTAINER ================= -->
       <main class="flex-1 p-4 pb-24 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto overflow-y-auto">
 
+        <!-- ★ v2.9: 백업 알림 (7일 넘게 백업이 없을 때 · 자동 백업 폴더 허락이 다시 필요할 때) -->
+        <div v-if="autoFolderNeedsClick" class="rounded-2xl border border-indigo-500/50 bg-indigo-500/10 px-4 py-3 text-xs text-indigo-200 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span class="font-bold">📁 오늘 자동 백업을 저장하려면 한 번 눌러 주세요.</span>
+          <span class="flex-1 min-w-[12rem]">크롬이 백업 폴더({{ autoFolderName }})에 저장해도 되는지 다시 물어요.</span>
+          <button @click="runAutoBackup(true)" class="px-3 py-1.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold cursor-pointer whitespace-nowrap">오늘 백업 저장</button>
+        </div>
+        <div v-else-if="backupAgeDays === null || backupAgeDays >= 7" class="rounded-2xl border border-rose-500/50 bg-rose-500/10 px-4 py-3 text-xs text-rose-200 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span class="font-bold">💾 {{ backupAgeDays === null ? '아직 백업을 받은 적이 없어요.' : '백업한 지 ' + backupAgeDays + '일 됐어요.' }}</span>
+          <span class="flex-1 min-w-[12rem]">휴대폰이나 브라우저 기록이 지워지면 데이터가 사라질 수 있어요. 지금 한 번 받아 두세요.</span>
+          <button @click="isMobile ? shareBackup() : exportBackupJSON()" class="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-bold cursor-pointer whitespace-nowrap">지금 백업</button>
+        </div>
+
         <!-- ★ 7단계: 구글 시트 연결 안내 (연결·불러오기를 마치면 사라집니다) -->
         <div v-if="!cloudSyncUrl.trim()" class="rounded-2xl border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-xs text-amber-200 flex flex-wrap items-center gap-x-3 gap-y-2">
           <span class="font-bold">☁️ 아직 구글 시트와 연결되지 않았어요.</span>
@@ -366,7 +378,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <span class="min-w-0 flex-1 space-y-0.5">
                   <span class="flex items-center gap-1.5 min-w-0">
                     <span class="font-bold text-white truncate">{{ s.client }}</span>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span><span v-if="s.status === '문의'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">문의</span><span v-if="workTypeOf(s) !== '공연'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">{{ workTypeOf(s) }}</span>
                   </span>
                   <span class="block text-[11px] text-slate-400 truncate">📍 {{ s.region || '지역미정' }} · 🎭 {{ s.performer || '공연자 미정' }}</span>
                   <span v-if="memoFirstLine(s)" class="block text-[11px] text-slate-300 truncate">📝 {{ memoFirstLine(s) }}</span>
@@ -411,7 +423,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <span class="min-w-0 flex-1">
                   <span class="flex items-center gap-1.5 min-w-0">
                     <span class="font-bold text-sm text-white truncate">{{ s.client }}</span>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span><span v-if="s.status === '문의'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">문의</span><span v-if="workTypeOf(s) !== '공연'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">{{ workTypeOf(s) }}</span>
                   </span>
                   <span v-if="memoFirstLine(s)" class="block text-[11px] text-slate-400 truncate">📝 {{ memoFirstLine(s) }}</span>
                   <span v-else class="block text-[11px] text-amber-300">⚠️ 협의 메모 없음</span>
@@ -428,6 +440,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <div class="text-[11px] font-bold text-indigo-300">이번 달 매출 ({{ Number(monthRevenue.ym.slice(5)) }}월 · {{ monthRevenue.count }}건)</div>
               <div class="text-lg font-black text-white font-mono">₩{{ monthRevenue.total.toLocaleString() }}</div>
               <div class="text-[10px] text-slate-400 font-mono">지난 ₩{{ monthRevenue.done.toLocaleString() }} · 예정 ₩{{ monthRevenue.plan.toLocaleString() }}</div>
+              <div class="text-[11px] text-emerald-300 font-mono font-bold">실수익 ₩{{ monthRevenue.net.toLocaleString() }}<span v-if="monthRevenue.inquiry" class="text-amber-300 font-normal"> · 문의 {{ monthRevenue.inquiry }}건 별도</span></div>
             </div>
             <div @click="goToUnpaidView" class="rounded-2xl bg-slate-800/90 border border-rose-500/40 p-3 space-y-0.5 cursor-pointer hover:border-rose-400 transition-all">
               <div class="text-[11px] font-bold text-rose-300">받을 돈 (미입금 {{ unpaidShows.length }}건)</div>
@@ -505,7 +518,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                   <div class="grid grid-cols-4 gap-1 text-[10px] font-bold">
                     <a v-if="item.phone" :href="'tel:' + item.phone" @click.stop class="py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-center border border-emerald-500/30">📞전화</a>
                     <button v-else type="button" @click.stop="showToast('등록된 연락처가 없습니다.')" class="py-1 rounded-lg bg-slate-800 text-slate-500 text-center">📞없음</button>
-                    <button type="button" @click.stop="openMapNavigation(item.address || item.client, item.region)" class="py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white text-center border border-blue-500/30">📍길찾기</button>
+                    <button type="button" @click.stop="openMapNavigation(item.address || item.venueName || item.client, item.region)" class="py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white text-center border border-blue-500/30">📍길찾기</button>
                     <button type="button" @click.stop="openSmsModal(item)" class="py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black text-center border border-amber-500/30">💬문자</button>
                     <button type="button" @click.stop="openQuoteModal(item)" class="py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-center border border-indigo-500/30">📄견적</button>
                   </div>
@@ -637,7 +650,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                       <td class="py-2 px-1.5 sm:px-2.5 font-bold text-indigo-300 whitespace-nowrap"><span class="sm:hidden">{{ formatCompactDate(s.showDate) }}</span><span class="hidden sm:inline">{{ s.showDate }}</span> <span class="text-slate-400 block sm:inline">{{ s.showTime }}</span></td>
                       <td class="py-2 px-1.5 sm:px-2.5 font-sans font-bold text-white truncate" :title="s.client">{{ s.client }}</td>
                       <td class="py-2 px-2.5 font-sans hidden sm:table-cell truncate">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span><span v-if="s.status === '문의'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">문의</span><span v-if="workTypeOf(s) !== '공연'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">{{ workTypeOf(s) }}</span>
                       </td>
                       <td class="py-2 px-1 sm:px-2.5 text-right font-bold text-white whitespace-nowrap">₩{{ s.amount.toLocaleString() }}</td>
                       <td class="py-2 px-1 sm:px-2.5 text-center font-mono">
@@ -705,6 +718,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </div>
               <div class="text-2xl font-black text-white font-mono">₩ {{ periodTotalRevenue.toLocaleString() }}</div>
               <div class="text-xs text-indigo-300 font-medium">{{ formatKoreanCurrency(periodTotalRevenue) }}</div>
+              <div class="text-[11px] font-mono text-slate-300">공연자 지급 ₩{{ periodPayout.toLocaleString() }} → <b class="text-emerald-300">실수익 ₩{{ periodNet.toLocaleString() }}</b></div>
               <div class="pt-2 border-t border-slate-700/60 flex justify-between text-[11px] text-slate-400 font-mono">
                 <span>이츠쇼: {{ formatKoreanCurrency(periodItsshowRevenue) }}</span>
                 <span>키즈니버스랩: {{ formatKoreanCurrency(periodKidsniverseRevenue) }}</span>
@@ -838,6 +852,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <option value="ALL">전체 (취소포함)</option>
                 <option value="ACTIVE">🟢 정상 일정만</option>
                 <option value="5DAYS">🔥 5일내 임박</option>
+                <option value="문의">🟡 문의(미정)만</option>
                 <option value="확정">확정 일정만</option>
                 <option value="완료">완료 일정만</option>
                 <option value="취소">🚫 취소 일정만</option>
@@ -929,8 +944,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                   <div class="sm:hidden space-y-0.5 pt-0.5">
                     <div v-for="s in cell.shows.slice(0, 2)" :key="'mc-' + s.no"
                       class="px-1 py-0.5 rounded text-[9px] leading-tight truncate font-bold"
-                      :class="s.status === '취소' ? 'bg-slate-800 text-slate-500 line-through' : (s.payStatus === '미입금' ? 'bg-rose-500/30 text-rose-200' : 'bg-indigo-500/30 text-indigo-200')">
-                      {{ s.client }}
+                      :class="s.status === '취소' ? 'bg-slate-800 text-slate-500 line-through' : (s.status === '문의' ? 'bg-amber-500/10 text-amber-200/80 border border-dashed border-amber-400/60' : (s.payStatus === '미입금' ? 'bg-rose-500/30 text-rose-200' : 'bg-indigo-500/30 text-indigo-200'))">
+                      <span v-if="s.status === '문의'">🟡</span>{{ s.client }}
                     </div>
                     <div v-if="cell.shows.length > 2" class="text-[8px] text-center font-mono text-slate-400">+{{ cell.shows.length - 2 }}건</div>
                   </div>
@@ -942,10 +957,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                       :class="[
                         s.status === '취소'
                           ? 'bg-slate-900/90 text-slate-500 border-slate-800 line-through opacity-60'
-                          : (s.payStatus === '미입금' ? 'bg-rose-500/20 text-rose-200 border-rose-500/40' : 'bg-indigo-500/20 text-indigo-200 border-indigo-500/40')
+                          : (s.status === '문의' ? 'bg-amber-500/10 text-amber-200/80 border-amber-400/60 border-dashed'
+                          : (s.payStatus === '미입금' ? 'bg-rose-500/20 text-rose-200 border-rose-500/40' : 'bg-indigo-500/20 text-indigo-200 border-indigo-500/40'))
                       ]"
                       :title="(s.status === '취소' ? '[취소됨] ' : '') + s.showTime + ' ' + s.client + ' (' + s.theme + ')'">
                       <span v-if="s.status === '취소'" class="text-rose-400 font-bold">[취소]</span>
+                      <span v-if="s.status === '문의'" class="text-amber-300 font-bold">[문의]</span>
+                      <span v-if="workTypeOf(s) !== '공연'" class="text-sky-300 font-bold">[{{ workTypeOf(s) }}]</span>
                       <span class="font-mono font-bold">{{ s.showTime }}</span> {{ s.client }}
                     </div>
                   </div>
@@ -970,19 +988,21 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center space-x-1.5">
                       <span class="font-mono font-bold text-xs text-amber-300">{{ s.showTime || '시간미정' }}</span>
-                      <span class="px-1.5 py-0.2 rounded text-[10px] font-bold" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span>
+                      <span class="px-1.5 py-0.2 rounded text-[10px] font-bold" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span><span v-if="s.status === '문의'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">문의</span><span v-if="workTypeOf(s) !== '공연'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">{{ workTypeOf(s) }}</span>
                       <span v-if="s.status === '취소'" class="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold">취소됨</span>
+                      <span v-if="s.status === '문의'" class="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">문의(미정)</span>
+                      <span v-if="workTypeOf(s) !== '공연'" class="px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 text-[10px] font-bold">{{ workTypeOf(s) }}</span>
                     </div>
                     <div class="text-sm font-black text-white truncate mt-0.5">{{ s.client }} <span class="text-xs font-normal text-slate-400">({{ s.region || '지역미정' }})</span></div>
+                    <div v-if="s.venueName || s.eventName" class="text-[11px] text-emerald-300 truncate">→ {{ [s.venueName, s.eventName].filter(Boolean).join(' · ') }}</div>
                   </div>
                   <div class="text-right shrink-0 space-y-1">
                     <div class="font-mono font-bold text-xs text-white">₩{{ (s.amount || 0).toLocaleString() }}</div>
                     <div class="flex flex-wrap items-center justify-end gap-1">
                       <a v-if="s.phone" :href="'tel:' + s.phone" @click.stop class="px-1.5 py-0.5 rounded bg-emerald-600/20 text-emerald-300 text-[10px] font-bold">📞</a>
-                      <button @click.stop="openMapNavigation(s.address || s.client, s.region)" class="px-1.5 py-0.5 rounded bg-blue-600/20 text-blue-300 text-[10px] font-bold">📍길</button>
+                      <button @click.stop="openMapNavigation(s.address || s.venueName || s.client, s.region)" class="px-1.5 py-0.5 rounded bg-blue-600/20 text-blue-300 text-[10px] font-bold">📍길</button>
                       <button @click.stop="openSmsModal(s)" class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">💬문자</button>
                       <button @click.stop="openQuoteModal(s)" class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">📄견적</button>
-                      <button @click.stop="openBlogStudioWithShow(s)" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">✍️글</button>
                     </div>
                   </div>
                 </div>
@@ -1035,7 +1055,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <!-- 상태 -->
                     <td class="py-2 px-1 font-sans text-center">
                       <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold inline-block" :title="cancelTooltip(s)"
-                        :class="s.status === '취소' ? (cancelBadge(s) === '무효' ? 'bg-slate-600/40 text-slate-300 border border-slate-500/50' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40') : (s.status === '완료' ? 'bg-slate-700 text-slate-300' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40')">
+                        :class="s.status === '취소' ? (cancelBadge(s) === '무효' ? 'bg-slate-600/40 text-slate-300 border border-slate-500/50' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40') : (s.status === '완료' ? 'bg-slate-700 text-slate-300' : (s.status === '문의' ? 'bg-amber-500/15 text-amber-300 border border-dashed border-amber-400/60' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'))">
                         {{ s.status === '취소' ? cancelBadge(s) : s.status }}
                       </span>
                     </td>
@@ -1054,7 +1074,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                           {{ s.custId }}
                         </button>
                         <a v-if="s.phone" :href="'tel:' + s.phone" class="px-1 py-0.2 rounded bg-emerald-500/15 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[9px] font-mono shrink-0" :title="'전화 걸기: ' + s.phone">📞</a>
-                        <button type="button" @click.stop="openMapNavigation(s.address || s.client, s.region)" class="px-1 py-0.2 rounded bg-blue-500/15 hover:bg-blue-600 text-blue-300 hover:text-white text-[9px] shrink-0 cursor-pointer" title="네이버지도 길찾기">📍길</button>
+                        <button type="button" @click.stop="openMapNavigation(s.address || s.venueName || s.client, s.region)" class="px-1 py-0.2 rounded bg-blue-500/15 hover:bg-blue-600 text-blue-300 hover:text-white text-[9px] shrink-0 cursor-pointer" title="네이버지도 길찾기">📍길</button>
+                      </div>
+                      <div v-if="s.venueName || s.eventName || workTypeOf(s) !== '공연' || isDirectSettle(s)" class="text-[10px] font-normal truncate">
+                        <span v-if="workTypeOf(s) !== '공연'" class="text-sky-300 font-bold mr-1">[{{ workTypeOf(s) }}]</span>
+                        <span v-if="s.venueName || s.eventName" class="text-emerald-300">→ {{ [s.venueName, s.eventName].filter(Boolean).join(' · ') }}</span>
+                        <span v-if="isDirectSettle(s)" class="text-violet-300 ml-1">공연자 직접 정산 · 수수료 ₩{{ (Number(s.commission) || 0).toLocaleString() }}{{ s.commissionReceived ? ' 받음' : '' }}</span>
                       </div>
                       <div v-if="s.address || s.memo || s.bizNo || s.email" class="text-[10px] text-slate-400 font-normal truncate">
                         <span v-if="s.bizNo" class="text-emerald-300 font-mono mr-1">[{{ s.bizNo }}]</span><span v-if="s.email" class="text-indigo-300 font-mono mr-1">{{ s.email }}</span>{{ s.address }} {{ s.memo ? '(' + s.memo + ')' : '' }}
@@ -1064,7 +1089,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <td class="py-2 px-1 font-sans text-slate-300 text-center whitespace-nowrap">{{ s.region || '-' }}</td>
                     <!-- 테마 -->
                     <td class="py-2 px-1 font-sans text-center truncate">
-                      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold inline-block truncate max-w-full" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span>
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold inline-block truncate max-w-full" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span><span v-if="s.status === '문의'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">문의</span><span v-if="workTypeOf(s) !== '공연'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">{{ workTypeOf(s) }}</span>
                     </td>
                     <!-- 공연료 -->
                     <td class="py-2 px-1.5 text-right font-bold whitespace-nowrap" :class="s.status === '취소' ? 'line-through text-slate-500' : 'text-white'">
@@ -1103,9 +1128,6 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                       </button>
                       <button @click="openQuoteModal(s)" class="px-1.5 py-1 rounded bg-indigo-500/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[10px] font-bold cursor-pointer" title="공식 견적서/확인서 PDF 출력">
                         📄견적
-                      </button>
-                      <button @click="openBlogStudioWithShow(s)" class="px-1.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-bold cursor-pointer" title="블로그·인스타 후기 자동 작성">
-                        ✍️글
                       </button>
                       <button @click="duplicateShowQuick(s)" class="px-1.5 py-1 rounded bg-slate-700/80 hover:bg-indigo-600 text-slate-300 hover:text-white text-[10px] font-bold cursor-pointer" title="일정 복사">
                         복사
@@ -1171,20 +1193,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                   </div>
                   <div class="flex items-center space-x-1.5 shrink-0 font-bold">
                     <a v-if="s.phone" :href="'tel:' + s.phone" class="px-2 py-0.5 rounded bg-emerald-600/25 text-emerald-300">📞전화</a>
-                    <button @click="openMapNavigation(s.address || s.client, s.region)" class="px-2 py-0.5 rounded bg-blue-600/25 text-blue-300">📍길찾기</button>
+                    <button @click="openMapNavigation(s.address || s.venueName || s.client, s.region)" class="px-2 py-0.5 rounded bg-blue-600/25 text-blue-300">📍길찾기</button>
                   </div>
                 </div>
 
                 <!-- Mobile Action Buttons Grid (No Overflow!) -->
                 <div class="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
                   <div class="flex items-center space-x-1">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span><span v-if="s.status === '문의'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">문의</span><span v-if="workTypeOf(s) !== '공연'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">{{ workTypeOf(s) }}</span>
                     <span class="text-[11px] text-slate-400">{{ s.issuer === '키즈니버스랩' ? '키즈랩' : '이츠쇼' }}</span>
                   </div>
                   <div class="flex flex-wrap items-center gap-1">
                     <button @click="openSmsModal(s)" class="px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-[11px] font-bold">💬문자</button>
                     <button @click="openQuoteModal(s)" class="px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 text-[11px] font-bold">📄견적</button>
-                    <button @click="openBlogStudioWithShow(s)" class="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-[11px] font-bold">✍️글</button>
                     <button @click="duplicateShowQuick(s)" class="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-bold">복사</button>
                     <button @click="openEditShowModal(s)" class="px-2 py-1 rounded-lg bg-slate-700 text-white text-[11px] font-bold">수정</button>
                     <button @click="toggleCancelShow(s)" class="px-2 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-[11px] font-bold">{{ s.status === '취소' ? '복구' : '취소' }}</button>
@@ -1730,10 +1751,30 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                   </div>
                   <div class="flex items-center space-x-1 shrink-0">
                     <button v-if="(performerStats[p.id] || {}).unpaid > 0" @click="openSettlementTab" class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-bold cursor-pointer">💸정산</button>
+                    <button @click="togglePerformerHistory(p)" class="px-2.5 py-1 rounded-lg bg-indigo-600/30 text-indigo-200 text-xs font-bold cursor-pointer">📜이력</button>
                     <button @click="openEditPerformerModal(p)" class="px-2.5 py-1 rounded-lg bg-slate-700 text-white text-xs font-bold cursor-pointer">✏️수정</button>
                   </div>
                 </div>
                 <div v-if="p.memo" class="text-[11px] text-slate-400 break-words">📝 {{ p.memo }}</div>
+                <!-- ★ v2.9: 출연 이력과 피드백 -->
+                <div v-if="openPerformerHistoryId === p.id" class="mt-1 p-2.5 rounded-xl bg-slate-950/80 border border-indigo-500/40 space-y-1.5 text-[11px]">
+                  <div class="font-bold text-indigo-300">📜 {{ p.name }} 출연 이력 ({{ performerHistory(p).length }}건, 취소 제외)</div>
+                  <div v-if="performerHistory(p).length === 0" class="text-slate-500">아직 출연 기록이 없어요.</div>
+                  <div v-for="h in performerHistory(p).slice(0, 30)" :key="'ph-' + h.no" class="border-t border-slate-800 pt-1.5">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <span class="font-mono text-slate-300">{{ h.showDate }}</span>
+                      <span class="font-bold text-white">{{ h.client }}</span>
+                      <span v-if="h.venueName || h.eventName" class="text-emerald-300">→ {{ [h.venueName, h.eventName].filter(Boolean).join(' · ') }}</span>
+                      <span class="px-1.5 rounded bg-slate-800 text-slate-300">{{ h.theme }}</span>
+                      <span v-if="h.status === '문의'" class="px-1.5 rounded bg-amber-500/20 text-amber-300">문의</span>
+                      <button @click="openEditShowModal(h)" class="ml-auto px-1.5 rounded bg-slate-700 text-white cursor-pointer">열기</button>
+                    </div>
+                    <div v-if="h.feedbackClient" class="text-slate-300 break-words">🙋 클라이언트: {{ h.feedbackClient }}</div>
+                    <div v-if="h.feedbackPerformer" class="text-slate-300 break-words">🎭 공연자: {{ h.feedbackPerformer }}</div>
+                    <div v-if="h.nextNote" class="text-amber-200 break-words">📌 {{ h.nextNote }}</div>
+                    <div v-if="!h.feedbackClient && !h.feedbackPerformer && h.status === '완료'" class="text-slate-500">피드백 없음</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1919,230 +1960,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         </div>
 
         <!-- ======================================================================= -->
-        <!-- TAB 5: ✍️ 네이버 블로그 & 인스타그램 OSMU 스튜디오 (Kidsniverse Blog & SNS Editor) -->
-        <!-- ======================================================================= -->
-        <div v-show="activeTab === 'blog'" class="space-y-6">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-800 gap-2.5">
-            <div>
-              <h2 class="text-base sm:text-lg font-bold text-white flex items-center space-x-2">
-                <span>✍️ 블로그 & SNS 스튜디오</span>
-                <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono badge-nowrap">OSMU</span>
-              </h2>
-              <p class="text-xs text-slate-400 mt-0.5 hidden sm:block">다녀온 공연을 선택하면 네이버 블로그 원고와 인스타 캡션이 동시에 생성됩니다.</p>
-            </div>
-            <div class="flex items-center space-x-2">
-              <button @click="generateBlogContent" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer shadow-lg">
-                ✨ 원고 자동 생성 / 새로고침
-              </button>
-            </div>
-          </div>
+        <!-- ★ v2.9: 블로그 & SNS 스튜디오 화면은 이츠쇼 SNS ERP(blog/app/이츠쇼_SNS_ERP.html)로 옮겼어요 -->
 
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            <!-- Left 5 Cols: 공연 선택 및 현장 에피소드 입력 패널 -->
-            <div class="lg:col-span-5 rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-4 h-fit">
-              <div class="flex items-center justify-between pb-2 border-b border-slate-700/60">
-                <h3 class="text-sm font-bold text-white">1️⃣ 공연 정보 불러오기 & 현장 메모 입력</h3>
-                <span class="text-[11px] text-indigo-300 font-mono">장부 연동</span>
-              </div>
-
-              <div class="space-y-3 text-xs">
-                <div>
-                  <label class="text-slate-400 block mb-1 font-bold">📂 마스터 장부에서 공연 선택 (선택 시 자동 입력)</label>
-                  <select v-model="selectedBlogShowNo" @change="onSelectShowForBlog" class="w-full px-3 py-2 rounded-xl border text-xs cursor-pointer font-bold">
-                    <option value="">-- 직접 입력 모드 (또는 아래에서 공연 선택) --</option>
-                    <option v-for="s in shows.filter(x => x.status !== '취소').slice(0, 80)" :key="s.no" :value="s.no">
-                      [{{ s.showDate }}] {{ s.client }} ({{ s.region || '지역' }} · {{ s.theme }})
-                    </option>
-                  </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <label class="text-slate-400 block mb-1">포스팅 유형</label>
-                    <select v-model="blogForm.postType" @change="generateBlogContent" class="w-full px-3 py-2 rounded-xl border text-xs">
-                      <option value="review">🎭 공연 다녀온 후기형</option>
-                      <option value="promo">📣 시즌/테마 섭외 홍보형</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="text-slate-400 block mb-1">지역명 (SEO 핵심 키워드)</label>
-                    <input type="text" v-model="blogForm.region" @input="generateBlogContent" placeholder="예: 천안, 서울 은평구, 동탄" class="w-full px-3 py-2 rounded-xl border text-xs font-bold" />
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <label class="text-slate-400 block mb-1">기관/행사명</label>
-                    <input type="text" v-model="blogForm.client" @input="generateBlogContent" placeholder="예: OO유치원" class="w-full px-3 py-2 rounded-xl border text-xs font-bold" />
-                  </div>
-                  <div>
-                    <label class="text-slate-400 block mb-1">기관 유형 (타겟 키워드)</label>
-                    <select v-model="blogForm.orgType" @change="generateBlogContent" class="w-full px-3 py-2 rounded-xl border text-xs">
-                      <option value="유치원">유치원</option>
-                      <option value="어린이집">어린이집</option>
-                      <option value="초등학교">초등학교 / 병설유치원</option>
-                      <option value="도서관">어린이도서관 / 공공도서관</option>
-                      <option value="축제/기업행사">지역축제 / 가족행사</option>
-                      <option value="복지관/기관">복지관 / 문화센터</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <label class="text-slate-400 block mb-1">공연 테마 (키즈니버스 세계관)</label>
-                    <select v-model="blogForm.theme" @change="generateBlogContent" class="w-full px-3 py-2 rounded-xl border text-xs font-bold">
-                      <option value="더클래식">키즈니버스 더클래식</option>
-                      <option value="더윈터">키즈니버스 더윈터 (겨울시즌)</option>
-                      <option value="더어드벤처">키즈니버스 더어드벤처</option>
-                      <option value="더 가디언즈">키즈니버스 더 가디언즈 (안전교육)</option>
-                      <option value="더에코">키즈니버스 더에코 (환경교육)</option>
-                      <option value="더플레이">키즈니버스 더플레이</option>
-                      <option value="매직버블쇼">익스트림 매직버블쇼</option>
-                      <option value="매직벌룬쇼">판타지 매직벌룬쇼</option>
-                      <option value="매직쉐도우">빛과 그림자 매직쉐도우</option>
-                      <option value="강연/체험">문화예술 강연/체험</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="text-slate-400 block mb-1">발행 브랜드</label>
-                    <select v-model="blogForm.issuer" @change="generateBlogContent" class="w-full px-3 py-2 rounded-xl border text-xs">
-                      <option value="이츠쇼컴퍼니">이츠쇼컴퍼니 (버블케이)</option>
-                      <option value="키즈니버스랩">키즈니버스랩 (면세 계산서 가능)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label class="text-slate-400 block mb-1 font-bold text-amber-300">💬 현장 에피소드 / 선생님 반응 한 줄 메모 (선택)</label>
-                  <textarea rows="3" v-model="blogForm.episode" @input="generateBlogContent"
-                    placeholder="예: 원장선생님께서 아이들이 50분 내내 이렇게 집중한 적은 처음이라며 겨울 시즌 더윈터도 바로 예약 문의를 주셨어요! (비워두면 입력 가이드가 표시됩니다)"
-                    class="w-full px-3 py-2 rounded-xl border text-xs leading-relaxed"></textarea>
-                </div>
-
-                <!-- Official Contact Card Preview & 1-Click Copy -->
-                <div class="p-3 rounded-xl bg-slate-900/90 border border-indigo-500/40 space-y-1.5">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-bold text-indigo-300">📇 하단 자동 삽입 공식 문의처 (고정 반영됨)</span>
-                    <button type="button" @click="copyTextToClipboard(officialContactBlock, '공식 문의처 명함')" class="text-[10px] px-2 py-0.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-bold cursor-pointer">
-                      문의처만 복사
-                    </button>
-                  </div>
-                  <div class="text-[11px] font-mono text-slate-300 space-y-0.5 leading-snug">
-                    <div>📞 연락처 : <strong class="text-white">010-2485-8561</strong></div>
-                    <div>📧 이메일 : <strong class="text-white">itsshow001@naver.com</strong></div>
-                    <div>🌐 홈페이지 : <strong class="text-emerald-300">www.itsshow.co.kr</strong></div>
-                    <div>📸 인스타그램 : <strong class="text-pink-300">@itsshowcom</strong></div>
-                    <div>📝 네이버블로그 : <strong class="text-emerald-300">https://blog.naver.com/itsshow001</strong></div>
-                  </div>
-                </div>
-
-                <div class="pt-2 border-t border-slate-700/60 flex items-center justify-between">
-                  <span class="text-[11px] text-slate-400">작성한 원고를 내 보관함에 저장해 둘 수 있습니다.</span>
-                  <button @click="saveCurrentBlogPost" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer shadow">
-                    💾 원고 보관함에 저장 ({{ savedBlogPosts.length }})
-                  </button>
-                </div>
-              </div>
-
-              <!-- Saved Posts History -->
-              <div v-if="savedBlogPosts.length > 0" class="pt-3 border-t border-slate-700 space-y-2">
-                <div class="text-xs font-bold text-slate-300">📚 저장된 블로그 원고 보관함 ({{ savedBlogPosts.length }}건)</div>
-                <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                  <div v-for="(post, idx) in savedBlogPosts" :key="post.id" class="p-2 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs">
-                    <div @click="loadSavedBlogPost(post)" class="truncate cursor-pointer flex-1">
-                      <span class="font-mono text-[10px] text-indigo-400 mr-1">{{ post.date }}</span>
-                      <span class="font-bold text-white">{{ post.client }}</span>
-                      <span class="text-[10px] text-slate-400 ml-1">({{ post.theme }})</span>
-                    </div>
-                    <button @click="deleteSavedBlogPost(idx)" class="text-slate-500 hover:text-rose-400 px-1.5 cursor-pointer">✕</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Right 7 Cols: 실시간 생성된 네이버 블로그 & 인스타그램 OSMU 원고 미리보기 및 원클릭 복사 -->
-            <div class="lg:col-span-7 space-y-4">
-              <!-- Output Sub-Tab Switcher -->
-              <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-800/90 p-3 rounded-2xl border border-slate-700/80">
-                <div class="flex w-full min-[1500px]:w-auto bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold">
-                  <button @click="blogOutputTab = 'naver'" class="flex-1 whitespace-normal text-center leading-tight px-3.5 py-1.5 rounded-lg cursor-pointer transition-all"
-                    :class="blogOutputTab === 'naver' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'">
-                    🟢 네이버 블로그 원고 (제목3+4단본문)
-                  </button>
-                  <button @click="blogOutputTab = 'insta'" class="flex-1 whitespace-normal text-center leading-tight px-3.5 py-1.5 rounded-lg cursor-pointer transition-all"
-                    :class="blogOutputTab === 'insta' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'">
-                    📸 인스타 피드 & 릴스 캡션 (OSMU)
-                  </button>
-                </div>
-
-                <div class="flex items-center space-x-2">
-                  <button v-if="blogOutputTab === 'naver'" @click="copyTextToClipboard(fullNaverCopyText, '네이버 블로그 전체 원고')"
-                    class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer shadow">
-                    📋 블로그 원고 전체 복사
-                  </button>
-                  <button v-else @click="copyTextToClipboard(generatedBlog.instaText, '인스타그램 피드/릴스 원고')"
-                    class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer shadow">
-                    📋 인스타 원고 전체 복사
-                  </button>
-                </div>
-              </div>
-
-              <!-- Output View 1: Naver Blog -->
-              <div v-if="blogOutputTab === 'naver'" class="space-y-4">
-                <!-- SEO Titles 3 Options -->
-                <div class="rounded-2xl bg-slate-800/90 border border-emerald-500/40 p-4 space-y-2.5">
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-emerald-300">🎯 STEP 1. 네이버 블로그 상위노출용 추천 제목 3선 (클릭 시 개별 복사)</span>
-                    <span class="text-[10px] text-slate-400">[지역명] + [기관/행사명] + [핵심키워드]</span>
-                  </div>
-                  <div class="space-y-1.5">
-                    <div v-for="(t, i) in generatedBlog.titles" :key="i" @click="copyTextToClipboard(t, '추천 제목 ' + (i+1))"
-                      class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-950 border border-slate-700 hover:border-emerald-500/60 flex items-center justify-between cursor-pointer text-xs">
-                      <span class="font-bold text-white"><strong class="text-emerald-400 mr-1.5">제목 {{ i + 1 }}.</strong> {{ t }}</span>
-                      <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-emerald-300">복사</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Editable Blog Body + Photo Guides -->
-                <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-4 space-y-2.5">
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-white">📝 STEP 2. 모바일 가독성 최적화 본문 & 사진 배치 가이드 (자유 편집 가능)</span>
-                    <span class="text-[11px] font-mono text-slate-400">{{ generatedBlog.naverBody.length }}자</span>
-                  </div>
-                  <textarea rows="18" v-model="generatedBlog.naverBody"
-                    class="w-full p-4 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-200 leading-relaxed font-sans"></textarea>
-                </div>
-
-                <!-- Hashtags -->
-                <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-4 space-y-2">
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-indigo-300">🏷️ 추천 네이버 블로그 태그 (클릭하여 복사)</span>
-                    <button @click="copyTextToClipboard(generatedBlog.naverTags, '블로그 해시태그')" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-bold cursor-pointer">태그만 복사</button>
-                  </div>
-                  <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-indigo-200 font-mono leading-relaxed">
-                    {{ generatedBlog.naverTags }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Output View 2: Instagram Feed & Reels -->
-              <div v-else class="rounded-2xl bg-slate-800/90 border border-indigo-500/40 p-5 space-y-3">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-xs font-bold text-indigo-300">📸 STEP 3. 인스타그램 피드/릴스 6컷 슬라이드 자막 & 캡션 패키지</h3>
-                    <p class="text-[11px] text-slate-400">카드뉴스 문구 및 릴스 텍스트 오버레이 구성안과 본문 캡션이 함께 들어있습니다.</p>
-                  </div>
-                </div>
-                <textarea rows="20" v-model="generatedBlog.instaText"
-                  class="w-full p-4 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-200 leading-relaxed font-sans"></textarea>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ======================================================================= -->
         <!-- TAB 5: ⚙️ 엑셀 연동 & 통장 잔고 / 백업 설정 -->
         <!-- ======================================================================= -->
         <div v-show="activeTab === 'settings'" class="space-y-6 max-w-5xl mx-auto">
@@ -2223,9 +2042,27 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <h3 class="text-sm font-bold text-white">💾 JSON 안전 백업 및 초기 데이터 복원</h3>
                 <p class="text-xs text-slate-400">브라우저 캐시를 비우기 전에 JSON 백업 파일을 보관하거나, 처음 구글 시트 원본 데이터 상태로 되돌릴 수 있습니다.</p>
               </div>
+              <div class="text-[11px] rounded-xl p-2.5 border" :class="backupAgeDays === null || backupAgeDays >= 7 ? 'bg-rose-500/10 border-rose-500/40 text-rose-200' : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200'">
+                {{ backupAgeDays === null ? '아직 백업 기록이 없어요.' : (backupAgeDays === 0 ? '오늘 백업했어요.' : '마지막 백업: ' + backupAgeDays + '일 전') }}
+                <span v-if="autoFolderName"> · 📁 자동 백업 폴더: {{ autoFolderName }}</span>
+                <span class="block text-slate-400 mt-0.5">백업 파일에는 공연·고객·정산 기록과 블로그(SNS ERP) 관리판·설정이 함께 들어가요. 이 파일은 이 기기 밖 어디로도 저절로 보내지지 않아요.</span>
+              </div>
               <div class="grid grid-cols-2 gap-2">
                 <button @click="exportBackupJSON" class="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer">
                   💾 JSON 백업 저장
+                </button>
+                <button @click="shareBackup" class="py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs cursor-pointer">
+                  📤 백업 보내기 (휴대폰 · 파일 앱/카톡)
+                </button>
+                <button @click="pickRestoreFile" class="py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs cursor-pointer">
+                  📂 백업 파일로 되돌리기
+                </button>
+                <input type="file" ref="restoreFileInput" accept=".json,application/json" class="hidden" @change="restoreFromBackupFile" />
+                <button v-if="navLastApp" @click="resetNavApp" class="py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs cursor-pointer">
+                  📍 길찾기 앱 다시 고르기 (지금: {{ ({ naver: '네이버 지도', kakao: '카카오맵', tmap: '티맵' })[navLastApp] }})
+                </button>
+                <button v-if="canAutoFolder" @click="chooseAutoFolder" class="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs cursor-pointer">
+                  📁 {{ autoFolderName ? '자동 백업 폴더 바꾸기' : '자동 백업 폴더 정하기 (PC)' }}
                 </button>
                 <button @click="resetToOriginalData" class="py-2.5 rounded-xl bg-slate-700 hover:bg-rose-600 text-white font-bold text-xs cursor-pointer">
                   🔄 원본 데이터로 초기화
@@ -2335,10 +2172,23 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div>
             <label class="text-slate-400 block mb-1">진행 상태 (취소 보존 지원)</label>
             <select v-model="editingShowForm.status" class="w-full px-3 py-2 rounded-xl border font-bold">
+              <option value="문의">🟡 문의 (미정 · 날짜만 잡아 둠)</option>
               <option value="확정">🟢 확정 (예정)</option>
               <option value="완료">✅ 완료</option>
               <option value="취소">🚫 취소 (삭제안함·기록보존)</option>
             </select>
+          </div>
+          <!-- ★ v2.9: 일 종류 (공연 / 강연 / 서브) -->
+          <div>
+            <label class="text-slate-400 block mb-1">일 종류 <span class="text-[10px] text-slate-500">(서브 = 다른 공연자의 공연을 도와주는 일)</span></label>
+            <select v-model="editingShowForm.workType" class="w-full px-3 py-2 rounded-xl border font-bold">
+              <option value="공연">🎪 공연</option>
+              <option value="강연">🎤 강연</option>
+              <option value="서브">🤝 서브 (내가 돕는 일 · 받는 돈을 금액에)</option>
+            </select>
+          </div>
+          <div v-if="editingShowForm.status === '문의'" class="sm:col-span-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-[11px] text-amber-200">
+            🟡 문의(미정)는 달력에 흐리게 보여 같은 날 겹치는 걸 막아 줘요. 매출·미수금·정산·블로그 글감에는 들어가지 않아요. 정해지면 [확정]으로 바꿔 주세요.
           </div>
           <!-- v2.3: 취소로 표시할 때만 보이는 칸 (왜 취소됐는지 남김 — 삭제 대신 기록) -->
           <div v-if="editingShowForm.status === '취소'" class="sm:col-span-3 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/40 grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -2388,6 +2238,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold shrink-0">{{ sg.reason }}</span>
               </button>
             </div>
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">실제 행사처 <span class="text-[10px] text-slate-500">(기획사·협업업체를 거친 공연일 때, 현장에서 알게 되면 적기)</span></label>
+            <input type="text" v-model="editingShowForm.venueName" placeholder="예: 햇살어린이집 · 롯데월드몰" class="w-full px-3 py-2 rounded-xl border" />
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">행사 이름</label>
+            <input type="text" v-model="editingShowForm.eventName" placeholder="예: 가을 운동회 · 크리스마스 파티" class="w-full px-3 py-2 rounded-xl border" />
           </div>
           <div>
             <label class="text-indigo-300 block mb-1 font-bold">🤝 단골고객(고객번호) 불러오기</label>
@@ -2474,6 +2332,30 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <input type="number" v-model.number="editingShowForm.settleAmt" step="10000" class="w-full px-3 py-2 rounded-xl border font-mono" />
             <p v-if="showModalSettleHint" class="text-[10px] mt-1 leading-snug" :class="showModalSettleHint.cls">{{ showModalSettleHint.text }}</p>
           </div>
+          <!-- ★ v2.9: 정산 방식 · 수수료 · 실수익 -->
+          <div class="sm:col-span-3 p-3 rounded-2xl bg-slate-950/70 border border-indigo-500/40 grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div>
+              <label class="text-indigo-300 block mb-1 font-bold">💳 정산 방식</label>
+              <select v-model="editingShowForm.settleMode" class="w-full px-3 py-2 rounded-xl border">
+                <option value="회사 정산">회사 정산 (고객 → 회사 → 공연자)</option>
+                <option value="공연자 직접">공연자 직접 정산 (고객 → 공연자)</option>
+              </select>
+            </div>
+            <div v-if="editingShowForm.settleMode === '공연자 직접'">
+              <label class="text-indigo-300 block mb-1 font-bold">수수료 (받은 그대로, 원)</label>
+              <input type="number" v-model.number="editingShowForm.commission" step="10000" class="w-full px-3 py-2 rounded-xl border font-mono" />
+              <label class="flex items-center gap-1.5 mt-1 text-[11px] text-slate-300"><input type="checkbox" v-model="editingShowForm.commissionReceived"> 수수료 받았어요</label>
+            </div>
+            <div class="text-[11px] leading-relaxed text-slate-300 sm:col-span-1" :class="editingShowForm.settleMode === '공연자 직접' ? '' : 'sm:col-span-2'">
+              <template v-if="editingShowForm.settleMode === '공연자 직접'">
+                고객이 공연자에게 바로 줘요. 회사 매출·실수익은 <b class="text-emerald-300">수수료 ₩{{ (Number(editingShowForm.commission) || 0).toLocaleString() }}</b>만 잡히고, 미수금·공연자 정산·계산서 목록에는 뜨지 않아요.
+              </template>
+              <template v-else>
+                공연 총액 ₩{{ (Number(editingShowForm.amount) || 0).toLocaleString() }} − 공연자 지급(세전) ₩{{ (Number(editingShowForm.settleAmt) || 0).toLocaleString() }}
+                = <b class="text-emerald-300">실수익 ₩{{ ((Number(editingShowForm.amount) || 0) - (Number(editingShowForm.settleAmt) || 0)).toLocaleString() }}</b>
+              </template>
+            </div>
+          </div>
           <div>
             <label class="text-slate-400 block mb-1">문의 경로 * <span class="text-[10px] text-slate-500">(어디서 연락이 왔나요?)</span></label>
             <select v-model="editingShowForm.channel" class="w-full px-3 py-2 rounded-xl border" :class="!isEditingShow && !editingShowForm.channel ? 'border-amber-500/60' : ''">
@@ -2495,9 +2377,45 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </optgroup>
             </select>
           </div>
+          <!-- ★ v2.9: 공연 직후 기록 (완료로 바꿀 때 채우기) -->
+          <div class="sm:col-span-3 p-3 rounded-2xl border space-y-2" :class="editingShowForm.status === '완료' ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-slate-950/60 border-slate-700'">
+            <div class="text-xs font-bold" :class="editingShowForm.status === '완료' ? 'text-emerald-300' : 'text-slate-400'">🎤 공연 직후 기록 <span class="font-normal text-[10px]">(블로그 후기 재료와 다음 섭외 참고가 돼요)</span></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div class="sm:col-span-2">
+                <label class="text-slate-400 block mb-1">현장 한 줄 메모</label>
+                <input type="text" v-model="editingShowForm.fieldMemo" placeholder="예: 버블 터널에서 아이들이 줄을 서서 기다렸어요" class="w-full px-3 py-2 rounded-xl border" />
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">클라이언트 피드백</label>
+                <input type="text" v-model="editingShowForm.feedbackClient" placeholder="고객(기관·기획사)에게 들은 말" class="w-full px-3 py-2 rounded-xl border" />
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">공연자 피드백</label>
+                <input type="text" v-model="editingShowForm.feedbackPerformer" placeholder="공연자에게 들은 현장 이야기" class="w-full px-3 py-2 rounded-xl border" />
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">다음에 참고할 점</label>
+                <input type="text" v-model="editingShowForm.nextNote" placeholder="예: 주차 어려움, 전기 콘센트 멀리 있음" class="w-full px-3 py-2 rounded-xl border" />
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">사진·영상</label>
+                <select v-model="editingShowForm.photoSource" class="w-full px-3 py-2 rounded-xl border">
+                  <option value="">-- 선택 --</option>
+                  <option value="공연자에게 받음">공연자에게 받음</option>
+                  <option value="대표님이 찍음">대표님이 찍음</option>
+                  <option value="없음">없음 (블로그에는 비슷한 지난 사진 · '지난 공연 모습'으로 표시)</option>
+                </select>
+              </div>
+            </div>
+          </div>
           <div class="sm:col-span-3">
-            <label class="text-slate-400 block mb-1">상세 주소 / 메모</label>
-            <input type="text" v-model="editingShowForm.address" placeholder="상세 공연 장소 및 특이사항 메모" class="w-full px-3 py-2 rounded-xl border" />
+            <label class="text-slate-400 block mb-1">상세 주소 (공연 장소)</label>
+            <input type="text" v-model="editingShowForm.address" placeholder="상세 공연 장소 (길찾기에 쓰여요)" class="w-full px-3 py-2 rounded-xl border" />
+          </div>
+          <!-- ★ v2.9: 협의 메모 칸 (대시보드 '협의 메모 없음' 알림이 보는 칸. v2.8에는 입력하는 곳이 없었음) -->
+          <div class="sm:col-span-3">
+            <label class="text-slate-400 block mb-1">📝 협의 메모 <span class="text-[10px] text-slate-500">(시간·회차·준비물·주차 등 고객과 정한 것. 적으면 '협의 메모 없음' 알림이 사라져요)</span></label>
+            <textarea v-model="editingShowForm.memo" rows="2" placeholder="예: 2회 공연(10:30, 11:30) · 강당 사용 · 주차 가능 · 마이크 기관 준비" class="w-full px-3 py-2 rounded-xl border"></textarea>
           </div>
           <!-- ★ 고객번호(custId) 기반 단골고객 사업자·이메일 양방향 동기화 영역 ★ -->
           <div class="sm:col-span-3 p-3.5 rounded-2xl bg-slate-950/90 border border-emerald-500/40 space-y-2.5">
@@ -2608,6 +2526,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <span class="px-2 py-0.5 rounded text-[10px] font-bold font-sans" :class="summaryShow.status === '완료' ? 'bg-slate-700 text-slate-300' : 'bg-emerald-500/20 text-emerald-300'">{{ summaryShow.status }}</span>
             </div>
             <h3 class="text-lg font-black text-white mt-1 break-words">{{ summaryShow.client }}</h3>
+            <div v-if="summaryShow.venueName || summaryShow.eventName" class="text-xs text-emerald-300 break-words">→ {{ [summaryShow.venueName, summaryShow.eventName].filter(Boolean).join(' · ') }}</div>
+            <div class="flex flex-wrap gap-1 mt-1">
+              <span v-if="summaryShow.status === '문의'" class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">🟡 문의(미정)</span>
+              <span v-if="workTypeOf(summaryShow) !== '공연'" class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 text-[10px] font-bold">{{ workTypeOf(summaryShow) }}</span>
+            </div>
           </div>
           <button @click="closeShowSummary" class="text-slate-400 hover:text-white text-sm cursor-pointer shrink-0">✕</button>
         </div>
@@ -2616,7 +2539,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div class="p-3 rounded-xl bg-slate-950/90 border border-slate-800 space-y-1.5">
             <div class="flex items-start justify-between gap-2">
               <span class="text-slate-200 break-words min-w-0">📍 {{ summaryShow.address || summaryShow.region || '장소 미정' }}<span v-if="summaryShow.address && summaryShow.region" class="text-slate-400"> ({{ summaryShow.region }})</span></span>
-              <button @click="openMapNavigation(summaryShow.address || summaryShow.client, summaryShow.region)" type="button" class="px-2 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white font-bold shrink-0 cursor-pointer">🗺️ 길찾기</button>
+              <button @click="openMapNavigation(summaryShow.address || summaryShow.venueName || summaryShow.client, summaryShow.region)" type="button" class="px-2 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white font-bold shrink-0 cursor-pointer">🗺️ 길찾기</button>
             </div>
             <div class="flex items-center justify-between gap-2">
               <span class="text-slate-200 min-w-0 truncate">📞 {{ summaryShow.manager || '담당자' }} <span class="font-mono text-slate-400">{{ summaryShow.phone || '연락처 없음' }}</span></span>
@@ -2641,6 +2564,24 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
 
+          <!-- ★ v2.9: 실수익 · 정산 방식 -->
+          <div v-if="isMoneyShow(summaryShow)" class="p-3 rounded-xl bg-slate-950/90 border border-slate-800 font-mono text-[11px] space-y-0.5">
+            <template v-if="isDirectSettle(summaryShow)">
+              <div class="font-sans text-violet-300 font-bold">🤝 공연자 직접 정산</div>
+              <div class="text-slate-300">수수료 ₩{{ (Number(summaryShow.commission) || 0).toLocaleString() }} · {{ summaryShow.commissionReceived ? '받음' : '아직' }} → <b class="text-emerald-300">실수익 ₩{{ netOf(summaryShow).toLocaleString() }}</b></div>
+            </template>
+            <div v-else class="text-slate-300">총액 ₩{{ revenueOf(summaryShow).toLocaleString() }} − 공연자 지급 ₩{{ payoutOf(summaryShow).toLocaleString() }} = <b class="text-emerald-300">실수익 ₩{{ netOf(summaryShow).toLocaleString() }}</b></div>
+          </div>
+          <!-- ★ v2.9: 공연 직후 기록 -->
+          <div v-if="summaryShow.fieldMemo || summaryShow.feedbackClient || summaryShow.feedbackPerformer || summaryShow.nextNote || summaryShow.photoSource" class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/40 space-y-1 text-[11px]">
+            <div class="font-bold text-emerald-300 text-xs">🎤 공연 직후 기록</div>
+            <div v-if="summaryShow.fieldMemo" class="text-white break-words">📝 {{ summaryShow.fieldMemo }}</div>
+            <div v-if="summaryShow.feedbackClient" class="text-slate-200 break-words">🙋 클라이언트: {{ summaryShow.feedbackClient }}</div>
+            <div v-if="summaryShow.feedbackPerformer" class="text-slate-200 break-words">🎭 공연자: {{ summaryShow.feedbackPerformer }}</div>
+            <div v-if="summaryShow.nextNote" class="text-amber-200 break-words">📌 다음에: {{ summaryShow.nextNote }}</div>
+            <div v-if="summaryShow.photoSource" class="text-slate-400">📷 {{ summaryShow.photoSource }}</div>
+          </div>
+          <div v-else-if="summaryShow.status === '완료'" class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-[11px] text-amber-200">🎤 공연 직후 기록이 비어 있어요. [✏️ 수정]에서 현장 메모·피드백·사진 여부를 적어 두면 블로그 후기와 다음 섭외에 쓰여요.</div>
           <div class="p-3 rounded-xl border space-y-1" :class="memoFirstLine(summaryShow) ? 'bg-slate-950/90 border-slate-800' : 'bg-amber-500/10 border-amber-500/40'">
             <div class="font-bold" :class="memoFirstLine(summaryShow) ? 'text-slate-300' : 'text-amber-300'">📝 협의 메모</div>
             <div v-if="memoFirstLine(summaryShow)" class="text-white break-words leading-relaxed" style="white-space: pre-wrap">{{ summaryShow.memo }}</div>
@@ -2656,6 +2597,21 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     </div>
 
     <!-- ======================================================================= -->
+    <!-- ★ v2.9: 길찾기 앱 고르기 -->
+    <div v-if="navSheet" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/70" @click.self="navSheet = null">
+      <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-sm p-5 space-y-3 shadow-2xl">
+        <div class="text-sm font-bold text-white">📍 어떤 앱으로 길을 찾을까요?</div>
+        <div class="text-[11px] text-slate-400 break-words">{{ navSheet.query }}</div>
+        <div class="grid grid-cols-3 gap-2">
+          <button @click="launchNav('naver', navSheet.query)" class="py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer">네이버 지도</button>
+          <button @click="launchNav('kakao', navSheet.query)" class="py-3 rounded-2xl bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-bold cursor-pointer">카카오맵</button>
+          <button @click="launchNav('tmap', navSheet.query)" class="py-3 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold cursor-pointer">티맵</button>
+        </div>
+        <label class="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" v-model="navRemember"> 다음부터 이 앱으로 바로 열기 (설정 탭에서 바꿀 수 있어요)</label>
+        <button @click="navSheet = null" class="w-full py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold cursor-pointer">닫기</button>
+      </div>
+    </div>
+
     <!-- MODAL v2.6: 🎭 공연자 추가 / 수정 -->
     <!-- ======================================================================= -->
     <div v-if="performerModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" @click.self="performerModalOpen = false">
@@ -3414,6 +3370,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const todoItems = ref([]);
         const performers = ref([]); // ★ v2.6: 공연자 명부
 
+        // ★ v2.9: 상태·정산 방식에 따라 돈 계산을 나눕니다.
+        //   문의(미정)는 일정에는 보이지만 매출·미수금·정산에서는 뺍니다.
+        //   공연자 직접 정산은 고객이 공연자에게 바로 주므로, 회사 매출·실수익은 받은 수수료만 봅니다.
+        const isInquiry = (s) => !!s && s.status === '문의';
+        const isDirectSettle = (s) => !!s && s.settleMode === '공연자 직접';
+        const isMoneyShow = (s) => !!s && s.status !== '취소' && s.status !== '문의';
+        const revenueOf = (s) => isDirectSettle(s) ? (Number(s.commission) || 0) : (Number(s.amount) || 0);
+        const payoutOf = (s) => isDirectSettle(s) ? 0 : (Number(s.settleAmt) || 0);
+        const netOf = (s) => revenueOf(s) - payoutOf(s);
+        const workTypeOf = (s) => (s && s.workType) || '공연';
+
         const themeMode = ref(localStorage.getItem('itsshow_v23_theme') || 'dark');
         const isSidebarOpen = ref(true);
         const isMobile = ref(false);
@@ -3478,7 +3445,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           { id: 'finance', icon: '💰', label: '미수금 & 3.3% 정산', badge: unpaidShows.value.length > 0 ? unpaidShows.value.length + '건' : '' },
           { id: 'crm', icon: '🤝', label: '단골 고객(CRM)', badge: customers.value.length },
           { id: 'performers', icon: '🎭', label: '공연자 명부', badge: undecidedPerformerCount.value > 0 ? '미정 ' + undecidedPerformerCount.value : performers.value.length },
-          { id: 'blog', icon: '✍️', label: '블로그 & SNS 스튜디오', badge: 'OSMU' },
+          // ★ v2.9: 블로그 & SNS 스튜디오 탭은 PC의 '이츠쇼 SNS ERP'로 옮겼어요 (저장해 둔 원고는 지우지 않고 그대로 둠)
           { id: 'settings', icon: '⚙️', label: '통장 잔고 & 엑셀 연동' }
         ]);
 
@@ -3723,7 +3690,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           // ── 물어보는 것 ──
           const status = vStr(f.status);
           const okAmounts = Number.isFinite(amount) && Number.isFinite(settleAmt);
-          if (okAmounts && amount === 0 && status !== '취소' && (changed('amount') || changed('status'))) {
+          if (okAmounts && amount === 0 && status !== '취소' && status !== '문의' && (changed('amount') || changed('status'))) {
             warnings.push('금액이 0원이에요. (견적 전이거나 무료 공연이면 그대로 두셔도 돼요)');
           }
           if (okAmounts && status === '취소' && amount > 0 && (changed('status') || changed('amount'))) {
@@ -4065,6 +4032,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const before30 = addDaysToDateStr(today, -30);
           const lateUnpaid = unpaidShows.value.filter(s => s.showDate && s.showDate <= before30);
           if (lateUnpaid.length) list.push({ key: 'unpaid', icon: '💸', text: `입금 안 된 지난 공연 ${lateUnpaid.length}건 (30일 넘음) · ₩${lateUnpaid.reduce((a, s) => a + (Number(s.amount) || 0), 0).toLocaleString()}`, go: 'unpaid' });
+          // ★ v2.9: 날짜가 지난 문의(미정) · 아직 못 받은 수수료
+          const staleInquiry = shows.value.filter(s => isInquiry(s) && s.showDate && s.showDate < today);
+          if (staleInquiry.length) list.push({ key: 'inquiry', icon: '🟡', text: `날짜가 지난 문의(미정) ${staleInquiry.length}건 → 확정 또는 취소로 정리`, shows: staleInquiry });
+          const commissionDue = shows.value.filter(s => isMoneyShow(s) && isDirectSettle(s) && Number(s.commission) > 0 && !s.commissionReceived && s.showDate && s.showDate < today);
+          if (commissionDue.length) list.push({ key: 'commission', icon: '🤝', text: `아직 못 받은 수수료 ${commissionDue.length}건 · ₩${commissionDue.reduce((a, s) => a + (Number(s.commission) || 0), 0).toLocaleString()}`, shows: commissionDue });
           const pastSettle = shows.value.filter(s => isSettleOpen(s) && s.showDate < today);
           if (pastSettle.length) list.push({ key: 'settle', icon: '🎭', text: `공연자 미지급 ${pastSettle.length}건 (지난 공연) · ₩${pastSettle.reduce((a, s) => a + (Number(s.settleAmt) || 0), 0).toLocaleString()}`, go: 'settle' });
           if (settleSummary.value.invoicePending > 0) list.push({ key: 'invoice', icon: '🧾', text: `사업자 공연자 계산서 미수취 ${settleSummary.value.invoicePending}건`, go: 'settle' });
@@ -4093,10 +4065,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const monthRevenue = computed(() => {
           const today = referenceToday.value;
           const ym = today.slice(0, 7);
-          const list = shows.value.filter(s => s.status !== '취소' && String(s.showDate || '').startsWith(ym));
-          const done = list.filter(s => s.showDate <= today).reduce((a, s) => a + (Number(s.amount) || 0), 0);
-          const plan = list.filter(s => s.showDate > today).reduce((a, s) => a + (Number(s.amount) || 0), 0);
-          return { ym, count: list.length, done, plan, total: done + plan };
+          const list = shows.value.filter(s => isMoneyShow(s) && String(s.showDate || '').startsWith(ym));
+          const done = list.filter(s => s.showDate <= today).reduce((a, s) => a + revenueOf(s), 0);
+          const plan = list.filter(s => s.showDate > today).reduce((a, s) => a + revenueOf(s), 0);
+          const net = list.reduce((a, s) => a + netOf(s), 0);
+          const inquiry = shows.value.filter(s => isInquiry(s) && String(s.showDate || '').startsWith(ym)).length;
+          return { ym, count: list.length, done, plan, total: done + plan, net, inquiry };
         });
 
         // --- 상세 요약 카드 (대시보드에서 공연을 누르면 수정 창 대신 이 카드가 뜸) ---
@@ -4141,19 +4115,22 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         });
 
         const periodShows = computed(() => {
-          const activeShows = shows.value.filter(s => s.status !== '취소');
+          const activeShows = shows.value.filter(s => isMoneyShow(s));
           if (selectedYearMonth.value === 'ALL') return activeShows;
           return activeShows.filter(s => s.showDate && s.showDate.startsWith(selectedYearMonth.value));
         });
 
-        const periodTotalRevenue = computed(() => periodShows.value.reduce((acc, s) => acc + (Number(s.amount) || 0), 0));
-        const periodItsshowRevenue = computed(() => periodShows.value.filter(s => s.issuer !== '키즈니버스랩').reduce((acc, s) => acc + (Number(s.amount) || 0), 0));
-        const periodKidsniverseRevenue = computed(() => periodShows.value.filter(s => s.issuer === '키즈니버스랩').reduce((acc, s) => acc + (Number(s.amount) || 0), 0));
-        const overallTotalRevenue = computed(() => shows.value.filter(s => s.status !== '취소').reduce((acc, s) => acc + (Number(s.amount) || 0), 0));
+        const periodTotalRevenue = computed(() => periodShows.value.reduce((acc, s) => acc + revenueOf(s), 0));
+        const periodItsshowRevenue = computed(() => periodShows.value.filter(s => s.issuer !== '키즈니버스랩').reduce((acc, s) => acc + revenueOf(s), 0));
+        const periodKidsniverseRevenue = computed(() => periodShows.value.filter(s => s.issuer === '키즈니버스랩').reduce((acc, s) => acc + revenueOf(s), 0));
+        const overallTotalRevenue = computed(() => shows.value.filter(s => isMoneyShow(s)).reduce((acc, s) => acc + revenueOf(s), 0));
+        // ★ v2.9: 실수익 = 매출 - 공연자·서브 인원 지급(세전)
+        const periodPayout = computed(() => periodShows.value.reduce((acc, s) => acc + payoutOf(s), 0));
+        const periodNet = computed(() => periodShows.value.reduce((acc, s) => acc + netOf(s), 0));
 
         const unpaidShows = computed(() => {
           return shows.value
-            .filter(s => s.status !== '취소' && s.payStatus === '미입금')
+            .filter(s => isMoneyShow(s) && !isDirectSettle(s) && s.payStatus === '미입금') // 공연자 직접 정산은 회사가 받을 돈이 아님
             .sort((a, b) => (a.showDate || '').localeCompare(b.showDate || ''));
         });
 
@@ -4176,7 +4153,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             if (selectedYearMonth.value !== 'ALL' && (!s.showDate || !s.showDate.startsWith(selectedYearMonth.value))) return false;
             if (filterStatus.value === 'ACTIVE' && s.status === '취소') return false;
             if (filterStatus.value === '5DAYS' && (s.status === '취소' || !isWithin5Days(s.showDate))) return false;
-            if (['확정', '완료', '취소'].includes(filterStatus.value) && s.status !== filterStatus.value) return false;
+            if (['문의', '확정', '완료', '취소'].includes(filterStatus.value) && s.status !== filterStatus.value) return false;
             if (filterStatus.value === 'INVALID' && !(s.status === '취소' && s.cancelType === CANCEL_TYPE_INVALID)) return false;
             if (filterDivision.value !== 'ALL' && s.issuer !== filterDivision.value && s.division !== filterDivision.value) return false;
             if (filterTheme.value !== 'ALL' && s.theme !== filterTheme.value) return false;
@@ -4185,7 +4162,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             if (filterDocIssued.value === 'ISSUED' && s.docIssued !== '발행완료') return false;
             if (filterSearch.value.trim() !== '') {
               const q = filterSearch.value.trim().toLowerCase();
-              const hay = `${s.client} ${s.region} ${s.theme} ${s.address} ${s.memo} ${s.performer}`.toLowerCase();
+              const hay = `${s.client} ${s.region} ${s.theme} ${s.address} ${s.memo} ${s.performer} ${s.venueName || ''} ${s.eventName || ''} ${s.fieldMemo || ''} ${s.workType || ''}`.toLowerCase(); // ★ v2.9: 실제 행사처·행사 이름도 검색
               if (!hay.includes(q)) return false;
             }
             return true;
@@ -4234,7 +4211,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         // Theme Statistics
         const themeStats = computed(() => {
           const map = {};
-          shows.value.filter(s => s.status !== '취소').forEach(s => {
+          shows.value.filter(s => isMoneyShow(s)).forEach(s => {
             const th = s.theme || '기타';
             map[th] = (map[th] || 0) + 1;
           });
@@ -4340,11 +4317,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           return added;
         };
 
+        // ★ v2.9: 공연자별 출연 이력 (명부 번호·이름·정산 대상 중 하나라도 맞으면)
+        const openPerformerHistoryId = ref('');
+        const togglePerformerHistory = (p) => { openPerformerHistoryId.value = openPerformerHistoryId.value === p.id ? '' : p.id; };
+        const performerHistory = (p) => shows.value
+          .filter(s => s.status !== '취소' && (s.performerId === p.id || (p.name && (s.performer === p.name || s.settleTarget === p.name))))
+          .slice().sort((a, b) => String(b.showDate || '').localeCompare(String(a.showDate || '')));
         const activePerformers = computed(() => performers.value.filter(p => p.active !== false).slice().sort((a, b) => String(a.name).localeCompare(String(b.name), 'ko')));
         const undecidedPerformerCount = computed(() => performers.value.filter(p => p.active !== false && (!p.kind || p.kind === '미정')).length);
 
         // 정산이 남은 공연인지: 정산대상과 금액이 있고, 취소·정산완료·정산건없음이 아닌 것
-        const isSettleOpen = (s) => s.status !== '취소' && Number(s.settleAmt) > 0 && String(s.settleTarget || '').trim() !== '' && s.settleStatus !== '정산완료' && s.settleStatus !== '정산건없음';
+        const isSettleOpen = (s) => isMoneyShow(s) && !isDirectSettle(s) && Number(s.settleAmt) > 0 && String(s.settleTarget || '').trim() !== '' && s.settleStatus !== '정산완료' && s.settleStatus !== '정산건없음';
 
         // 공연자별 출연 횟수·미지급 금액
         const performerStats = computed(() => {
@@ -4352,7 +4335,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const ym = referenceToday.value.slice(0, 7);
           const get = (id) => (map[id] = map[id] || { total: 0, month: 0, unpaid: 0, unpaidCount: 0 });
           shows.value.forEach(s => {
-            if (s.status === '취소') return;
+            if (!isMoneyShow(s)) return;
             const ids = new Set();
             const byPerf = findPerformerById(s.performerId) || findPerformerByName(s.performer);
             const byTarget = findPerformerByName(s.settleTarget);
@@ -4753,7 +4736,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 firstDate: s.showDate || '',
                 lastDate: s.showDate || '',
                 count: 1,
-                totalRev: Number(s.amount) || 0,
+                totalRev: revenueOf(s),
                 favTheme: s.theme || '기타',
                 company: s.issuer || '이츠쇼컴퍼니',
                 recontract: '🟡 보통',
@@ -4794,13 +4777,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
           // 2) Recalculate stats per custId from active shows
           const statsMap = {};
-          shows.value.filter(s => s.status !== '취소' && s.custId).forEach(s => {
+          shows.value.filter(s => isMoneyShow(s) && s.custId).forEach(s => {
             if (!statsMap[s.custId]) {
               statsMap[s.custId] = { count: 0, totalRev: 0, firstDate: s.showDate || '', lastDate: s.showDate || '', lastTheme: s.theme || '' };
             }
             const st = statsMap[s.custId];
             st.count += 1;
-            st.totalRev += (Number(s.amount) || 0);
+            st.totalRev += revenueOf(s);
             if (s.showDate && (!st.firstDate || s.showDate < st.firstDate)) st.firstDate = s.showDate;
             if (s.showDate && (!st.lastDate || s.showDate >= st.lastDate)) {
               st.lastDate = s.showDate;
@@ -4857,6 +4840,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             bizName: '',
             bizNo: '',
             bizAddress: '',
+            workType: '공연',
+            venueName: '',
+            eventName: '',
+            settleMode: '회사 정산',
+            commission: 0,
+            commissionReceived: false,
+            fieldMemo: '',
+            feedbackClient: '',
+            feedbackPerformer: '',
+            nextNote: '',
+            photoSource: '',
             memo: ''
           };
           showModalOpen.value = true;
@@ -4883,6 +4877,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               if (!copy.bizAddress && linkedCust.bizAddress) copy.bizAddress = linkedCust.bizAddress;
             }
           }
+          // ★ v2.9: 예전 기록에 없는 칸은 기본값으로 채워 둡니다 (저장하기 전에는 원본을 바꾸지 않음)
+          if (!copy.workType) copy.workType = '공연';
+          if (!copy.settleMode) copy.settleMode = '회사 정산';
+          ['venueName', 'eventName', 'fieldMemo', 'feedbackClient', 'feedbackPerformer', 'nextNote', 'photoSource'].forEach(k => { if (copy[k] === undefined) copy[k] = ''; });
+          if (copy.commission === undefined) copy.commission = 0;
+          if (copy.commissionReceived === undefined) copy.commissionReceived = false;
           editingShowForm.value = copy;
           showModalOpen.value = true;
         };
@@ -5089,6 +5089,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           copied.no = nextNo;
           copied.reqDate = referenceToday.value;
           copied.status = '확정';
+          // ★ v2.9: 복사한 일정에는 지난 공연의 현장 기록·피드백·수수료 받음 표시를 가져가지 않음
+          ['fieldMemo', 'feedbackClient', 'feedbackPerformer', 'nextNote', 'photoSource'].forEach(k => { copied[k] = ''; });
+          copied.commissionReceived = false;
           stripRecordMeta(copied); clearCancelFields(copied);
           isEditingShow.value = false;
           showModalMode.value = 'single';
@@ -5102,6 +5105,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           copied.no = nextNo;
           copied.reqDate = referenceToday.value;
           copied.status = '확정';
+          // ★ v2.9: 복사한 일정에는 지난 공연의 현장 기록·피드백·수수료 받음 표시를 가져가지 않음
+          ['fieldMemo', 'feedbackClient', 'feedbackPerformer', 'nextNote', 'photoSource'].forEach(k => { copied[k] = ''; });
+          copied.commissionReceived = false;
           stripRecordMeta(copied); clearCancelFields(copied);
           isEditingShow.value = false;
           showModalMode.value = 'single';
@@ -5559,7 +5565,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
 
         const exportHometaxInvoiceBatch = () => {
-          const targetShows = filteredShows.value.filter(s => s.status !== '취소' && (Number(s.amount) || 0) > 0);
+          const targetShows = filteredShows.value.filter(s => isMoneyShow(s) && !isDirectSettle(s) && (Number(s.amount) || 0) > 0);
           if (targetShows.length === 0) {
             showToast('발행할 공연 내역이 없습니다.');
             return;
@@ -5791,15 +5797,41 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
         });
 
         // ★ NEW FEATURE 5: 모바일 원터치 내비게이션(네이버지도 검색 연동) ★
+        // ★ v2.9: 주소를 누르면 내비·지도 앱을 골라 바로 열기 (휴대폰은 앱으로, 앱이 없거나 PC면 웹 지도로)
+        const NAV_APP_KEY = 'itsshow_v23_nav_app';
+        const navSheet = ref(null); // { query }
+        const navRemember = ref(false);
+        const navLastApp = ref((() => { try { return localStorage.getItem(NAV_APP_KEY) || ''; } catch (e) { return ''; } })());
+        const NAV_APPS = {
+          naver: { label: '네이버 지도', app: (q) => `nmap://search?query=${encodeURIComponent(q)}&appname=itsshow.erp`, web: (q) => `https://map.naver.com/p/search/${encodeURIComponent(q)}` },
+          kakao: { label: '카카오맵', app: (q) => `kakaomap://search?q=${encodeURIComponent(q)}`, web: (q) => `https://map.kakao.com/?q=${encodeURIComponent(q)}` },
+          tmap: { label: '티맵', app: (q) => `tmap://search?name=${encodeURIComponent(q)}`, web: (q) => `https://map.naver.com/p/search/${encodeURIComponent(q)}` },
+        };
+        const launchNav = (key, query) => {
+          const a = NAV_APPS[key] || NAV_APPS.naver;
+          navSheet.value = null;
+          if (navRemember.value) { navLastApp.value = key; try { localStorage.setItem(NAV_APP_KEY, key); } catch (e) {} }
+          if (!isMobile.value) { window.open(a.web(query), '_blank'); return; } // PC에는 앱이 없으니 웹 지도
+          let left = false;
+          const onHide = () => { left = true; };
+          document.addEventListener('visibilitychange', onHide, { once: true });
+          window.location.href = a.app(query);
+          setTimeout(() => { // 앱이 열리지 않았으면(설치 안 됨) 웹 지도로
+            document.removeEventListener('visibilitychange', onHide);
+            if (!left && document.visibilityState === 'visible') window.open(a.web(query), '_blank');
+          }, 1600);
+        };
         const openMapNavigation = (addressOrPlace, region = '') => {
           const query = `${region || ''} ${addressOrPlace || ''}`.trim();
           if (!query) {
             showToast('검색할 주소나 기관명이 없습니다.');
             return;
           }
-          const url = `https://map.naver.com/p/search/${encodeURIComponent(query)}`;
-          window.open(url, '_blank');
+          if (navLastApp.value && NAV_APPS[navLastApp.value]) { navRemember.value = true; launchNav(navLastApp.value, query); return; }
+          navRemember.value = false;
+          navSheet.value = { query };
         };
+        const resetNavApp = () => { navLastApp.value = ''; try { localStorage.removeItem(NAV_APP_KEY); } catch (e) {} showToast('다음부터 길찾기 때 앱을 다시 물어볼게요.'); };
 
         const markShowPaid = (showItem) => {
           const target = shows.value.find(s => s.no === showItem.no);
@@ -6503,10 +6535,8 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           showToast(`'${found.client}' 공연 정보를 불러와 블로그 원고를 생성했습니다!`);
         };
 
-        const openBlogStudioWithShow = (showItem) => {
-          selectedBlogShowNo.value = showItem.no;
-          onSelectShowForBlog();
-          activeTab.value = 'blog';
+        const openBlogStudioWithShow = () => {
+          showToast('✍️ 블로그 글은 PC의 이츠쇼 SNS ERP에서 만들어요. [1. 공연 고르기]에서 이 공연을 눌러 주세요.', 6000);
         };
 
         const copyTextToClipboard = async (text, label) => {
@@ -6596,10 +6626,10 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
         const renderCharts = () => {
           const months = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
           const itsshowSeries = months.map(m => {
-            return Math.round(shows.value.filter(s => s.status !== '취소' && s.showDate && s.showDate.startsWith(m) && s.issuer !== '키즈니버스랩').reduce((a, b) => a + (Number(b.amount) || 0), 0) / 10000);
+            return Math.round(shows.value.filter(s => isMoneyShow(s) && s.showDate && s.showDate.startsWith(m) && s.issuer !== '키즈니버스랩').reduce((a, b) => a + revenueOf(b), 0) / 10000);
           });
           const kidsSeries = months.map(m => {
-            return Math.round(shows.value.filter(s => s.status !== '취소' && s.showDate && s.showDate.startsWith(m) && s.issuer === '키즈니버스랩').reduce((a, b) => a + (Number(b.amount) || 0), 0) / 10000);
+            return Math.round(shows.value.filter(s => isMoneyShow(s) && s.showDate && s.showDate.startsWith(m) && s.issuer === '키즈니버스랩').reduce((a, b) => a + revenueOf(b), 0) / 10000);
           });
 
           const ctx1 = document.getElementById('monthlyRevenueChart')?.getContext('2d');
@@ -6667,23 +6697,104 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           showToast('엑셀(.xlsx) 파일이 다운로드되었습니다!');
         };
 
+        // ★ v2.9 백업 강화: 공연관리 + SNS ERP(블로그 관리판·설정·실제 행사 정보)를 파일 하나로
+        const LAST_BACKUP_KEY = 'itsshow_v23_last_backup';
+        const BLOG_EXTRA_KEYS = ['itsshow_blog_v1', 'itsshow_blog_settings', 'itsshow_v23_saved_blogs'];
+        const lastBackupAt = ref((() => { try { return localStorage.getItem(LAST_BACKUP_KEY) || ''; } catch (e) { return ''; } })());
+        const markBackedUp = () => { lastBackupAt.value = new Date().toISOString(); try { localStorage.setItem(LAST_BACKUP_KEY, lastBackupAt.value); } catch (e) {} };
+        const backupAgeDays = computed(() => lastBackupAt.value ? Math.floor((Date.now() - new Date(lastBackupAt.value).getTime()) / 86400000) : null);
+        const backupFileName = () => `itsshow_erp_backup_${referenceToday.value || new Date().toISOString().slice(0, 10)}.json`;
+        const buildBackupText = () => {
+          const extras = {};
+          BLOG_EXTRA_KEYS.forEach(k => { try { const v = localStorage.getItem(k); if (v) extras[k] = v; } catch (e) {} });
+          return JSON.stringify(Object.assign({}, currentDataObject(), { backupVersion: '2.9', backupAt: new Date().toISOString(), blogExtras: extras }), null, 2);
+        };
         const exportBackupJSON = () => {
-          const blob = new Blob([JSON.stringify({
-            shows: shows.value,
-            customers: customers.value,
-            payables: payables.value,
-            taxRecords: taxRecords.value,
-            cashAccounts: cashAccounts.value,
-            todoItems: todoItems.value,
-            performers: performers.value
-          }, null, 2)], { type: 'application/json' });
+          const blob = new Blob([buildBackupText()], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `itsshow_erp_backup_${new Date().toISOString().slice(0,10)}.json`;
+          a.download = backupFileName();
           a.click();
           URL.revokeObjectURL(url);
-          showToast('JSON 백업 파일이 다운로드되었습니다.');
+          markBackedUp();
+          showToast('JSON 백업 파일이 다운로드되었습니다. (블로그 기록도 함께 들어 있어요)');
+        };
+        // 휴대폰(아이폰): 공유 창으로 파일 앱(iCloud)·카톡 '나에게'로 보내기
+        const shareBackup = async () => {
+          const file = new File([buildBackupText()], backupFileName(), { type: 'application/json' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try { await navigator.share({ files: [file], title: '이츠쇼 ERP 백업' }); markBackedUp(); showToast('백업을 보냈어요. 파일 앱(iCloud)에 저장해 두면 안전해요.'); }
+            catch (e) { if (e && e.name !== 'AbortError') showToast('보내지 못했어요. [JSON 백업 저장]을 눌러 주세요.'); }
+          } else exportBackupJSON();
+        };
+        // 백업 파일로 되돌리기: 건수를 먼저 비교해 보여 주고, 되돌리기 직전 상태를 자동 백업
+        const restoreFileInput = ref(null);
+        const pickRestoreFile = () => { if (restoreFileInput.value) restoreFileInput.value.click(); };
+        const restoreFromBackupFile = (ev) => {
+          const f = ev.target.files && ev.target.files[0]; ev.target.value = '';
+          if (!f) return;
+          const r = new FileReader();
+          r.onload = () => {
+            let d = null;
+            try { d = JSON.parse(r.result); } catch (e) { showToast('백업 파일을 읽지 못했어요. 이츠쇼 ERP 백업(JSON) 파일인지 확인해 주세요.', 7000); return; }
+            if (!d || !Array.isArray(d.shows)) { showToast('이츠쇼 ERP 백업 파일이 아니에요 (공연 목록이 없음).', 7000); return; }
+            const now = currentCounts();
+            const lines = COUNT_LABELS.map(([k, label]) => `${label} ${now[k]}건 → ${Array.isArray(d[k]) ? d[k].length : '(없음 · 지금 것 유지)'}${Array.isArray(d[k]) ? '건' : ''}`);
+            const when = d.backupAt ? formatSnapshotTime(d.backupAt) : '(시각 정보 없음)';
+            if (!confirm(`이 백업 파일로 되돌릴까요?\n백업 시각: ${when}\n\n${lines.join('\n')}\n\n지금 데이터는 되돌리기 직전에 자동 백업 목록에 저장돼요.`)) return;
+            if (!takeSnapshot('파일로 되돌리기 직전 자동 백업')) { showToast('⚠️ 지금 데이터를 백업하지 못해 멈췄어요. 먼저 JSON 백업을 받아 주세요.', 9000); return; }
+            shows.value = d.shows;
+            if (Array.isArray(d.customers)) customers.value = d.customers;
+            if (Array.isArray(d.payables)) payables.value = d.payables;
+            if (Array.isArray(d.taxRecords)) taxRecords.value = d.taxRecords;
+            if (Array.isArray(d.cashAccounts)) cashAccounts.value = d.cashAccounts;
+            if (Array.isArray(d.todoItems)) todoItems.value = d.todoItems;
+            if (Array.isArray(d.performers)) performers.value = d.performers;
+            if (d.blogExtras && typeof d.blogExtras === 'object' && Object.keys(d.blogExtras).length && confirm('이 백업에 블로그(SNS ERP) 기록도 들어 있어요. 함께 되돌릴까요?')) {
+              BLOG_EXTRA_KEYS.forEach(k => { if (typeof d.blogExtras[k] === 'string') { try { localStorage.setItem(k, d.blogExtras[k]); } catch (e) {} } });
+            }
+            syncShowsAndCustomers(true);
+            saveAllToStorage(false); // 되돌린 데이터를 클라우드로 자동 전송하지는 않습니다.
+            nextTick(() => renderCharts());
+            showToast('✅ 백업 파일로 되돌렸어요. (구글 시트에는 자동 저장하지 않았어요)', 7000);
+          };
+          r.readAsText(f, 'utf-8');
+        };
+        // PC 자동 백업 폴더 (크롬): 폴더를 한 번 고르면 하루 한 번 그 폴더에 백업 파일을 씀
+        const canAutoFolder = typeof window.showDirectoryPicker === 'function';
+        const autoFolderName = ref('');
+        const autoFolderNeedsClick = ref(false);
+        const lastAutoBackupDay = ref((() => { try { return localStorage.getItem('itsshow_v23_last_auto_backup_day') || ''; } catch (e) { return ''; } })());
+        const dirDb = () => new Promise((res, rej) => { const q = indexedDB.open('itsshow_v23_backup', 1); q.onupgradeneeded = () => q.result.createObjectStore('h'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+        const dirGet = async () => { const db = await dirDb(); return new Promise((res) => { const t = db.transaction('h').objectStore('h').get('dir'); t.onsuccess = () => res(t.result || null); t.onerror = () => res(null); }); };
+        const dirSet = async (h) => { const db = await dirDb(); return new Promise((res) => { const t = db.transaction('h', 'readwrite'); t.objectStore('h').put(h, 'dir'); t.oncomplete = () => res(true); t.onerror = () => res(false); }); };
+        const writeAutoBackup = async (h) => {
+          const fh = await h.getFileHandle(backupFileName(), { create: true });
+          const w = await fh.createWritable(); await w.write(buildBackupText()); await w.close();
+          lastAutoBackupDay.value = referenceToday.value; try { localStorage.setItem('itsshow_v23_last_auto_backup_day', lastAutoBackupDay.value); } catch (e) {}
+          markBackedUp(); autoFolderNeedsClick.value = false;
+        };
+        const chooseAutoFolder = async () => {
+          if (!canAutoFolder) { showToast('이 브라우저는 자동 백업 폴더를 지원하지 않아요. PC 크롬에서 열어 주세요.'); return; }
+          try {
+            const h = await window.showDirectoryPicker({ mode: 'readwrite' });
+            await dirSet(h); autoFolderName.value = h.name; await writeAutoBackup(h);
+            showToast(`📁 '${h.name}' 폴더에 오늘 백업을 저장했어요. 앞으로 하루 한 번 이 폴더에 저장돼요.`, 7000);
+          } catch (e) { if (e && e.name !== 'AbortError') showToast('폴더에 저장하지 못했어요: ' + (e.message || e)); }
+        };
+        const runAutoBackup = async (fromClick = false) => {
+          if (!canAutoFolder) return;
+          try {
+            const h = await dirGet(); if (!h) return;
+            autoFolderName.value = h.name;
+            if (!fromClick && lastAutoBackupDay.value === referenceToday.value) return;
+            let perm = await h.queryPermission({ mode: 'readwrite' });
+            if (perm !== 'granted' && fromClick) perm = await h.requestPermission({ mode: 'readwrite' });
+            if (perm !== 'granted') { autoFolderNeedsClick.value = true; return; } // 크롬이 허락을 다시 물을 때는 버튼 한 번이 필요
+            await writeAutoBackup(h);
+            if (fromClick) showToast(`📁 '${h.name}' 폴더에 오늘 백업을 저장했어요.`);
+          } catch (e) { autoFolderNeedsClick.value = true; }
         };
 
         const resetToOriginalData = () => {
@@ -6714,6 +6825,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           watch(() => showModalOpen.value, linkPerformerOnShowModalOpen);
           syncShowsAndCustomers(true);
           afterLoadSafety();
+          runAutoBackup(false); // ★ v2.9: 자동 백업 폴더가 정해져 있으면 하루 한 번 저장
           generateBlogContent();
           nextTick(() => renderCharts());
           // 앱 실행 시 자동으로 구글 시트 클라우드에서 최신 데이터 동기화 (비어있으면 자동 초기 업로드)
@@ -6738,6 +6850,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           mobileFilterOpen, calendarYear, calendarMonth, selectedCalendarDate, selectCalendarDate, selectedDateShows, openNewShowOnSelectedDate, getDayOfWeekKorean, calendarCells, calendarMonthShowsCount, changeCalendarMonth,
           navItems, availableYearMonths, uniqueThemes,
           periodShows, periodTotalRevenue, periodItsshowRevenue, periodKidsniverseRevenue, overallTotalRevenue,
+          periodPayout, periodNet, navSheet, navRemember, navLastApp, launchNav, resetNavApp, backupAgeDays, lastBackupAt, shareBackup, restoreFileInput, pickRestoreFile, restoreFromBackupFile, canAutoFolder, autoFolderName, autoFolderNeedsClick, chooseAutoFolder, runAutoBackup, openPerformerHistoryId, togglePerformerHistory, performerHistory, isInquiry, isDirectSettle, isMoneyShow, revenueOf, payoutOf, netOf, workTypeOf,
           unpaidShows, totalUnpaidAmount, pendingPayables, totalPendingPayables, totalCashBalance, projectedNetCash,
           upcomingShows, filteredShows, themeStats,
           newTaxForm, calcNatTax, calcLocTax, calcTaxTotal, calcNetPay, addTaxRecord,
