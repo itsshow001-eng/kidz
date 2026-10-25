@@ -25,6 +25,9 @@
     @media (max-width: 1023px) { body { padding-bottom: env(safe-area-inset-bottom); } }
     /* 폰을 가로로 눕힌 경우: 화면 높이가 낮아 맨 아래 내용이 하단 버튼 줄에 가리므로 여백을 더 줌 */
     @media (max-width: 1023px) and (orientation: landscape) and (max-height: 500px) { body { padding-bottom: calc(env(safe-area-inset-bottom) + 64px); } }
+    /* ★ v2.9: 아이폰 사파리는 날짜·시간 칸에 고유 최소 너비가 있어 칸 밖으로 튀어나감 → 칸 너비에 맞추고 글자는 왼쪽 정렬 */
+    input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; display: block; box-sizing: border-box; }
+    input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value, input[type="month"]::-webkit-date-and-time-value { text-align: left; }
   </style>
   <title>이츠쇼 ERP v2.9</title>
   <!-- v2.3 오프라인판: Vue 3.4.38 · Chart.js 4.4.4 · SheetJS 0.18.5 · Tailwind(미리 빌드)를 파일 안에 내장 — 인터넷 없이도 열립니다 -->
