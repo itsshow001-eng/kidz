@@ -29,7 +29,7 @@
     input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; display: block; box-sizing: border-box; }
     input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value, input[type="month"]::-webkit-date-and-time-value { text-align: left; }
   </style>
-  <title>이츠쇼 ERP v2.9</title>
+  <title>이츠쇼타임 공연관리 v3.0</title>
   <!-- v2.3 오프라인판: Vue 3.4.38 · Chart.js 4.4.4 · SheetJS 0.18.5 · Tailwind(미리 빌드)를 파일 안에 내장 — 인터넷 없이도 열립니다 -->
   <!-- ERP-INLINE:BEGIN vue 3.4.38 -->
   <script>/**
@@ -177,6 +177,15 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   <!-- ERP-INLINE:END tailwind-css -->
 <style>
   /* ★ v3.0: 장부 '전체' 보기에서 오늘 이전 일정이 시작되는 줄 위에 오늘 표시 */
+
+  /* ★ v3.0: 이츠쇼타임 프리미엄 마크 · 세 프로그램 오가기 (세 파일이 같은 폴더에 있어야 함) */
+  .itt-nav { display: none; align-items: center; gap: 4px; padding: 4px; border-radius: 14px; background: #0f172a; border: 1px solid #334155; font: 700 12px/1.2 inherit; white-space: nowrap; }
+  @media (min-width: 1024px) { .itt-nav { display: flex; } }
+  .itt-nav .itt-mark { padding: 0 8px 0 6px; color: #e2e8f0; font-weight: 900; letter-spacing: -0.2px; }
+  .itt-nav .itt-mark b { margin-left: 4px; padding: 2px 6px; border-radius: 999px; background: #facc15; color: #111827; font-size: 10px; letter-spacing: 0.5px; }
+  .itt-nav .itt-tab { padding: 6px 10px; border-radius: 10px; color: #94a3b8; text-decoration: none; cursor: pointer; border: 0; background: none; font: inherit; }
+  .itt-nav .itt-tab:hover { color: #fff; }
+  .itt-nav .itt-tab.on { background: #4f46e5; color: #fff; }
   /* ★ v3.0: PC에서 화면을 내려도 왼쪽 메뉴가 따라오게 (머리말 바로 아래에 붙음) */
   .erp-side-sticky { position: sticky; top: 61px; align-self: flex-start; height: calc(100vh - 61px); overflow-y: auto; }
   tr.ledger-today-line > td { border-top: 3px solid #f59e0b; }
@@ -208,14 +217,22 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
           <div class="min-w-0">
             <div class="flex items-center space-x-1.5">
-              <span class="text-sm sm:hidden font-black text-white tracking-tight truncate">이츠쇼 ERP</span>
-              <span class="hidden sm:inline text-base font-black text-white tracking-tight">이츠쇼 & 키즈니버스 ERP</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold shrink-0">v2.9</span>
+              <span class="text-sm sm:hidden font-black text-white tracking-tight truncate">공연관리</span>
+              <span class="hidden sm:inline text-base font-black text-white tracking-tight">{{ brandName }} 공연관리</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold shrink-0">v3.0</span>
             </div>
-            <p class="text-[11px] text-slate-400 hidden md:block truncate">스케줄 · 5일 브리핑 · To-Do · 정산 · 단골 CRM</p>
+            <p class="text-[11px] text-slate-400 hidden md:block truncate"><b class="text-amber-300">이츠쇼타임 PREMIUM</b> · 스케줄 · 5일 브리핑 · 정산 · 단골 CRM</p>
           </div>
         </button>
       </div>
+
+      <!-- ★ v3.0: 이츠쇼타임 프리미엄 · 세 프로그램 오가기 (PC) -->
+      <nav class="itt-nav" aria-label="이츠쇼타임 프리미엄 프로그램">
+        <span class="itt-mark">이츠쇼타임<b>PREMIUM</b></span>
+        <button type="button" class="itt-tab on" @click="switchTab('overview')">🗓️ 공연관리</button>
+        <button type="button" class="itt-tab" @click="goPremiumApp('sns')">📝 SNS</button>
+        <button type="button" class="itt-tab" @click="goPremiumApp('shorts')">🎬 쇼츠</button>
+      </nav>
 
       <!-- Top Right Quick Controls (Zero wrapping on 360px portrait) -->
       <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
@@ -3839,6 +3856,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const keep = trash.value.filter(t => trashDaysLeft(t) > 0);
           if (keep.length !== trash.value.length) { trash.value = keep; return true; }
           return false;
+        };
+        // ★ v3.0: 머리말 이름(첫 번째 사업자)과 세 프로그램 오가기. PC에서는 같은 폴더의 파일을 열고, 인터넷 주소(아이폰 등)에서는 안내만
+        const brandName = computed(() => (profile.value.companies[0] && profile.value.companies[0].name) || '내 업체');
+        const PREMIUM_FILES = { sns: '이츠쇼_SNS_ERP.html', shorts: '이츠쇼_쇼츠스튜디오.html' };
+        const goPremiumApp = (k) => {
+          if (location.protocol !== 'file:') { showToast('📝 SNS·🎬 쇼츠는 PC에서 열어요. (공연관리와 같은 폴더의 파일을 같은 크롬으로)', 6000); return; }
+          location.href = PREMIUM_FILES[k];
         };
         const runTimeText = (name) => { const x = productOf(name); const m = x && Number(x.runMin); return m > 0 ? `약 ${m}분` : '약 50분'; };
         const showFormOpen = ref({ talk: true, perf: true, after: true, biz: true }); // ★ v2.9: 공연 입력창 묶음 펼침 상태
@@ -7591,7 +7615,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           shows, customers, payables, taxRecords, cashAccounts, todoItems,
           runOf, endTimeOf, formTimeInfo, // ★ v3.0
           dupExcluded, isDupExcluded, toggleDupExclude, // ★ v3.0
-          openSmsAs,
+          openSmsAs, brandName, goPremiumApp,
           SMS_LABELS, SMS_FIELDS, smsEditMode, smsTplDraft, isCustomSms, startSmsTplEdit, cancelSmsTplEdit, saveSmsTpl, resetSmsTpl, insertSmsField,
           lastYearOpen, lastYearAgain, recallSms, markRecallAsked,
           CANCEL_TYPE_INVALID, isFeeShow, amountDue, trash, trashDaysLeft, moveShowToTrash, trashFromCancelModal, onCancelFeeToggle, restoreFromTrash, deleteFromTrash, // ★ v3.0
