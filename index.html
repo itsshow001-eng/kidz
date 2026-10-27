@@ -419,7 +419,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <template v-else>
                 <div class="text-slate-200">{{ a.icon }} {{ a.text }}</div>
                 <div class="flex flex-wrap gap-1.5 mt-1.5">
-                  <button v-for="s in a.shows" :key="'am-' + (s.uid || s.no)" @click="openShowSummary(s)" type="button" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold cursor-pointer">{{ shortDateLabel(s.showDate) }} {{ s.client }}</button>
+                  <button v-for="s in a.shows" :key="'am-' + (s.uid || s.no)" @click="a.smsType ? openSmsAs(s, a.smsType) : openShowSummary(s)" type="button" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold cursor-pointer">{{ shortDateLabel(s.showDate) }} {{ s.client }}</button>
                 </div>
               </template>
             </div>
@@ -2083,6 +2083,23 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
 
+          <!-- ★ v3.0: 문의 문자 어필 칸 -->
+          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 text-xs">
+            <div class="pb-2 border-b border-slate-700/60">
+              <h3 class="text-sm font-bold text-white">📣 문의 문자에 넣을 우리 팀 자랑</h3>
+              <p class="text-xs text-slate-400">'통화 확인 · 문의' 문자 아래에 붙어서, 여러 곳을 비교하는 담당자가 우리 팀을 기억하게 해요. 비워 둔 줄은 문자에 안 나와요.</p>
+            </div>
+            <div><label class="text-slate-400 block mb-1">한 줄 소개 (공연마다 '한 줄 소개'가 있으면 그게 먼저 나와요)</label><input type="text" v-model="profile.appeal.intro" @change="saveProfile" placeholder="예: 아이들이 직접 참여하는 마술·버블 공연, 50분 동안 쉴 틈 없이!" class="w-full px-3 py-2 rounded-xl border" /></div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div v-for="(pt, pi) in profile.appeal.points" :key="'ap' + pi"><label class="text-slate-400 block mb-1">강점 {{ pi + 1 }}</label><input type="text" v-model="profile.appeal.points[pi]" @change="saveProfile" :placeholder="['예: 아이들이 무대에 올라와 함께해요', '예: 음향·조명·안전매트까지 다 챙겨 가요', '예: 서류(사업자등록증 등) 바로 드려요'][pi]" class="w-full px-3 py-2 rounded-xl border" /></div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div><label class="text-slate-400 block mb-1">공연 영상 링크</label><input type="text" v-model="profile.appeal.video" @change="saveProfile" placeholder="https://youtu.be/…" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+              <div><label class="text-slate-400 block mb-1">후기 링크 (블로그 등)</label><input type="text" v-model="profile.appeal.review" @change="saveProfile" placeholder="https://blog.naver.com/…" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+              <div><label class="text-slate-400 block mb-1">문의 날짜 먼저 잡아 두는 기간 (일)</label><input type="number" min="1" v-model.number="profile.appeal.holdDays" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+            </div>
+          </div>
+
           <!-- ★ v3.0: 휴지통 -->
           <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
             <div class="pb-2 border-b border-slate-700/60">
@@ -2327,6 +2344,23 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div v-for="o in formTimeInfo.others" :key="'gap' + o.no">
               {{ o.level === '겹침' ? '⛔' : (o.level === '빠듯' ? '⚠️' : '✅') }} {{ o.time }}~{{ o.end }}{{ o.guessed ? '(1시간으로 셈)' : '' }} {{ o.client }} — {{ o.gapText }}{{ o.level === '빠듯' ? ' · 이동이 빠듯해요' : '' }}
             </div>
+          </div>
+          <!-- ★ v3.0: 통화 확인 문자에 들어가는 칸 -->
+          <div>
+            <label class="text-slate-400 block mb-1">대상 (연령)</label>
+            <input type="text" v-model="editingShowForm.audience" placeholder="예: 5~7세, 초등 저학년" class="w-full px-3 py-2 rounded-xl border" />
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">인원</label>
+            <input type="text" v-model="editingShowForm.headcount" placeholder="예: 80명" class="w-full px-3 py-2 rounded-xl border" />
+          </div>
+          <div v-if="editingShowForm.status === '문의'">
+            <label class="text-amber-300 block mb-1">📌 날짜 먼저 잡아 두는 마감 (홀드)</label>
+            <input type="date" v-model="editingShowForm.holdUntil" class="w-full px-3 py-2 rounded-xl border font-mono" />
+          </div>
+          <div class="sm:col-span-3">
+            <label class="text-slate-400 block mb-1">특이사항 (고객에게 보내는 확인 문자에 들어가요 · 협의 메모는 안 보내요)</label>
+            <input type="text" v-model="editingShowForm.clientNote" placeholder="예: 강당 2층, 엘리베이터 있음" class="w-full px-3 py-2 rounded-xl border" />
           </div>
           <div v-if="editingShowForm.status === '문의'" class="sm:col-span-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-[11px] text-amber-200">
             🟡 문의(미정)는 달력에 흐리게 보여 같은 날 겹치는 걸 막아 줘요. 매출·미수금·정산·블로그 글감에는 들어가지 않아요. 정해지면 [확정]으로 바꿔 주세요.
@@ -3249,6 +3283,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <button @click="smsModalOpen = false" class="text-slate-400 hover:text-white text-sm px-2 cursor-pointer">✕</button>
         </div>
 
+        <!-- ★ v3.0: 첫 통화 확인 · 답 없을 때 안부 -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-bold">
+          <button @click="setSmsType('call_inquiry')" class="py-2 px-2 rounded-xl cursor-pointer transition-all text-center" :class="smsType === 'call_inquiry' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'">📞 통화 확인 · 문의 (어필)</button>
+          <button @click="setSmsType('call_confirm')" class="py-2 px-2 rounded-xl cursor-pointer transition-all text-center" :class="smsType === 'call_confirm' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'">📞 통화 확인 · 확정</button>
+          <button @click="setSmsType('follow')" class="py-2 px-2 rounded-xl cursor-pointer transition-all text-center" :class="smsType === 'follow' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'">⏰ 답 없을 때 안부</button>
+        </div>
         <!-- 4 Template Tabs (Mobile 2x2 Grid / Desktop 4 Tabs) -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-bold">
           <button @click="setSmsType('confirm')" class="py-2 px-2 rounded-xl cursor-pointer transition-all text-center"
@@ -3684,7 +3724,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             .concat(['매직벌룬쇼', '매직버블쇼', '매직쉐도우'].map(n => ({ name: n, kind: '공연', runMin: '', setupMin: '', people: '', price: '', intro: '' })))
             .concat([{ name: '강연/체험', kind: '강연·체험', runMin: '', setupMin: '', people: '', price: '', intro: '' }]),
           items: [],
-          smsTemplates: {}
+          smsTemplates: {},
+          appeal: { intro: '', points: ['', '', ''], video: '', review: '', holdDays: 7 } // ★ v3.0 문의 문자 어필
         };
         const PRODUCT_KINDS = ['공연', '체험부스', '설치·장식', '진행', '강연·체험', '기타'];
         const ITEM_UNITS = ['회', '명', '개', '시간', 'km', '식'];
@@ -3696,7 +3737,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             companies: Array.isArray(p.companies) ? p.companies.map(c => Object.assign({ name: '', en: '', label: '', taxType: '과세', note: '', bizNo: '', bank: '' }, c)) : d.companies,
             products: Array.isArray(p.products) ? p.products.map(x => Object.assign({ name: '', kind: '공연', runMin: '', setupMin: '', people: '', price: '', intro: '' }, x)) : d.products,
             items: Array.isArray(p.items) ? p.items.map(x => Object.assign({ name: '', price: '', unit: '회' }, x)) : d.items,
-            smsTemplates: (p.smsTemplates && typeof p.smsTemplates === 'object') ? Object.assign({}, p.smsTemplates) : {} // ★ v3.0 고친 문자 틀
+            smsTemplates: (p.smsTemplates && typeof p.smsTemplates === 'object') ? Object.assign({}, p.smsTemplates) : {}, // ★ v3.0 고친 문자 틀
+            appeal: (() => { const a = Object.assign({}, d.appeal, p.appeal || {}); const pts = Array.isArray(a.points) ? a.points.slice(0, 3) : []; while (pts.length < 3) pts.push(''); a.points = pts; return a; })()
           };
         };
         const profile = ref(normalizeProfile(null));
@@ -4550,6 +4592,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             }).sort();
             list.push({ key: 'tax', icon: '🧾', text: `원천세 신고대기 ${waitTax.length}건 (가장 빠른 기한 ${Number(dues[0].slice(5, 7))}/10)`, go: 'tax', urgent: dues[0] <= addDaysToDateStr(today, 5) });
           }
+          // ★ v3.0: 문의하고 3일 넘게 답이 없는 곳(안부 문자) · 날짜 홀드 마감이 지난 문의
+          const holdOver = shows.value.filter(s => isInquiry(s) && s.showDate && s.showDate >= today && s.holdUntil && s.holdUntil < today);
+          if (holdOver.length) list.push({ key: 'holdover', icon: '📌', text: `날짜 홀드 마감이 지난 문의 ${holdOver.length}건 → 확정하거나 날짜 풀기`, shows: holdOver });
+          const waitInq = shows.value.filter(s => isInquiry(s) && s.showDate && s.showDate >= today && s.reqDate && s.reqDate <= addDaysToDateStr(today, -3) && !holdOver.includes(s));
+          if (waitInq.length) list.push({ key: 'waitinq', icon: '⏰', text: `답 기다리는 문의 ${waitInq.length}건 (3일 넘음) → 눌러서 안부 문자`, shows: waitInq, smsType: 'follow' });
           if (lastYearAgain.value.length) list.push({ key: 'lastyear', icon: '🔁', text: `작년 이맘때 공연한 곳 ${lastYearAgain.value.length}곳 — 올해도 연락해 볼까요?`, go: 'lastyear' }); // ★ v3.0
           if (highPriorityTodos.value.length) list.push({ key: 'todo', icon: '🔥', text: `급한 할 일·구매 ${highPriorityTodos.value.length}건`, go: 'todo' });
           if (settleSummary.value.undecided > 0) list.push({ key: 'perf', icon: '❓', text: `정산할 공연자 중 개인/사업자 미정 ${settleSummary.value.undecided}건`, go: 'performers' });
@@ -5450,6 +5497,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             photoSource: '',
             crew: [],
             runMin: '', // ★ v3.0: 비워 두면 공연 목록의 기본 러닝타임
+            audience: '', headcount: '', clientNote: '',
+            holdUntil: addDaysToDateStr(referenceToday.value, Number((profile.value.appeal || {}).holdDays) || 7), // 문의 날짜를 먼저 잡아 두는 마감
             memo: ''
           };
           showModalOpen.value = true;
@@ -6260,25 +6309,48 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           settle: "안녕하세요, {기관} {담당자}! 😊\n{발행사업자} 대표 {대표}({활동명})입니다.\n\n오늘 [{기관}] 친구들의 반짝이는 눈망울과 큰 함성 덕분에 저도 무대 위에서 큰 에너지를 얻고 돌아왔습니다. 현장에서 따뜻하게 배려해 주신 선생님들께 진심으로 감사드립니다!\n\n요청하신 공연 정산 및 행정서류 안내드립니다.\n■ 공연명 : 키즈니버스 「{공연}」 ({날짜})\n■ 정산금액 : ₩{금액}\n■ 발행사업자 : {발행사업자} ({정산계산서})\n{계산서안내}\n\n궁금하신 점 있으시면 언제든 연락 주세요. 감사합니다! 🙏\n- {발행사업자} {대표} 드림 ({연락처})",
           thanks: "안녕하세요, {기관} {담당자}! 😊\n아이들의 상상력이 현실이 되는 공간, 키즈니버스 아티스트 {활동명}({대표})입니다.\n\n지난번 함께했던 「{공연}」 공연 때 아이들이 너무나 즐겁게 참여해 주었던 기억이 늘 따뜻하게 남아 있습니다. 🫧🎩\n\n다가오는 시즌을 맞아, 기존 관람 기관 원장님·선생님들께서 가장 만족도가 높으신 후속 연계 테마를 안내해 드립니다!\n\n✨ [{기관} 맞춤 차기 추천 프로그램]\n👉 「{추천공연}」\n• 이전 공연과 전혀 겹치지 않는 새로운 스토리텔링과 업그레이드된 마술·버블·벌룬·그림자 퍼포먼스로 50분간 진행됩니다.\n\n시즌 황금 일정은 조기에 마감되어, 단골 기관에 먼저 일정 우선권을 드리고 있습니다.\n원하시는 월/주간을 말씀해 주시면 맞춤 계획안과 견적서를 보내드리겠습니다! 늘 건강하고 행복한 하루 보내세요. 😊\n\n📞 직통 문의 : {연락처}\n🌐 공식 블로그 : {블로그}"
         };
-        const SMS_LABELS = { confirm: '예약 확정', remind: '전일(D-1) 안부', settle: '정산·계산서', thanks: '감사·차기테마' };
-        const SMS_FIELDS = ['기관', '담당자', '날짜', '요일', '시간', '끝시간', '시간범위', '공연', '장소', '금액', '발행사업자', '계산서종류', '정산계산서', '계산서안내', '추천공연', '대표', '활동명', '연락처', '블로그'];
+        // ★ v3.0: 첫 통화 확인 문자(문의·확정)와 답 없는 문의 안부. 값이 빈 칸만 있는 줄은 저절로 빠짐
+        Object.assign(DEFAULT_SMS, { call_inquiry: "안녕하세요, {기관} {담당자}! 방금 통화 감사합니다 😊\n{활동명}입니다. 말씀 나눈 내용 정리해 드려요.\n\n■ 일자 : {월일} ({요일})\n■ 시간 : {시간범위}\n■ 장소 : {장소}\n■ 대상 : {대상}\n■ 콘텐츠 : {공연}\n■ 견적 : {견적}\n■ 특이사항 : {특이사항}\n\n━━━━━━━━━━━━━━\n{한줄소개}\n{강점}\n▶ 공연 영상 : {영상}\n▶ 실제 후기 : {후기}\n\n📌 {월일} 일정은 {홀드마감}까지 먼저 잡아 둘게요.\n편하게 비교해 보시고 연락 주세요 😊\n- {활동명} 드림 ({연락처})", call_confirm: "안녕하세요, {기관} {담당자}! 방금 통화 감사합니다 😊\n말씀 나눈 내용 정리해 드려요.\n\n■ 일자 : {월일} ({요일})\n■ 시간 : {시간범위}\n■ 장소 : {장소}\n■ 대상 : {대상}\n■ 콘텐츠 : {공연}\n■ 견적 : {견적}\n■ 특이사항 : {특이사항}\n\n내용 확인 부탁드려요. 고칠 부분은 말씀해 주세요!\n- {활동명} 드림 ({연락처})", follow: "안녕하세요, {기관} {담당자}! {활동명}입니다 😊\n지난번 문의 주신 {월일} ({요일}) 공연 건, 검토는 잘 되고 계신가요?\n{월일} 날짜는 {홀드마감}까지 잡아 두었어요. 궁금하신 점 있으면 편하게 말씀해 주세요!\n▶ 공연 영상 : {영상}\n- {활동명} 드림 ({연락처})" });
+        const SMS_LABELS = { confirm: '예약 확정', remind: '전일(D-1) 안부', settle: '정산·계산서', thanks: '감사·차기테마', call_inquiry: '통화 확인·문의', call_confirm: '통화 확인·확정', follow: '답 없을 때 안부' };
+        const SMS_FIELDS = ['기관', '담당자', '날짜', '월일', '요일', '시간', '끝시간', '시간범위', '공연', '장소', '금액', '발행사업자', '계산서종류', '정산계산서', '계산서안내', '추천공연', '대상', '견적', '특이사항', '한줄소개', '강점', '영상', '후기', '홀드마감', '대표', '활동명', '연락처', '블로그'];
         const smsVars = (target) => {
           const client = target.client || '기관';
           const showDate = target.showDate || '예정일';
           const issuer = target.issuer || '키즈니버스랩';
           const taxFree = ((companyOf(issuer) || {}).taxType || (issuer === '키즈니버스랩' ? '면세' : '과세')) === '면세';
           const o = profile.value.owner || {};
+          const ap = profile.value.appeal || {};
           return {
+            월일: /^\d{4}-\d{2}-\d{2}$/.test(showDate) ? `${Number(showDate.slice(5, 7))}/${Number(showDate.slice(8, 10))}` : showDate,
             기관: client, 담당자: target.manager || '담당자님', 날짜: showDate, 요일: getDayOfWeekKorean(showDate), 시간: target.showTime || '예정시간',
             끝시간: endTimeOf(target) || '', 시간범위: (target.showTime || '예정시간') + (endTimeOf(target) ? ' ~ ' + endTimeOf(target) : ''), 공연: target.theme || '더클래식', 장소: target.address || client + ' 내 공연장소',
             금액: Number(target.amount || 0).toLocaleString(), 발행사업자: issuer,
             계산서종류: taxFree ? '면세사업자 계산서' : '세금계산서/카드', 정산계산서: taxFree ? '면세 전자계산서' : '세금계산서',
             계산서안내: target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계산서 받으실 이메일 주소와 사업자등록증을 회신 주시면 즉시 발행해 드리겠습니다.',
-            추천공연: recommendNextTheme(target.theme || '더클래식'), 대표: o.ceo || '', 활동명: o.artist || o.ceo || '', 연락처: o.phone || '', 블로그: o.blog || ''
+            추천공연: recommendNextTheme(target.theme || '더클래식'),
+            대상: [target.audience, target.headcount ? ('약 ' + String(target.headcount).replace(/^약\s*/, '') + (/명$/.test(String(target.headcount)) ? '' : '명')) : ''].filter(Boolean).join(' · '),
+            견적: quoteTextOf(target), 특이사항: target.clientNote || '',
+            한줄소개: ((productOf(target.theme) || {}).intro) || ap.intro || '',
+            강점: (ap.points || []).filter(x => String(x || '').trim()).map(x => '✔ ' + String(x).trim()).join('\n'),
+            영상: ap.video || '', 후기: ap.review || '', 홀드마감: holdText(target),
+            대표: o.ceo || '', 활동명: o.artist || o.ceo || '', 연락처: o.phone || '', 블로그: o.blog || ''
           };
         };
         const smsTemplateOf = (type) => ((profile.value.smsTemplates || {})[type]) || DEFAULT_SMS[type] || DEFAULT_SMS.thanks;
-        const fillSms = (tpl, vars) => String(tpl || '').replace(/\{([가-힣A-Za-z0-9]+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+        // 칸을 채움. 한 줄의 칸이 모두 비어 있으면 그 줄은 뺌 (예: 특이사항이 없으면 '■ 특이사항' 줄이 안 나옴)
+        const fillSms = (tpl, vars) => String(tpl || '').split('\n').map(line => {
+          const keys = [...line.matchAll(/\{([가-힣A-Za-z0-9]+)\}/g)].map(m => m[1]).filter(k => k in vars);
+          if (keys.length && keys.every(k => String(vars[k] == null ? '' : vars[k]).trim() === '')) return null;
+          return line.replace(/\{([가-힣A-Za-z0-9]+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+        }).filter(l => l !== null).join('\n');
+        const quoteTextOf = (t) => {
+          const total = Number(t.amount) || 0;
+          const lines = Array.isArray(t.quoteLines) ? t.quoteLines.filter(l => l && (l.name || Number(l.price) > 0)) : [];
+          if (!total) return '';
+          if (!lines.length) return total.toLocaleString() + '원';
+          return total.toLocaleString() + '원 (공연 ' + (Number(t.quoteMain) || 0).toLocaleString() + lines.map(l => ' + ' + (l.name || '추가') + ' ' + ((Number(l.qty) || 0) * (Number(l.price) || 0)).toLocaleString()).join('') + (t.quoteVat === '별도' ? ' + 부가세' : '') + ')';
+        };
+        const holdText = (t) => { const d = t.holdUntil; if (!d) return ''; const [y, m, dd] = d.split('-'); return `${Number(m)}/${Number(dd)}(${getDayOfWeekKorean(d)})`; };
         const buildSmsTemplate = (target, type) => fillSms(smsTemplateOf(type), smsVars(target));
         // 문자 창에서 틀 고치기 (다음부터 이 문구로)
         const smsEditMode = ref(false);
@@ -6316,8 +6388,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const openSmsModal = (showItem) => {
           smsEditMode.value = false; // ★ v3.0
           smsTarget.value = { ...showItem };
-          smsType.value = 'confirm';
-          smsText.value = buildSmsTemplate(smsTarget.value, 'confirm');
+          smsType.value = showItem.status === '문의' ? 'call_inquiry' : 'confirm'; // ★ v3.0: 문의면 통화 확인부터
+          smsText.value = buildSmsTemplate(smsTarget.value, smsType.value);
           smsModalOpen.value = true;
         };
 
@@ -6340,6 +6412,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           smsModalOpen.value = true;
         };
 
+        const openSmsAs = (showItem, type) => { openSmsModal(showItem); setSmsType(type); }; // ★ v3.0
         const setSmsType = (type) => {
           smsEditMode.value = false; // ★ v3.0
           smsType.value = type;
@@ -7518,6 +7591,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           shows, customers, payables, taxRecords, cashAccounts, todoItems,
           runOf, endTimeOf, formTimeInfo, // ★ v3.0
           dupExcluded, isDupExcluded, toggleDupExclude, // ★ v3.0
+          openSmsAs,
           SMS_LABELS, SMS_FIELDS, smsEditMode, smsTplDraft, isCustomSms, startSmsTplEdit, cancelSmsTplEdit, saveSmsTpl, resetSmsTpl, insertSmsField,
           lastYearOpen, lastYearAgain, recallSms, markRecallAsked,
           CANCEL_TYPE_INVALID, isFeeShow, amountDue, trash, trashDaysLeft, moveShowToTrash, trashFromCancelModal, onCancelFeeToggle, restoreFromTrash, deleteFromTrash, // ★ v3.0
