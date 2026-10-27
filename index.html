@@ -2230,27 +2230,35 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-4">
             <div class="flex items-center justify-between pb-2 border-b border-slate-700/60">
               <div>
-                <h3 class="text-sm font-bold text-white">🏦 사업자 및 개인 통장 잔액 실시간 입력</h3>
-                <p class="text-xs text-slate-400">잔액을 수정하면 브라우저에 자동 저장되며 메인 브리핑의 가용 현금에 즉시 반영됩니다.</p>
+                <h3 class="text-sm font-bold text-white">🏦 내 통장</h3>
+                <p class="text-xs text-slate-400">[입금완납 확인]을 누르면 어느 통장으로 들어왔는지 고르고, 통장마다 올해 들어온 돈이 쌓여 보여요. 잔액은 직접 적는 칸이고 저절로 바뀌지 않아요.</p>
               </div>
-              <div class="text-right font-mono">
-                <span class="text-xs text-slate-400 block">현재 통장 총액</span>
+              <div class="text-right font-mono shrink-0">
+                <span class="text-xs text-slate-400 block">적어 둔 잔액 합계</span>
                 <strong class="text-lg font-black text-emerald-400">₩ {{ totalCashBalance.toLocaleString() }}</strong>
               </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <div v-for="acc in cashAccounts" :key="acc.id" class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2">
-                <div class="flex justify-between items-center text-xs">
-                  <span class="font-bold text-white">{{ acc.name }}</span>
-                  <span v-if="acc.memo" class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300">{{ acc.memo }}</span>
+              <div v-for="acc in sortedAccounts" :key="acc.id" class="p-3.5 rounded-xl bg-slate-900 border space-y-2 text-xs" :class="acc.id === mainAccountId ? 'border-amber-500/60' : 'border-slate-700/80'">
+                <div class="flex items-center gap-1.5">
+                  <input type="text" v-model="acc.name" @change="saveAllToStorage" placeholder="통장 이름 (예: 농협 사업자)" class="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border font-bold" />
+                  <span v-if="acc.id === mainAccountId" class="px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-bold whitespace-nowrap">⭐ 주통장</span>
+                  <button v-else type="button" @click="setMainAccount(acc)" class="px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold cursor-pointer whitespace-nowrap">⭐ 주통장으로</button>
                 </div>
+                <input type="text" v-model="acc.memo" @change="saveAllToStorage" placeholder="메모 (예: 이츠쇼컴퍼니 입금용)" class="w-full px-2.5 py-1.5 rounded-lg border" />
                 <div class="flex items-center space-x-2">
-                  <span class="text-xs font-mono text-slate-400">₩</span>
+                  <span class="font-mono text-slate-400 whitespace-nowrap">잔액 ₩</span>
                   <input type="number" v-model.number="acc.balance" @change="saveAllToStorage" step="10000" class="w-full px-2.5 py-1.5 rounded-lg border font-mono font-bold text-right text-sm text-white" />
                 </div>
+                <div class="rounded-lg bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1.5 text-emerald-300 font-mono">
+                  들어온 돈 · 이번 달 ₩{{ ((receivedByAccount[acc.id] || {}).month || 0).toLocaleString() }} · 올해 ₩{{ ((receivedByAccount[acc.id] || {}).year || 0).toLocaleString() }} ({{ (receivedByAccount[acc.id] || {}).count || 0 }}건)
+                </div>
+                <div class="flex justify-end"><button type="button" @click="removeCashAccount(acc)" class="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold cursor-pointer">이 통장 빼기</button></div>
               </div>
+              <button type="button" @click="addCashAccount" class="p-3.5 rounded-xl border border-dashed border-slate-700/80 text-xs font-bold text-indigo-300 cursor-pointer min-h-[62px]">+ 통장 추가</button>
             </div>
+            <p v-if="receivedByAccount['']" class="text-[11px] text-slate-400">통장을 안 적은 올해 입금: ₩{{ receivedByAccount[''].year.toLocaleString() }} ({{ receivedByAccount[''].count }}건) — 예전 기록은 공연 고치기 창의 '입금 상태' 아래에서 통장을 골라 둘 수 있어요.</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2573,6 +2581,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <select v-model="editingShowForm.payStatus" class="w-full px-3 py-2 rounded-xl border">
               <option value="미입금">🚨 미입금</option>
               <option value="완납">✅ 완납</option>
+            </select>
+            <!-- ★ v3.0: 어느 통장으로 들어왔는지 -->
+            <select v-if="editingShowForm.payStatus === '완납' && cashAccounts.length" v-model="editingShowForm.paidAccount" class="w-full px-3 py-2 rounded-xl border mt-1.5 text-xs">
+              <option value="">🏦 들어온 통장 (안 적음)</option>
+              <option v-for="a in cashAccounts" :key="'pa' + a.id" :value="a.id">🏦 {{ a.name }}{{ a.main ? ' ⭐' : '' }}</option>
             </select>
           </div>
           <div>
@@ -3578,6 +3591,22 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div v-if="profile.defaults.kit === 'itsshow'">• 필요 행정서류(사업자등록증, 통장사본, 전자계산서, 교육계획안, 성범죄경력조회동의서 등) 요청 시 즉시 제출 가능합니다.</div>
             <div v-else>• 필요 서류(사업자등록증, 통장사본, 계산서 등)는 요청하시면 바로 보내 드립니다.</div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ★ v3.0: 입금 확인 — 어느 통장으로 들어왔나요? -->
+    <div v-if="payAccPick" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" @click.self="payAccPick = null">
+      <div class="bg-slate-900 border border-emerald-500/50 rounded-3xl max-w-md w-full p-5 space-y-3 shadow-2xl text-xs">
+        <h3 class="text-base font-black text-white">🏦 어느 통장으로 들어왔나요?</h3>
+        <p class="text-slate-400">고르면 입금 완납으로 바뀌고, 그 통장의 '들어온 돈'에 더해져요. 잔액은 바뀌지 않아요.</p>
+        <button v-for="a in sortedAccounts" :key="'pk' + a.id" type="button" @click="choosePaidAccount(a.id)"
+          class="w-full py-3 rounded-2xl font-bold text-sm cursor-pointer" :class="a.id === mainAccountId ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white'">
+          {{ a.id === mainAccountId ? '⭐ ' : '' }}{{ a.name || '이름 없는 통장' }}<span v-if="a.memo" class="font-normal text-[11px]"> · {{ a.memo }}</span>
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" @click="choosePaidAccount('')" class="py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold cursor-pointer">통장 안 적고 완납</button>
+          <button type="button" @click="payAccPick = null" class="py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold cursor-pointer">취소</button>
         </div>
       </div>
     </div>
@@ -4915,6 +4944,36 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const totalPendingPayables = computed(() => pendingPayables.value.reduce((acc, p) => acc + (Number(p.amount) || 0), 0));
 
         const totalCashBalance = computed(() => cashAccounts.value.reduce((acc, c) => acc + (Number(c.balance) || 0), 0));
+        // ★ v3.0: 통장 더하기·빼기·주통장, 통장별로 들어온 돈 합계 (세금 계산 없이 기록만)
+        const accountOf = (id) => (id ? cashAccounts.value.find(a => a.id === id) : null) || null;
+        const sortedAccounts = computed(() => cashAccounts.value.slice().sort((a, b) => (b.id === mainAccountId.value ? 1 : 0) - (a.id === mainAccountId.value ? 1 : 0)));
+        const addCashAccount = () => {
+          const n = cashAccounts.value.reduce((m, a) => Math.max(m, Number(String(a.id || '').replace(/\D/g, '')) || 0), 0) + 1;
+          cashAccounts.value.push({ id: 'ACC-' + n, name: '새 통장', memo: '', balance: 0, main: cashAccounts.value.length === 0 });
+          saveAllToStorage();
+        };
+        const mainAccountId = computed(() => ((cashAccounts.value.find(a => a.main) || cashAccounts.value[0] || {}).id) || '');
+        const setMainAccount = (acc) => { cashAccounts.value.forEach(a => { a.main = (a === acc); }); saveAllToStorage(); };
+        const removeCashAccount = (acc) => {
+          const used = shows.value.filter(s => s.paidAccount === acc.id).length;
+          if (!confirm(`'${acc.name}' 통장을 목록에서 뺄까요?` + (used ? `\n이 통장으로 들어온 기록 ${used}건은 '통장 안 적음'으로 보여요.` : ''))) return;
+          cashAccounts.value = cashAccounts.value.filter(a => a !== acc);
+          if (acc.main && cashAccounts.value[0]) cashAccounts.value[0].main = true;
+          saveAllToStorage();
+        };
+        const receivedByAccount = computed(() => {
+          const y = String(referenceToday.value).slice(0, 4), m = String(referenceToday.value).slice(0, 7);
+          const r = {};
+          shows.value.forEach(s => {
+            if (s.payStatus !== '완납' || !isCountedMoney(s)) return;
+            const d = String(s.payDate || s.showDate || '');
+            if (!d.startsWith(y)) return;
+            const k = accountOf(s.paidAccount) ? s.paidAccount : '';
+            const o = r[k] || (r[k] = { year: 0, month: 0, count: 0 });
+            o.year += revenueOf(s); o.count++; if (d.startsWith(m)) o.month += revenueOf(s);
+          });
+          return r;
+        });
         const projectedNetCash = computed(() => totalCashBalance.value + totalUnpaidAmount.value - totalPendingPayables.value);
 
         const upcomingShows = computed(() => {
@@ -6808,19 +6867,33 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
         const resetNavApp = () => { navLastApp.value = ''; try { localStorage.removeItem(NAV_APP_KEY); } catch (e) {} showToast('다음부터 길찾기 때 앱을 다시 물어볼게요.'); };
 
+        // ★ v3.0: 입금 확인 때 '어느 통장으로 들어왔나요?'를 고름 (통장이 없으면 예전처럼 바로 완납). 통장 잔액은 바꾸지 않고 기록만 함
+        const payAccPick = ref(null); // { no }
+        const finishPaid = (target, accId) => {
+          target.payStatus = '완납';
+          target.payDate = referenceToday.value;
+          target.paidAccount = accId || '';
+          target.updatedAt = nowStamp();
+          saveAllToStorage();
+          const acc = accountOf(accId);
+          showToast(`'${target.client}' (₩${amountDue(target).toLocaleString()}) 입금 완납 처리되었습니다!${acc ? ' 🏦 ' + acc.name : ''}`);
+        };
         const markShowPaid = (showItem) => {
           const target = shows.value.find(s => s.no === showItem.no);
-          if (target) {
-            target.payStatus = '완납';
-            target.payDate = referenceToday.value;
-            target.updatedAt = nowStamp();
-            saveAllToStorage();
-            showToast(`'${target.client}' (₩${target.amount.toLocaleString()}) 입금 완납 처리되었습니다!`);
-          }
+          if (!target) return;
+          if (cashAccounts.value.length) { payAccPick.value = { no: target.no }; return; }
+          finishPaid(target, '');
+        };
+        const choosePaidAccount = (accId) => {
+          const target = payAccPick.value && shows.value.find(s => s.no === payAccPick.value.no);
+          payAccPick.value = null;
+          if (target) finishPaid(target, accId);
         };
 
         const toggleShowPayStatus = (showItem) => {
-          showItem.payStatus = showItem.payStatus === '완납' ? '미입금' : '완납';
+          if (showItem.payStatus !== '완납') { markShowPaid(showItem); return; } // ★ v3.0: 완납으로 바꿀 때는 통장 고르기
+          showItem.payStatus = '미입금';
+          if (showItem.paidAccount) showItem.paidAccount = '';
           showItem.updatedAt = nowStamp();
           saveAllToStorage();
           showToast(`'${showItem.client}' 입금상태가 [${showItem.payStatus}]으로 변경되었습니다.`);
@@ -7829,6 +7902,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           runOf, endTimeOf, formTimeInfo, // ★ v3.0
           dupExcluded, isDupExcluded, toggleDupExclude, // ★ v3.0
           openSmsAs, brandName, goPremiumApp,
+          payAccPick, choosePaidAccount, accountOf, sortedAccounts, mainAccountId, addCashAccount, setMainAccount, removeCashAccount, receivedByAccount, // ★ v3.0 통장
           secondCo, coShort, issuerShort, license, firstRunOpen, isDemo, wiz, finishFirstRun, startDemo, endDemo, firstRunFromCloud, // ★ v3.0
           SMS_LABELS, SMS_FIELDS, smsEditMode, smsTplDraft, isCustomSms, startSmsTplEdit, cancelSmsTplEdit, saveSmsTpl, resetSmsTpl, insertSmsField,
           lastYearOpen, lastYearAgain, recallSms, markRecallAsked,
