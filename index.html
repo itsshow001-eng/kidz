@@ -2714,6 +2714,33 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       </div>
     </div>
 
+    <!-- ★ v3.0: 🔁 작년 이맘때 공연한 곳 -->
+    <div v-if="lastYearOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" @click.self="lastYearOpen = false">
+      <div class="bg-slate-900 border border-emerald-500/50 rounded-3xl max-w-2xl w-full p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="text-base font-bold text-white">🔁 작년 이맘때 공연한 곳 ({{ lastYearAgain.length }}곳)</h3>
+          <button @click="lastYearOpen = false" class="text-slate-400 hover:text-white text-sm cursor-pointer">✕</button>
+        </div>
+        <p class="text-[11px] text-slate-400 leading-relaxed">작년 이 무렵(지금부터 2~8주 뒤 날짜)에 공연한 곳이에요. 해마다 하는 행사라면 지금 연락하면 좋아요. 올해 같은 무렵(±30일)에 이미 일정이 잡힌 곳, 재계약 가능성 '낮음', 최근 60일 안에 [연락함] 표시한 곳은 빼고 보여 줘요.</p>
+        <div v-if="lastYearAgain.length === 0" class="p-4 text-center text-xs text-emerald-300">지금 연락할 곳이 없어요.</div>
+        <div v-for="x in lastYearAgain" :key="'ly-' + x.key" class="rounded-2xl bg-slate-950/90 border border-slate-800 p-3 space-y-2 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-bold text-white text-sm">{{ x.show.client }}</span>
+            <span class="text-slate-400">({{ x.show.region || '지역' }})</span>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">작년 {{ x.show.showDate }} · {{ x.show.theme || '공연' }}</span>
+            <span class="text-amber-300 font-bold">올해 같은 날까지 {{ x.daysTo }}일</span>
+          </div>
+          <div class="text-slate-400">{{ x.show.manager || '담당자' }} · {{ (x.cust && x.cust.phone) || x.show.phone || '전화 없음' }}<template v-if="x.show.eventName"> · 행사: {{ x.show.eventName }}</template></div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" @click="recallSms(x)" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black font-bold cursor-pointer">💬 재계약 문자</button>
+            <a v-if="(x.cust && x.cust.phone) || x.show.phone" :href="'tel:' + ((x.cust && x.cust.phone) || x.show.phone)" class="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white font-bold">📞 전화</a>
+            <button v-if="x.cust" type="button" @click="openCustomerHistoryModal(x.cust)" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold cursor-pointer">📜 이력</button>
+            <button type="button" @click="markRecallAsked(x)" class="ml-auto px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold cursor-pointer">✓ 연락함</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ======================================================================= -->
     <!-- MODAL v2.7: 📋 공연 상세 요약 카드 (대시보드에서 공연을 누르면 뜸 · 읽기 전용) -->
     <!-- ======================================================================= -->
@@ -4441,6 +4468,38 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         });
 
         // 확인 필요: 할 일이 있는 항목만 돌려줌 (없으면 빈 목록 → 화면에서 숨김)
+        // ★ v3.0: '작년 이맘때' — 해마다 오는 행사(재롱잔치·크리스마스 등) 4~6주 전에 미리 연락하도록
+        const lastYearOpen = ref(false);
+        const lastYearAgain = computed(() => {
+          const today = referenceToday.value;
+          const from = addDaysToDateStr(today, 14 - 365), to = addDaysToDateStr(today, 56 - 365);
+          const keyOf = (s) => s.custId || ('name:' + normalizeName(s.client));
+          const done = shows.value.filter(s => s.showDate && s.showDate >= from && s.showDate <= to && s.status !== '취소' && s.status !== '문의');
+          const byKey = {};
+          done.forEach(s => { const k = keyOf(s); if (!byKey[k] || s.showDate < byKey[k].showDate) byKey[k] = s; });
+          return Object.keys(byKey).map(k => {
+            const s = byKey[k];
+            const cust = customers.value.find(c => (s.custId && c.custId === s.custId) || normalizeName(c.client) === normalizeName(s.client)) || null;
+            const anniv = addDaysToDateStr(s.showDate, 365);
+            // 올해 같은 무렵(작년 날짜 ±30일 안)에 이미 일정(문의 포함)이 있으면 뺌
+            const booked = shows.value.some(x => keyOf(x) === k && x.status !== '취소' && x.showDate && x.showDate >= addDaysToDateStr(anniv, -30) && x.showDate <= addDaysToDateStr(anniv, 30));
+            const asked = cust && cust.recallAskedAt && cust.recallAskedAt >= addDaysToDateStr(today, -60);
+            return { key: k, show: s, cust, anniv, booked, asked, daysTo: diffDaysFromToday(anniv) };
+          }).filter(x => !x.booked && !x.asked && !(x.cust && String(x.cust.recontract || '').includes('낮음')))
+            .sort((a, b) => a.anniv.localeCompare(b.anniv));
+        });
+        const recallSms = (x) => {
+          if (x.cust) { openSmsForCustomer(x.cust); return; }
+          openSmsModal(x.show); setSmsType('thanks');
+        };
+        const markRecallAsked = (x) => {
+          if (!x.cust) { showToast('단골 고객에 없는 곳이라 표시를 남길 수 없어요. 단골 고객으로 등록해 주세요.'); return; }
+          const c = customers.value.find(cc => cc.custId === x.cust.custId); if (!c) return;
+          c.recallAskedAt = referenceToday.value;
+          saveAllToStorage();
+          showToast(`✓ '${c.client}' 연락함으로 표시했어요. 60일 동안 이 목록에 안 나와요.`);
+        };
+
         const dashAlerts = computed(() => {
           const today = referenceToday.value;
           const list = [];
@@ -4468,11 +4527,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             }).sort();
             list.push({ key: 'tax', icon: '🧾', text: `원천세 신고대기 ${waitTax.length}건 (가장 빠른 기한 ${Number(dues[0].slice(5, 7))}/10)`, go: 'tax', urgent: dues[0] <= addDaysToDateStr(today, 5) });
           }
+          if (lastYearAgain.value.length) list.push({ key: 'lastyear', icon: '🔁', text: `작년 이맘때 공연한 곳 ${lastYearAgain.value.length}곳 — 올해도 연락해 볼까요?`, go: 'lastyear' }); // ★ v3.0
           if (highPriorityTodos.value.length) list.push({ key: 'todo', icon: '🔥', text: `급한 할 일·구매 ${highPriorityTodos.value.length}건`, go: 'todo' });
           if (settleSummary.value.undecided > 0) list.push({ key: 'perf', icon: '❓', text: `정산할 공연자 중 개인/사업자 미정 ${settleSummary.value.undecided}건`, go: 'performers' });
           return list;
         });
         const goDashAlert = (a) => {
+          if (a.go === 'lastyear') { lastYearOpen.value = true; return; } // ★ v3.0
           if (a.go === 'unpaid') goToUnpaidView();
           else if (a.go === 'settle') openSettlementTab();
           else if (a.go === 'tax') { switchTab('finance'); financeSubTab.value = 'payables'; }
@@ -7444,6 +7505,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           shows, customers, payables, taxRecords, cashAccounts, todoItems,
           runOf, endTimeOf, formTimeInfo, // ★ v3.0
           dupExcluded, isDupExcluded, toggleDupExclude, // ★ v3.0
+          lastYearOpen, lastYearAgain, recallSms, markRecallAsked,
           CANCEL_TYPE_INVALID, isFeeShow, amountDue, trash, trashDaysLeft, moveShowToTrash, trashFromCancelModal, onCancelFeeToggle, restoreFromTrash, deleteFromTrash, // ★ v3.0
           quoteLineSum, quoteSubtotal, quoteVatAmt, quoteTotal, quoteHasTravel, addQuoteLine, removeQuoteLine, saveQuoteToShow,
           listWhen, ledgerShows, ledgerCounts, todayDividerNo, scrollLedgerToToday, // ★ v3.0
