@@ -866,8 +866,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <label class="text-[11px] text-slate-400 block mb-1">🏢 사업자 구분</label>
               <select v-model="filterDivision" class="w-full px-2 py-1.5 rounded-xl border text-xs cursor-pointer">
                 <option value="ALL">전체 사업자</option>
-                <option value="이츠쇼컴퍼니">이츠쇼컴퍼니</option>
-                <option value="키즈니버스랩">키즈니버스랩</option>
+                <option v-for="n in companyNames" :key="n" :value="n">{{ n }}</option>
+                <option v-if="filterDivision && filterDivision !== 'ALL' && !companyNames.includes(filterDivision)" :value="filterDivision">{{ filterDivision }}</option>
               </select>
             </div>
             <div>
@@ -1976,6 +1976,88 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <p class="text-xs text-slate-400 mt-0.5 hidden sm:block">구글 시트 실시간 클라우드 연동과 통장 잔액, 엑셀 다운로드를 관리합니다.</p>
           </div>
 
+          <!-- ★ v3.0: 내 업체 정보 · 내 공연·상품 · 추가 품목 (견적서·입력창 목록이 여기 값을 씀) -->
+          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-4">
+            <div class="pb-2 border-b border-slate-700/60">
+              <h3 class="text-sm font-bold text-white">🏢 내 업체 정보</h3>
+              <p class="text-xs text-slate-400">견적서의 공급자 칸과 발행 사업자 목록에 쓰여요. 고치면 바로 저장돼요.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div><label class="text-slate-400 block mb-1">대표자 이름</label><input type="text" v-model="profile.owner.ceo" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border" /></div>
+              <div><label class="text-slate-400 block mb-1">활동명 (견적서에 '아티스트 ○○'로)</label><input type="text" v-model="profile.owner.artist" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border" /></div>
+              <div><label class="text-slate-400 block mb-1">대표 연락처</label><input type="text" v-model="profile.owner.phone" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+              <div><label class="text-slate-400 block mb-1">이메일</label><input type="text" v-model="profile.owner.email" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+              <div><label class="text-slate-400 block mb-1">홈페이지</label><input type="text" v-model="profile.owner.homepage" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+              <div><label class="text-slate-400 block mb-1">블로그 주소</label><input type="text" v-model="profile.owner.blog" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+              <div><label class="text-slate-400 block mb-1">인스타그램</label><input type="text" v-model="profile.owner.insta" @change="saveProfile" placeholder="예: @itsshow" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+              <div><label class="text-slate-400 block mb-1">출발 주소 (나중에 이동 시간 계산에 써요)</label><input type="text" v-model="profile.owner.baseAddress" @change="saveProfile" placeholder="예: 천안시 서북구 …" class="w-full px-3 py-2 rounded-xl border" /></div>
+            </div>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white">사업자 (발행 사업자 목록)</span>
+                <button type="button" @click="addCompany" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer">+ 사업자 추가</button>
+              </div>
+              <div v-for="(c, ci) in profile.companies" :key="'co' + ci" class="rounded-xl border border-slate-700 p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div><label class="text-slate-400 block mb-1">상호</label><input type="text" v-model="c.name" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-bold" /></div>
+                <div><label class="text-slate-400 block mb-1">영문 이름 (견적서)</label><input type="text" v-model="c.en" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border" /></div>
+                <div><label class="text-slate-400 block mb-1">과세 구분</label>
+                  <select v-model="c.taxType" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border"><option value="과세">과세 (세금계산서)</option><option value="면세">면세 (계산서)</option></select></div>
+                <div><label class="text-slate-400 block mb-1">짧은 설명 (견적서 발행 목록에 괄호로)</label><input type="text" v-model="c.label" @change="saveProfile" placeholder="예: 서울 · 면세사업자" class="w-full px-3 py-2 rounded-xl border" /></div>
+                <div class="sm:col-span-2"><label class="text-slate-400 block mb-1">사업자 구분 문구 (견적서)</label><input type="text" v-model="c.note" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border" /></div>
+                <div><label class="text-slate-400 block mb-1">사업자등록번호 (적으면 견적서에 나와요)</label><input type="text" v-model="c.bizNo" @change="saveProfile" placeholder="000-00-00000" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+                <div><label class="text-slate-400 block mb-1">입금 계좌 (나중에 견적서·정산 문자에)</label><input type="text" v-model="c.bank" @change="saveProfile" placeholder="은행 · 계좌번호 · 예금주" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+                <div class="sm:col-span-2 flex justify-end"><button type="button" @click="removeCompany(ci)" class="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold cursor-pointer">이 사업자 빼기</button></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-700/60">
+              <div>
+                <h3 class="text-sm font-bold text-white">🎭 내 공연·상품</h3>
+                <p class="text-xs text-slate-400">새 일정의 '공연 테마' 목록과 견적서의 러닝타임·소개에 쓰여요. 이름을 바꾸면 지난 기록의 이름은 그대로 남아요.</p>
+              </div>
+              <button type="button" @click="addProduct" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer whitespace-nowrap">+ 공연·상품 추가</button>
+            </div>
+            <div v-for="(x, xi) in profile.products" :key="'pr' + xi" class="rounded-xl border border-slate-700 p-3 space-y-2 text-xs">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div class="col-span-2"><label class="text-slate-400 block mb-1">이름</label><input type="text" v-model="x.name" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-bold" /></div>
+                <div><label class="text-slate-400 block mb-1">종류</label>
+                  <select v-model="x.kind" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border"><option v-for="k in PRODUCT_KINDS" :key="k" :value="k">{{ k }}</option></select></div>
+                <div><label class="text-slate-400 block mb-1">러닝타임(분)</label><input type="number" min="0" v-model.number="x.runMin" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+                <div><label class="text-slate-400 block mb-1">세팅·철수(분)</label><input type="number" min="0" v-model.number="x.setupMin" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+                <div><label class="text-slate-400 block mb-1">인원</label><input type="text" v-model="x.people" @change="saveProfile" placeholder="예: 2명" class="w-full px-3 py-2 rounded-xl border" /></div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                <div class="sm:col-span-3"><label class="text-slate-400 block mb-1">한 줄 소개 (견적서에 나와요)</label><input type="text" v-model="x.intro" @change="saveProfile" placeholder="예: 아이들이 직접 참여하는 마술·버블 공연" class="w-full px-3 py-2 rounded-xl border" /></div>
+                <div><label class="text-slate-400 block mb-1">기본 금액 (선택)</label><input type="number" min="0" step="10000" v-model.number="x.price" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+              </div>
+              <div class="flex justify-end gap-2">
+                <button type="button" @click="moveProduct(xi, -1)" class="px-2.5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold cursor-pointer">▲</button>
+                <button type="button" @click="moveProduct(xi, 1)" class="px-2.5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold cursor-pointer">▼</button>
+                <button type="button" @click="removeProduct(xi)" class="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold cursor-pointer">빼기</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-700/60">
+              <div>
+                <h3 class="text-sm font-bold text-white">➕ 추가 품목</h3>
+                <p class="text-xs text-slate-400">출장비·포토존·보조 인력·도구비처럼 견적서에 따로 넣는 것. (견적서 여러 줄은 다음 단계에서 이 목록을 써요)</p>
+              </div>
+              <button type="button" @click="addItem" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer whitespace-nowrap">+ 품목 추가</button>
+            </div>
+            <div v-if="profile.items.length === 0" class="text-xs text-slate-400">아직 없어요. [+ 품목 추가]로 넣어 두면 견적서에서 눌러서 바로 쓸 수 있어요.</div>
+            <div v-for="(it, ii) in profile.items" :key="'it' + ii" class="flex flex-wrap gap-2 items-end text-xs">
+              <div class="flex-1 min-w-0"><label class="text-slate-400 block mb-1">품목</label><input type="text" v-model="it.name" @change="saveProfile" placeholder="예: 출장비" class="w-full px-3 py-2 rounded-xl border" /></div>
+              <div class="w-28"><label class="text-slate-400 block mb-1">기본 단가</label><input type="number" min="0" step="10000" v-model.number="it.price" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+              <div class="w-20"><label class="text-slate-400 block mb-1">단위</label>
+                <select v-model="it.unit" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border"><option v-for="u in ITEM_UNITS" :key="u" :value="u">{{ u }}</option></select></div>
+              <div><button type="button" @click="removeItem(ii)" class="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold cursor-pointer">빼기</button></div>
+            </div>
+          </div>
+
           <!-- ★ NEW: PC & 모바일 실시간 클라우드(구글 시트) 연동 패널 ★ -->
           <div class="rounded-2xl bg-indigo-950/30 border border-indigo-500/50 p-5 space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-indigo-500/30">
@@ -2256,16 +2338,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div>
             <label class="text-slate-400 block mb-1">공연 테마</label>
             <select v-model="editingShowForm.theme" class="w-full px-3 py-2 rounded-xl border">
-              <option value="더클래식">더클래식</option>
-              <option value="더윈터">더윈터</option>
-              <option value="더어드벤처">더어드벤처</option>
-              <option value="더 가디언즈">더 가디언즈</option>
-              <option value="더플레이">더플레이</option>
-              <option value="더에코">더에코</option>
-              <option value="매직벌룬쇼">매직벌룬쇼</option>
-              <option value="매직버블쇼">매직버블쇼</option>
-              <option value="매직쉐도우">매직쉐도우</option>
-              <option value="강연/체험">강연/체험</option>
+              <option v-for="n in productNames.filter(x => x !== '기타')" :key="n" :value="n">{{ n }}{{ (productOf(n) || {}).runMin ? ' · ' + productOf(n).runMin + '분' : '' }}</option>
+              <option v-if="editingShowForm.theme && editingShowForm.theme !== '기타' && !productNames.includes(editingShowForm.theme)" :value="editingShowForm.theme">{{ editingShowForm.theme }}</option>
               <option value="기타">기타</option>
             </select>
           </div>
@@ -2322,8 +2396,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div>
             <label class="text-slate-400 block mb-1">발행 사업자 구분</label>
             <select v-model="editingShowForm.issuer" class="w-full px-3 py-2 rounded-xl border">
-              <option value="이츠쇼컴퍼니">이츠쇼컴퍼니 (서울)</option>
-              <option value="키즈니버스랩">키즈니버스랩 (천안 면세)</option>
+              <option v-for="n in companyNames" :key="n" :value="n">{{ n }}</option>
+              <option v-if="editingShowForm.issuer && editingShowForm.issuer !== 'ALL' && !companyNames.includes(editingShowForm.issuer)" :value="editingShowForm.issuer">{{ editingShowForm.issuer }}</option>
             </select>
           </div>
           <div>
@@ -2837,8 +2911,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div>
             <label class="text-slate-400 block mb-1">주거래 사업자</label>
             <select v-model="editingCustomerForm.company" class="w-full px-3 py-2 rounded-xl border">
-              <option value="이츠쇼컴퍼니">이츠쇼컴퍼니</option>
-              <option value="키즈니버스랩">키즈니버스랩</option>
+              <option v-for="n in companyNames" :key="n" :value="n">{{ n }}</option>
+              <option v-if="editingCustomerForm.company && editingCustomerForm.company !== 'ALL' && !companyNames.includes(editingCustomerForm.company)" :value="editingCustomerForm.company">{{ editingCustomerForm.company }}</option>
             </select>
           </div>
 
@@ -3135,8 +3209,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <select v-model="quoteData.issuer" class="px-2.5 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold text-white max-w-full">
-              <option value="키즈니버스랩">발행: 키즈니버스랩 (면세사업자)</option>
-              <option value="이츠쇼컴퍼니">발행: 이츠쇼컴퍼니 (서울)</option>
+              <option v-for="c in profile.companies.filter(x => x.name)" :key="c.name" :value="c.name">발행: {{ c.name }}{{ c.label ? ' (' + c.label + ')' : '' }}</option>
             </select>
             <button @click="printQuoteSheet" class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black cursor-pointer shadow-lg">
               🖨️ PDF 저장 / 인쇄하기
@@ -3166,7 +3239,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <!-- Provider Info & Total Box -->
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-stretch">
             <div class="sm:col-span-5 bg-slate-900 text-white rounded-2xl p-4 flex flex-col justify-between">
-              <div class="text-xs text-indigo-300 font-bold">총 견적 금액 ({{ quoteData.issuer === '키즈니버스랩' ? '면세사업자 · 부가세 면제' : '공급가액 기준' }})</div>
+              <div class="text-xs text-indigo-300 font-bold">총 견적 금액 ({{ (companyOf(quoteData.issuer) || {}).taxType === '면세' ? '면세사업자 · 부가세 면제' : '공급가액 기준' }})</div>
               <div class="my-2">
                 <div class="text-2xl font-black font-mono text-amber-400">₩ {{ Number(quoteData.amount || 0).toLocaleString() }}</div>
                 <div class="text-xs text-slate-300 mt-0.5">일금 {{ formatKoreanCurrency(Number(quoteData.amount || 0)) }} 정</div>
@@ -3178,17 +3251,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
             <div class="sm:col-span-7 border border-slate-300 rounded-2xl p-3.5 text-xs space-y-1.5 bg-slate-50 relative">
               <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
-                <span class="font-black text-slate-800 text-sm">🏢 공급자: {{ quoteData.issuer === '키즈니버스랩' ? '키즈니버스랩 (KIDSNIVERSE LAB)' : '이츠쇼컴퍼니 (ITS SHOW COMPANY)' }}</span>
+                <span class="font-black text-slate-800 text-sm">🏢 공급자: {{ quoteData.issuer }}{{ (companyOf(quoteData.issuer) || {}).en ? ' (' + companyOf(quoteData.issuer).en + ')' : '' }}</span>
                 <!-- Stamp Badge -->
                 <span class="inline-flex items-center justify-center w-11 h-11 rounded-full border-2 border-rose-600 text-rose-600 font-black text-[10px] leading-tight text-center rotate-[-8deg] select-none bg-rose-50/60">
-                  대표<br>고민준인
+                  대표<br>{{ profile.owner.ceo }}인
                 </span>
               </div>
               <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-700">
-                <div><strong>대표자:</strong> 고민준 (아티스트 버블케이)</div>
-                <div><strong>직통연락처:</strong> 010-2485-8561</div>
-                <div class="col-span-2"><strong>이메일:</strong> itsshow001@naver.com · <strong>홈페이지:</strong> www.itsshow.co.kr</div>
-                <div class="col-span-2"><strong>사업자구분:</strong> {{ quoteData.issuer === '키즈니버스랩' ? '면세사업자 (전자계산서 발행 가능)' : '과세/겸영사업자 (세금계산서·카드결제 가능)' }}</div>
+                <div><strong>대표자:</strong> {{ profile.owner.ceo }}{{ profile.owner.artist ? ' (아티스트 ' + profile.owner.artist + ')' : '' }}</div>
+                <div><strong>직통연락처:</strong> {{ profile.owner.phone }}</div>
+                <div class="col-span-2"><strong>이메일:</strong> {{ profile.owner.email }}<template v-if="profile.owner.homepage"> · <strong>홈페이지:</strong> {{ profile.owner.homepage }}</template></div>
+                <div class="col-span-2"><strong>사업자구분:</strong> {{ (companyOf(quoteData.issuer) || {}).note || '' }}</div>
+                <div v-if="(companyOf(quoteData.issuer) || {}).bizNo" class="col-span-2"><strong>사업자등록번호:</strong> {{ companyOf(quoteData.issuer).bizNo }}</div>
               </div>
             </div>
           </div>
@@ -3209,7 +3283,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                   <td class="border border-slate-300 py-2.5 px-3 block sm:table-cell">
                     <span class="sm:hidden block text-[10px] font-bold text-slate-500 mb-0.5">항목 / 프로그램명</span>
                     <input type="text" v-model="quoteData.themeTitle" class="w-full font-bold text-slate-900 bg-transparent border-b border-slate-200" />
-                    <div class="text-[11px] text-slate-500 mt-0.5">마술 + 버블 + 벌룬 + 빛과 그림자극 올인원 초청공연</div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">{{ (productOf(quoteData.theme) || {}).intro || '마술 + 버블 + 벌룬 + 빛과 그림자극 올인원 초청공연' }}</div>
                   </td>
                   <td class="border border-slate-300 py-2.5 px-3 font-mono block sm:table-cell">
                     <span class="sm:hidden block text-[10px] font-bold text-slate-500 mb-0.5 font-sans">공연 일시 / 장소</span>
@@ -3217,7 +3291,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <div class="text-[11px] text-slate-500 font-sans mt-0.5">{{ quoteData.address || quoteData.region || '귀 기관 지정 공연장소' }}</div>
                   </td>
                   <td class="border border-slate-300 py-2.5 px-3 sm:text-center font-bold block sm:table-cell">
-                    <span class="sm:hidden text-[10px] font-bold text-slate-500 mr-1.5">러닝타임</span>약 50분
+                    <span class="sm:hidden text-[10px] font-bold text-slate-500 mr-1.5">러닝타임</span>{{ runTimeText(quoteData.theme) }}
                   </td>
                   <td class="border border-slate-300 py-2.5 px-3 sm:text-right font-mono font-bold block sm:table-cell">
                     <span class="sm:hidden text-[10px] font-bold text-slate-500 mr-1.5 font-sans">금액 (원)</span>
@@ -3428,6 +3502,58 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const cashAccounts = ref([]);
         const todoItems = ref([]);
         const performers = ref([]); // ★ v2.6: 공연자 명부
+        // ★ v3.0: 내 업체 정보 · 내 공연·상품 · 추가 품목 (예전엔 견적서·입력창 목록에 박혀 있던 값을 설정으로 옮김)
+        //   공연 기록과 함께 저장·구글 시트 동기화·백업된다. 처음엔 지금까지 화면에 박혀 있던 값으로 채워 두어 화면이 그대로다.
+        const DEFAULT_PROFILE = {
+          owner: { ceo: '고민준', artist: '버블케이', phone: '010-2485-8561', email: 'itsshow001@naver.com', homepage: 'www.itsshow.co.kr', blog: 'https://blog.naver.com/itsshow001', insta: '', baseAddress: '' },
+          companies: [
+            { name: '이츠쇼컴퍼니', en: 'ITS SHOW COMPANY', label: '서울', taxType: '과세', note: '과세/겸영사업자 (세금계산서·카드결제 가능)', bizNo: '', bank: '' },
+            { name: '키즈니버스랩', en: 'KIDSNIVERSE LAB', label: '면세사업자', taxType: '면세', note: '면세사업자 (전자계산서 발행 가능)', bizNo: '', bank: '' }
+          ],
+          products: ['더클래식', '더윈터', '더어드벤처', '더 가디언즈', '더플레이', '더에코'].map(n => ({ name: n, kind: '공연', runMin: 50, setupMin: 50, people: '', price: '', intro: '마술 + 버블 + 벌룬 + 빛과 그림자극 올인원 초청공연' }))
+            .concat(['매직벌룬쇼', '매직버블쇼', '매직쉐도우'].map(n => ({ name: n, kind: '공연', runMin: '', setupMin: '', people: '', price: '', intro: '' })))
+            .concat([{ name: '강연/체험', kind: '강연·체험', runMin: '', setupMin: '', people: '', price: '', intro: '' }]),
+          items: []
+        };
+        const PRODUCT_KINDS = ['공연', '체험부스', '설치·장식', '진행', '강연·체험', '기타'];
+        const ITEM_UNITS = ['회', '명', '개', '시간', 'km', '식'];
+        const normalizeProfile = (p) => {
+          const d = JSON.parse(JSON.stringify(DEFAULT_PROFILE));
+          if (!p || typeof p !== 'object') return d;
+          return {
+            owner: Object.assign({}, d.owner, p.owner || {}),
+            companies: Array.isArray(p.companies) ? p.companies.map(c => Object.assign({ name: '', en: '', label: '', taxType: '과세', note: '', bizNo: '', bank: '' }, c)) : d.companies,
+            products: Array.isArray(p.products) ? p.products.map(x => Object.assign({ name: '', kind: '공연', runMin: '', setupMin: '', people: '', price: '', intro: '' }, x)) : d.products,
+            items: Array.isArray(p.items) ? p.items.map(x => Object.assign({ name: '', price: '', unit: '회' }, x)) : d.items
+          };
+        };
+        const profile = ref(normalizeProfile(null));
+        const companyNames = computed(() => profile.value.companies.map(c => String(c.name || '').trim()).filter(Boolean));
+        const productNames = computed(() => profile.value.products.map(x => String(x.name || '').trim()).filter(Boolean));
+        const companyOf = (name) => profile.value.companies.find(c => c.name === name) || null;
+        const productOf = (name) => profile.value.products.find(x => x.name === name) || null;
+        const saveProfile = () => saveAllToStorage();
+        const addCompany = () => { profile.value.companies.push({ name: '', en: '', label: '', taxType: '과세', note: '', bizNo: '', bank: '' }); };
+        const removeCompany = (i) => {
+          const c = profile.value.companies[i];
+          if (profile.value.companies.length <= 1) { showToast('사업자는 하나 이상 있어야 해요.'); return; }
+          if (!confirm(`'${c.name || '이름 없음'}' 사업자를 목록에서 뺄까요?\n지난 공연 기록에 적힌 이름은 그대로 남아요.`)) return;
+          profile.value.companies.splice(i, 1); saveProfile();
+        };
+        const addProduct = () => { profile.value.products.push({ name: '', kind: '공연', runMin: '', setupMin: '', people: '', price: '', intro: '' }); };
+        const removeProduct = (i) => {
+          const x = profile.value.products[i];
+          if (!confirm(`'${x.name || '이름 없음'}'을(를) 목록에서 뺄까요?\n지난 공연 기록에 적힌 공연 이름은 그대로 남아요.`)) return;
+          profile.value.products.splice(i, 1); saveProfile();
+        };
+        const moveProduct = (i, d) => {
+          const a = profile.value.products, j = i + d;
+          if (j < 0 || j >= a.length) return;
+          [a[i], a[j]] = [a[j], a[i]]; saveProfile();
+        };
+        const addItem = () => { profile.value.items.push({ name: '', price: '', unit: '회' }); };
+        const removeItem = (i) => { profile.value.items.splice(i, 1); saveProfile(); };
+        const runTimeText = (name) => { const x = productOf(name); const m = x && Number(x.runMin); return m > 0 ? `약 ${m}분` : '약 50분'; };
         const showFormOpen = ref({ talk: true, perf: true, after: true, biz: true }); // ★ v2.9: 공연 입력창 묶음 펼침 상태
 
         // ★ v2.9: 상태·정산 방식에 따라 돈 계산을 나눕니다.
@@ -3576,7 +3702,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           taxRecords: taxRecords.value,
           cashAccounts: cashAccounts.value,
           todoItems: todoItems.value,
-          performers: performers.value
+          performers: performers.value,
+          profile: profile.value // ★ v3.0
         });
 
         // 지금 데이터를 통째로 복사해 보관합니다. 성공하면 true.
@@ -3626,6 +3753,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           cashAccounts.value = d.cashAccounts;
           if (Array.isArray(d.todoItems)) todoItems.value = d.todoItems;
           if (Array.isArray(d.performers)) performers.value = d.performers;
+          if (d.profile && typeof d.profile === 'object') profile.value = normalizeProfile(d.profile); // ★ v3.0
           syncShowsAndCustomers(true);
           saveAllToStorage(false); // 복원한 데이터를 클라우드로 자동 전송하지는 않습니다.
           nextTick(() => renderCharts());
@@ -3910,6 +4038,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               cashAccounts.value = parsed.cashAccounts || rawInit.cashAccounts;
               todoItems.value = Array.isArray(parsed.todoItems) && parsed.todoItems.length > 0 ? parsed.todoItems : JSON.parse(JSON.stringify(DEFAULT_TODOS));
               performers.value = Array.isArray(parsed.performers) ? parsed.performers : [];
+              profile.value = normalizeProfile(parsed.profile); // ★ v3.0: 없으면 지금까지 박혀 있던 값으로
               if (migratedShowCount) {
                 showToast('예전 ERP(v2.2)가 이 브라우저에 저장해 둔 데이터를 가져왔어요 (공연 ' + migratedShowCount + '건). 예전 데이터는 그대로 남아 있어요. 설정 탭에서 구글 시트 주소를 넣고 [클라우드에서 불러오기]를 눌러 주세요.', 14000);
                 migratedShowCount = 0;
@@ -3930,6 +4059,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           cashAccounts.value = JSON.parse(JSON.stringify(rawInit.cashAccounts));
           todoItems.value = JSON.parse(JSON.stringify(DEFAULT_TODOS));
           performers.value = Array.isArray(rawInit.performers) ? JSON.parse(JSON.stringify(rawInit.performers)) : [];
+          profile.value = normalizeProfile(null); // ★ v3.0
         };
 
         const DEFAULT_CLOUD_URL = '';
@@ -3986,7 +4116,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               taxRecords: taxRecords.value,
               cashAccounts: cashAccounts.value,
               todoItems: todoItems.value,
-              performers: performers.value
+              performers: performers.value,
+              profile: profile.value // ★ v3.0
             }));
           } catch (e) {
             syncStatusText.value = '⚠️ 이 기기 저장 실패';
@@ -5878,6 +6009,7 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
             client: showItem.client || '',
             manager: showItem.manager || '담당자님',
             phone: showItem.phone || '',
+            theme: showItem.theme || '', // ★ v3.0: 내 공연·상품에서 러닝타임·소개를 찾을 때 씀
             themeTitle: `키즈니버스 「${showItem.theme || '더클래식'}」 초청공연`,
             scheduleText: `${showItem.showDate || ''} ${showItem.showTime || ''}`.trim(),
             address: showItem.address || showItem.bizAddress || '',
@@ -6171,6 +6303,7 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
               cashAccounts: cashAccounts.value,
               todoItems: todoItems.value,
               performers: performers.value,
+              profile: profile.value, // ★ v3.0
               updatedAt: sentAt
             });
             // ★ v2.5 (C): 구글의 답장(ok / conflict / denied / busy …)을 직접 읽습니다.
@@ -6329,6 +6462,7 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
               if (Array.isArray(data.todoItems) && data.todoItems.length > 0) todoItems.value = data.todoItems;
               // ★ v2.6: 예전 버전(v2.5 이하)이 저장한 시트에는 공연자 명부가 없을 수 있음 → 이 기기 명부를 그대로 둠
               if (Array.isArray(data.performers)) performers.value = data.performers;
+              if (data.profile && typeof data.profile === 'object') profile.value = normalizeProfile(data.profile); // ★ v3.0 (없으면 이 기기 것 유지)
               if (performers.value.length === 0) seedPerformersFromShows(true);
               syncShowsAndCustomers(true);
               saveBaseline(currentCounts()); // 확인을 거친 건수를 새 기준으로 삼습니다.
@@ -6898,6 +7032,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
             if (Array.isArray(d.cashAccounts)) cashAccounts.value = d.cashAccounts;
             if (Array.isArray(d.todoItems)) todoItems.value = d.todoItems;
             if (Array.isArray(d.performers)) performers.value = d.performers;
+            if (d.profile && typeof d.profile === 'object') profile.value = normalizeProfile(d.profile); // ★ v3.0
             if (d.blogExtras && typeof d.blogExtras === 'object' && Object.keys(d.blogExtras).length && confirm('이 백업에 블로그(SNS ERP) 기록도 들어 있어요. 함께 되돌릴까요?')) {
               BLOG_EXTRA_KEYS.forEach(k => { if (typeof d.blogExtras[k] === 'string') { try { localStorage.setItem(k, d.blogExtras[k]); } catch (e) {} } });
             }
@@ -6983,6 +7118,8 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
 
         return {
           shows, customers, payables, taxRecords, cashAccounts, todoItems,
+          profile, PRODUCT_KINDS, ITEM_UNITS, companyNames, productNames, companyOf, productOf, saveProfile, runTimeText, // ★ v3.0
+          addCompany, removeCompany, addProduct, removeProduct, moveProduct, addItem, removeItem,
           todoFilterType, todoFilterPriority, newTodoForm, highPriorityTodos, pendingTodosCount, totalPendingPurchaseCost, filteredTodos,
           addTodoItem, toggleTodoDone, deleteTodoItem,
           themeMode, isSidebarOpen, isMobile, activeTab, scheduleViewMode, financeSubTab, selectedYearMonth,
