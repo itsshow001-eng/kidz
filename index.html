@@ -389,7 +389,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <button v-for="s in g.shows" :key="g.key + '-' + (s.uid || s.no)" @click="openShowSummary(s)" type="button"
                 class="w-full text-left p-3 rounded-xl bg-slate-900/90 border flex items-start gap-3 cursor-pointer transition-all"
                 :class="g.key === 'today' ? 'border-slate-700 hover:border-amber-400' : 'border-slate-800 hover:border-indigo-500/50'">
-                <span class="font-mono font-black text-base shrink-0" :class="g.key === 'today' ? 'text-amber-300' : 'text-indigo-300'">{{ s.showTime || '--:--' }}</span>
+                <span class="font-mono font-black text-base shrink-0" :class="g.key === 'today' ? 'text-amber-300' : 'text-indigo-300'">{{ s.showTime || '--:--' }}<span v-if="endTimeOf(s)" class="text-xs font-bold text-slate-400">~{{ endTimeOf(s) }}</span></span>
                 <span class="min-w-0 flex-1 space-y-0.5">
                   <span class="flex items-center gap-1.5 min-w-0">
                     <span class="font-bold text-white truncate">{{ s.client }}</span>
@@ -1072,7 +1072,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <td class="py-2 px-1.5 whitespace-nowrap" :title="s.showDate + ' ' + s.showTime">
                       <div class="flex items-center space-x-1">
                         <span class="font-bold" :class="s.status === '취소' ? 'line-through text-slate-500' : 'text-white'">{{ formatCompactDate(s.showDate) }}</span>
-                        <span class="text-slate-400 text-[10px]">{{ s.showTime }}</span>
+                        <span class="text-slate-400 text-[10px]">{{ s.showTime }}{{ endTimeOf(s) ? '~' + endTimeOf(s) : '' }}</span>
                       </div>
                       <div v-if="s.status !== '취소' && isWithin5Days(s.showDate)" class="mt-0.5">
                         <span class="px-1 py-0.2 rounded bg-amber-500 text-black font-black text-[9px]">🔥 {{ getDdayLabel(s.showDate) }}</span>
@@ -1181,7 +1181,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 :class="[s.no === todayDividerNo ? 'ledger-today-line' : '', s.status === '취소' ? 'bg-slate-950/60 opacity-60' : (isWithin5Days(s.showDate) ? 'bg-amber-500/10' : '')]">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-1.5">
-                    <span class="font-mono font-bold text-xs text-indigo-300">{{ s.showDate }} {{ s.showTime }}</span>
+                    <span class="font-mono font-bold text-xs text-indigo-300">{{ s.showDate }} {{ s.showTime }}{{ endTimeOf(s) ? '~' + endTimeOf(s) : '' }}</span>
                     <span v-if="s.status !== '취소' && isWithin5Days(s.showDate)" class="px-1.5 py-0.2 rounded bg-amber-500 text-black font-black text-[10px]">
                       🔥 {{ getDdayLabel(s.showDate) }}
                     </span>
@@ -2293,6 +2293,21 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <option value="취소">🚫 취소 (삭제안함·기록보존)</option>
             </select>
           </div>
+          <!-- ★ v3.0: 러닝타임 → 끝나는 시간, 같은 날 다른 일정과 간격 -->
+          <div class="sm:col-span-3 flex flex-wrap items-center gap-2">
+            <label class="text-slate-400">⏱️ 러닝타임</label>
+            <input type="number" min="0" step="5" v-model.number="editingShowForm.runMin" :placeholder="formTimeInfo.productRun ? '기본 ' + formTimeInfo.productRun : '분'" class="w-28 px-3 py-2 rounded-xl border font-mono" />
+            <span class="text-slate-400">분</span>
+            <span v-if="formTimeInfo.end" class="font-mono font-bold text-indigo-200">→ {{ editingShowForm.showTime }} ~ {{ formTimeInfo.end }}</span>
+            <span v-else class="text-[11px] text-slate-500">러닝타임을 적거나 '내 공연·상품'에 기본값을 넣으면 끝나는 시간이 나와요.</span>
+          </div>
+          <div v-if="formTimeInfo.others.length" class="sm:col-span-3 p-2.5 rounded-xl border text-[11px] space-y-1"
+            :class="formTimeInfo.others.some(o => o.level !== '여유') ? 'bg-rose-500/10 border-rose-500/40 text-rose-200' : 'bg-slate-900 border-slate-700 text-slate-300'">
+            <div class="font-bold">📅 같은 날 다른 일정 ({{ editingShowForm.performer || '공연자' }})</div>
+            <div v-for="o in formTimeInfo.others" :key="'gap' + o.no">
+              {{ o.level === '겹침' ? '⛔' : (o.level === '빠듯' ? '⚠️' : '✅') }} {{ o.time }}~{{ o.end }}{{ o.guessed ? '(1시간으로 셈)' : '' }} {{ o.client }} — {{ o.gapText }}{{ o.level === '빠듯' ? ' · 이동이 빠듯해요' : '' }}
+            </div>
+          </div>
           <div v-if="editingShowForm.status === '문의'" class="sm:col-span-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-[11px] text-amber-200">
             🟡 문의(미정)는 달력에 흐리게 보여 같은 날 겹치는 걸 막아 줘요. 매출·미수금·정산·블로그 글감에는 들어가지 않아요. 정해지면 [확정]으로 바꿔 주세요.
           </div>
@@ -3314,7 +3329,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <div class="text-[11px] text-slate-500 font-sans mt-0.5">{{ quoteData.address || quoteData.region || '귀 기관 지정 공연장소' }}</div>
                   </td>
                   <td class="border border-slate-300 py-2.5 px-3 sm:text-center font-bold block sm:table-cell">
-                    <span class="sm:hidden text-[10px] font-bold text-slate-500 mr-1.5">러닝타임</span>{{ runTimeText(quoteData.theme) }}
+                    <span class="sm:hidden text-[10px] font-bold text-slate-500 mr-1.5">러닝타임</span>{{ quoteData.runMin ? '약 ' + quoteData.runMin + '분' : runTimeText(quoteData.theme) }}
                   </td>
                   <td class="border border-slate-300 py-2.5 px-3 sm:text-right font-mono font-bold block sm:table-cell">
                     <span class="sm:hidden text-[10px] font-bold text-slate-500 mr-1.5 font-sans">금액 (원)</span>
@@ -3576,6 +3591,32 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
         const addItem = () => { profile.value.items.push({ name: '', price: '', unit: '회' }); };
         const removeItem = (i) => { profile.value.items.splice(i, 1); saveProfile(); };
+        // ★ v3.0: 러닝타임 — 일정에 적은 값(runMin)이 없으면 '내 공연·상품'의 기본값을 씀(저장된 기록은 바꾸지 않음)
+        const toMin = (t) => { const m = /^(\d{1,2}):(\d{2})/.exec(String(t || '').trim()); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+        const fromMin = (n) => `${String(Math.floor(n / 60) % 24).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+        const runOf = (s) => { const r = Number(s && s.runMin); if (r > 0) return r; const x = productOf(s && s.theme); return x && Number(x.runMin) > 0 ? Number(x.runMin) : 0; };
+        const endTimeOf = (s) => { const st = toMin(s && s.showTime); const r = runOf(s); return st !== null && r > 0 ? fromMin(st + r) : ''; };
+        // 같은 날·같은 공연자의 다른 일정과 간격 (러닝타임을 모르면 60분으로 셈). 60분 안쪽이면 '빠듯', 겹치면 '겹침'
+        const sameDayGaps = (f, list, date) => {
+          const d = date || (f && f.showDate);
+          const st = toMin(f && f.showTime);
+          if (!d || st === null) return [];
+          const en = st + (runOf(f) || 60);
+          const perf = String((f && f.performer) || '').trim();
+          return (list || []).filter(o => o.showDate === d && o.no !== f.no && o.status !== '취소' && String(o.performer || '').trim() === perf && toMin(o.showTime) !== null)
+            .map(o => {
+              const os = toMin(o.showTime), oe = os + (runOf(o) || 60);
+              const gap = os >= en ? os - en : (st >= oe ? st - oe : -1);
+              const level = gap < 0 ? '겹침' : (gap < 60 ? '빠듯' : '여유');
+              const gapText = gap < 0 ? '시간이 겹쳐요' : `간격 ${gap >= 60 ? Math.floor(gap / 60) + '시간 ' : ''}${gap % 60 ? (gap % 60) + '분' : (gap >= 60 ? '' : '0분')}`.trim();
+              return { no: o.no, client: o.client, time: o.showTime, end: fromMin(oe), level, gapText, guessed: !runOf(o) };
+            }).sort((a, b) => toMin(a.time) - toMin(b.time));
+        };
+        const formTimeInfo = computed(() => {
+          const f = editingShowForm.value || {};
+          const st = toMin(f.showTime), r = runOf(f);
+          return { run: r, end: st !== null && r > 0 ? fromMin(st + r) : '', productRun: Number((productOf(f.theme) || {}).runMin) || 0, others: showModalMode.value === 'bulk' && !isEditingShow.value ? [] : sameDayGaps(f, shows.value) };
+        });
         const runTimeText = (name) => { const x = productOf(name); const m = x && Number(x.runMin); return m > 0 ? `약 ${m}분` : '약 50분'; };
         const showFormOpen = ref({ talk: true, perf: true, after: true, biz: true }); // ★ v2.9: 공연 입력창 묶음 펼침 상태
 
@@ -3925,6 +3966,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               if (same.length) hits.push(`${d} ${timeNow} → 이미 [${same.slice(0, 2).map(s => s.client).join(', ')}] 일정`);
             });
             if (hits.length) warnings.push(`같은 공연자(${perf})의 같은 시간 일정이 이미 있어요 (중복 예약 가능성):\n     ${hits.slice(0, 3).join('\n     ')}${hits.length > 3 ? `\n     …외 ${hits.length - 3}건` : ''}`);
+            // ★ v3.0: 시간이 겹치거나 간격이 1시간보다 짧으면 물어봄 (러닝타임 기준)
+            if (!hits.length) {
+              const tight = [];
+              dates.filter(vIsRealDate).forEach(d => sameDayGaps(Object.assign({}, f, { showTime: timeNow }), others, d).filter(o => o.level !== '여유')
+                .forEach(o => tight.push(`${d} ${o.time}~${o.end} [${o.client}] — ${o.gapText}`)));
+              if (tight.length) warnings.push(`같은 날 ${perf} 일정과 시간이 겹치거나 간격이 빠듯해요:\n     ${tight.slice(0, 3).join('\n     ')}${tight.length > 3 ? `\n     …외 ${tight.length - 3}건` : ''}`);
+            }
           }
           // ★ v2.9: 함께한 사람 — 이름·페이 확인, 지급 합계가 공연 금액보다 크면 물어봄
           const crewList = Array.isArray(f.crew) ? f.crew : [];
@@ -5165,6 +5213,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             nextNote: '',
             photoSource: '',
             crew: [],
+            runMin: '', // ★ v3.0: 비워 두면 공연 목록의 기본 러닝타임
             memo: ''
           };
           showModalOpen.value = true;
@@ -6065,6 +6114,7 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
             manager: showItem.manager || '담당자님',
             phone: showItem.phone || '',
             theme: showItem.theme || '', // ★ v3.0: 내 공연·상품에서 러닝타임·소개를 찾을 때 씀
+            runMin: Number(showItem.runMin) > 0 ? Number(showItem.runMin) : '',
             themeTitle: `키즈니버스 「${showItem.theme || '더클래식'}」 초청공연`,
             scheduleText: `${showItem.showDate || ''} ${showItem.showTime || ''}`.trim(),
             address: showItem.address || showItem.bizAddress || '',
@@ -7173,6 +7223,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
 
         return {
           shows, customers, payables, taxRecords, cashAccounts, todoItems,
+          runOf, endTimeOf, formTimeInfo, // ★ v3.0
           listWhen, ledgerShows, ledgerCounts, todayDividerNo, scrollLedgerToToday, // ★ v3.0
           profile, PRODUCT_KINDS, ITEM_UNITS, companyNames, productNames, companyOf, productOf, saveProfile, runTimeText, // ★ v3.0
           addCompany, removeCompany, addProduct, removeProduct, moveProduct, addItem, removeItem,
