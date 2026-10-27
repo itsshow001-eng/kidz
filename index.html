@@ -144,7 +144,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     :root .text-white { color: var(--text-heading); }
     :root .text-slate-200, :root .text-slate-300 { color: var(--text-primary); }
     :root .text-slate-400 { color: var(--text-secondary); }
-    :root .bg-indigo-600, :root .bg-emerald-600, :root .bg-rose-600, :root .bg-amber-500 { color: #ffffff !important; }
+    :root .bg-indigo-600, :root .bg-emerald-600, :root .bg-rose-600 { color: #ffffff !important; }
+    :root .bg-amber-500 { color: #111827 !important; } /* ★ v3.0: 노란 단추 글자는 진하게 (흰 글자는 잘 안 보였음) */
     :root input:not([type="checkbox"]), :root select, :root textarea {
       background-color: var(--bg-input);
       border-color: var(--border-secondary);
@@ -190,6 +191,28 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .itt-nav .itt-tab.on { background: #4f46e5; color: #fff; }
   /* ★ v3.0: PC에서 화면을 내려도 왼쪽 메뉴가 따라오게 (머리말 바로 아래에 붙음) */
   .erp-side-sticky { position: sticky; top: 61px; align-self: flex-start; height: calc(100vh - 61px); overflow-y: auto; }
+  /* ★ v3.0: 밝은 화면에서 연한 색 글자(-100~-400)를 진하게 — 어두운 화면은 그대로 */
+  html:not(.dark) .text-amber-100, html:not(.dark) .text-amber-200, html:not(.dark) .text-amber-300, html:not(.dark) .text-amber-400 { color: #b45309; }
+  html:not(.dark) .text-yellow-100, html:not(.dark) .text-yellow-200, html:not(.dark) .text-yellow-300, html:not(.dark) .text-yellow-400 { color: #a16207; }
+  html:not(.dark) .text-orange-100, html:not(.dark) .text-orange-200, html:not(.dark) .text-orange-300, html:not(.dark) .text-orange-400 { color: #c2410c; }
+  html:not(.dark) .text-rose-100, html:not(.dark) .text-rose-200, html:not(.dark) .text-rose-300, html:not(.dark) .text-rose-400 { color: #be123c; }
+  html:not(.dark) .text-red-100, html:not(.dark) .text-red-200, html:not(.dark) .text-red-300, html:not(.dark) .text-red-400 { color: #b91c1c; }
+  html:not(.dark) .text-pink-100, html:not(.dark) .text-pink-200, html:not(.dark) .text-pink-300, html:not(.dark) .text-pink-400 { color: #be185d; }
+  html:not(.dark) .text-fuchsia-100, html:not(.dark) .text-fuchsia-200, html:not(.dark) .text-fuchsia-300, html:not(.dark) .text-fuchsia-400 { color: #a21caf; }
+  html:not(.dark) .text-purple-100, html:not(.dark) .text-purple-200, html:not(.dark) .text-purple-300, html:not(.dark) .text-purple-400 { color: #7e22ce; }
+  html:not(.dark) .text-violet-100, html:not(.dark) .text-violet-200, html:not(.dark) .text-violet-300, html:not(.dark) .text-violet-400 { color: #6d28d9; }
+  html:not(.dark) .text-indigo-100, html:not(.dark) .text-indigo-200, html:not(.dark) .text-indigo-300, html:not(.dark) .text-indigo-400 { color: #4338ca; }
+  html:not(.dark) .text-blue-100, html:not(.dark) .text-blue-200, html:not(.dark) .text-blue-300, html:not(.dark) .text-blue-400 { color: #1d4ed8; }
+  html:not(.dark) .text-sky-100, html:not(.dark) .text-sky-200, html:not(.dark) .text-sky-300, html:not(.dark) .text-sky-400 { color: #0369a1; }
+  html:not(.dark) .text-cyan-100, html:not(.dark) .text-cyan-200, html:not(.dark) .text-cyan-300, html:not(.dark) .text-cyan-400 { color: #0e7490; }
+  html:not(.dark) .text-teal-100, html:not(.dark) .text-teal-200, html:not(.dark) .text-teal-300, html:not(.dark) .text-teal-400 { color: #0f766e; }
+  html:not(.dark) .text-emerald-100, html:not(.dark) .text-emerald-200, html:not(.dark) .text-emerald-300, html:not(.dark) .text-emerald-400 { color: #047857; }
+  html:not(.dark) .text-green-100, html:not(.dark) .text-green-200, html:not(.dark) .text-green-300, html:not(.dark) .text-green-400 { color: #15803d; }
+  html:not(.dark) .text-lime-100, html:not(.dark) .text-lime-200, html:not(.dark) .text-lime-300, html:not(.dark) .text-lime-400 { color: #4d7c0f; }
+  html:not(.dark) .hover\:text-white:hover { color: #fff; }
+  html:not(.dark) .hover\:text-black:hover { color: #111827; }
+  html:not(.dark) .bg-slate-700, html:not(.dark) .bg-slate-700\/80 { background-color: #e2e8f0; }
+  html:not(.dark) .hover\:bg-slate-600:hover { background-color: #cbd5e1; }
   .itt-first { z-index: 80; } /* ★ v3.0 처음 질문 창은 맨 위 */
   tr.ledger-today-line > td { border-top: 3px solid #f59e0b; }
   div.ledger-today-line { border-top: 3px solid #f59e0b; position: relative; }
@@ -249,10 +272,6 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <span>＋</span>
           <span class="sm:hidden">등록</span>
           <span class="hidden sm:inline">새 공연</span>
-        </button>
-        <button @click="openNewShowModal('bulk')" class="hidden sm:flex px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/30 items-center space-x-1 cursor-pointer transition-all">
-          <span>🔁</span>
-          <span>정기등록</span>
         </button>
 
         <button @click="toggleTheme" class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-sm cursor-pointer shrink-0" :title="themeMode === 'dark' ? '라이트 모드' : '다크 모드'">
@@ -1809,7 +1828,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                   </div>
                   <div class="flex items-center space-x-1 shrink-0">
                     <button v-if="(performerStats[p.id] || {}).unpaid > 0" @click="openSettlementTab" class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-bold cursor-pointer">💸정산</button>
-                    <button @click="togglePerformerHistory(p)" class="px-2.5 py-1 rounded-lg bg-indigo-600/30 text-indigo-200 text-xs font-bold cursor-pointer">📜이력</button>
+                    <button @click="togglePerformerHistory(p)" class="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-200 text-xs font-bold cursor-pointer">📜이력</button>
                     <button @click="openEditPerformerModal(p)" class="px-2.5 py-1 rounded-lg bg-slate-700 text-white text-xs font-bold cursor-pointer">✏️수정</button>
                   </div>
                 </div>
@@ -2024,7 +2043,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         <!-- ======================================================================= -->
         <div v-show="activeTab === 'settings'" class="space-y-6 max-w-5xl mx-auto">
           <div class="pb-3 border-b border-slate-800">
-            <h2 class="text-base sm:text-lg font-bold text-white">⚙️ 동기화 & 통장/백업 설정</h2>
+            <h2 class="text-base sm:text-lg font-bold text-white">⚙️ 설정 · 백업</h2>
             <p v-if="license" class="text-xs text-amber-300 font-bold mt-0.5">이츠쇼타임 프리미엄 · {{ license.name }}님 전용{{ license.no ? ' · 구매번호 ' + license.no : '' }}</p>
             <p class="text-xs text-slate-400 mt-0.5 hidden sm:block">구글 시트 실시간 클라우드 연동과 통장 잔액, 엑셀 다운로드를 관리합니다.</p>
           </div>
@@ -2247,8 +2266,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
             <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 flex flex-col justify-between">
               <div class="space-y-1">
-                <h3 class="text-sm font-bold text-white">💾 JSON 안전 백업 및 초기 데이터 복원</h3>
-                <p class="text-xs text-slate-400">브라우저 캐시를 비우기 전에 JSON 백업 파일을 보관하거나, 처음 구글 시트 원본 데이터 상태로 되돌릴 수 있습니다.</p>
+                <h3 class="text-sm font-bold text-white">💾 JSON 안전 백업 · 되돌리기</h3>
+                <p class="text-xs text-slate-400">브라우저 기록을 지우기 전에 JSON 백업 파일을 받아 두고, 필요하면 그 파일로 되돌릴 수 있어요.</p>
               </div>
               <div class="text-[11px] rounded-xl p-2.5 border" :class="backupAgeDays === null || backupAgeDays >= 7 ? 'bg-rose-500/10 border-rose-500/40 text-rose-200' : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200'">
                 {{ backupAgeDays === null ? '아직 백업 기록이 없어요.' : (backupAgeDays === 0 ? '오늘 백업했어요.' : '마지막 백업: ' + backupAgeDays + '일 전') }}
@@ -2259,10 +2278,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <button @click="exportBackupJSON" class="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer">
                   💾 JSON 백업 저장
                 </button>
-                <button @click="shareBackup" class="py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs cursor-pointer">
+                <button @click="shareBackup" class="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs cursor-pointer">
                   📤 백업 보내기 (휴대폰 · 파일 앱/카톡)
                 </button>
-                <button @click="pickRestoreFile" class="py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs cursor-pointer">
+                <button @click="pickRestoreFile" class="py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs cursor-pointer">
                   📂 백업 파일로 되돌리기
                 </button>
                 <input type="file" ref="restoreFileInput" accept=".json,application/json" class="hidden" @change="restoreFromBackupFile" />
@@ -2272,10 +2291,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <button v-if="canAutoFolder" @click="chooseAutoFolder" class="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs cursor-pointer">
                   📁 {{ autoFolderName ? '자동 백업 폴더 바꾸기' : '자동 백업 폴더 정하기 (PC)' }}
                 </button>
-                <button @click="resetToOriginalData" class="py-2.5 rounded-xl bg-slate-700 hover:bg-rose-600 text-white font-bold text-xs cursor-pointer">
-                  🔄 원본 데이터로 초기화
-                </button>
               </div>
+              <!-- ★ v3.0: 모두 지우기는 접어 두고, 백업을 먼저 받은 뒤 '지우기'를 직접 적어야 실행 -->
+              <details class="rounded-xl border border-rose-500/40 p-2.5 text-xs">
+                <summary class="cursor-pointer font-bold text-rose-300">⚠️ 이 기기 기록 모두 지우기 (잘 안 써요)</summary>
+                <p class="text-slate-400 mt-2">이 기기의 공연·고객·정산 기록을 모두 지우고 처음 화면으로 돌아가요. 지우기 직전에 백업 파일이 저절로 받아지고, 구글 시트의 기록은 건드리지 않아요.</p>
+                <button @click="resetToOriginalData" class="mt-2 px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer">🧹 이 기기 기록 모두 지우기</button>
+              </details>
             </div>
           </div>
 
@@ -4064,6 +4086,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const workTypeOf = (s) => (s && s.workType) || '공연';
 
         const themeMode = ref(localStorage.getItem('itsshow_v23_theme') || 'dark');
+        if (themeMode.value !== 'dark') document.documentElement.classList.remove('dark'); // ★ v3.0: 다시 열 때도 밝은 화면 유지
         const isSidebarOpen = ref(true);
         const isMobile = ref(false);
         const activeTab = ref('overview');
@@ -4128,7 +4151,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           { id: 'crm', icon: '🤝', label: '단골 고객(CRM)', badge: customers.value.length },
           { id: 'performers', icon: '🎭', label: '공연자 명부', badge: undecidedPerformerCount.value > 0 ? '미정 ' + undecidedPerformerCount.value : performers.value.length },
           // ★ v2.9: 블로그 & SNS 스튜디오 탭은 PC의 '이츠쇼 SNS ERP'로 옮겼어요 (저장해 둔 원고는 지우지 않고 그대로 둠)
-          { id: 'settings', icon: '⚙️', label: '통장 잔고 & 엑셀 연동' }
+          { id: 'settings', icon: '⚙️', label: '설정 · 백업' }
         ]);
 
         // ===== v2.3 안전장치 (BEGIN SAFETY) =====
@@ -7757,17 +7780,25 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
         };
 
         const resetToOriginalData = () => {
-          if (!confirm('원본 데이터 상태로 초기화하시겠습니까?\n(지금 데이터는 초기화 전에 자동 백업 목록에 저장됩니다.)')) return;
-          if (!takeSnapshot('초기화 직전 자동 백업')) {
-            showToast('⚠️ 현재 데이터를 백업하지 못해 초기화를 중단했어요. 먼저 JSON 백업을 받아 주세요.', 9000);
+          // ★ v3.0: 더 안전하게 — '지우기'를 직접 적어야 하고, 지우기 전에 백업 파일을 받고, 이 기기가 구글 시트를 덮어쓰지 못하게 함
+          const typed = prompt(`이 기기의 기록(공연 ${shows.value.length}건 등)을 모두 지울까요?\n지우려면 아래 칸에 '지우기'라고 적어 주세요.`);
+          if (typed === null) return;
+          if (String(typed).trim() !== '지우기') { showToast("'지우기'라고 적지 않아서 멈췄어요. 아무것도 지우지 않았어요."); return; }
+          if (!takeSnapshot('모두 지우기 직전 자동 백업')) {
+            showToast('⚠️ 현재 데이터를 백업하지 못해 지우기를 멈췄어요. 먼저 JSON 백업을 받아 주세요.', 9000);
             return;
           }
+          exportBackupJSON();
           localStorage.removeItem(STORAGE_KEY);
+          try { localStorage.removeItem(DEMO_KEY); } catch (e) {}
+          isDemo.value = false;
+          cloudPulledUrl.value = ''; // 다시 불러오기 전에는 구글 시트에 저장하지 않음
+          try { localStorage.removeItem('itsshow_v23_cloud_pulled_url'); } catch (e) {}
           loadFromStorage();
           syncShowsAndCustomers(true);
           generateBlogContent();
           nextTick(() => renderCharts());
-          showToast('구글 드라이브 원본 데이터로 복원되었습니다.');
+          showToast('이 기기 기록을 지웠어요. 지우기 전 기록은 방금 받은 백업 파일과 자동 백업 목록에 있어요.', 9000);
         };
 
         onMounted(() => {
