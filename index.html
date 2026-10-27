@@ -3269,9 +3269,30 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </button>
         </div>
 
-        <textarea rows="12" v-model="smsText" class="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-700 text-xs text-slate-200 leading-relaxed font-sans"></textarea>
+        <!-- ★ v3.0: 문자 틀 고치기 (다음부터 이 문구로) -->
+        <template v-if="!smsEditMode">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+            <span class="text-slate-400">아래 글은 이번에만 고칠 수 있어요.<span v-if="isCustomSms(smsType)" class="ml-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">내 문구</span></span>
+            <button type="button" @click="startSmsTplEdit" class="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-amber-300 font-bold cursor-pointer">✏️ 문자 틀 고치기 (다음부터 이 문구로)</button>
+          </div>
+          <textarea rows="12" v-model="smsText" class="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-700 text-xs text-slate-200 leading-relaxed font-sans"></textarea>
+        </template>
+        <template v-else>
+          <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-[11px] text-amber-200">
+            ✏️ <b>'{{ SMS_LABELS[smsType] }}' 문자 틀을 고치는 중</b>이에요. <b>{기관}</b>·<b>{날짜}</b> 같은 칸은 보낼 때 그 공연 정보로 자동으로 채워져요. 아래 단추를 누르면 그 칸이 커서 자리에 들어가요.
+          </div>
+          <div class="flex flex-wrap gap-1">
+            <button v-for="f in SMS_FIELDS" :key="'sf-' + f" type="button" @click="insertSmsField(f)" class="px-2 py-0.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] text-indigo-300 font-bold cursor-pointer">{{ '{' + f + '}' }}</button>
+          </div>
+          <textarea id="sms-tpl-area" rows="12" v-model="smsTplDraft" class="w-full p-3.5 rounded-2xl bg-slate-950 border border-amber-500/60 text-xs text-slate-200 leading-relaxed font-sans"></textarea>
+          <div class="flex flex-wrap items-center justify-end gap-2">
+            <button type="button" @click="resetSmsTpl" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold cursor-pointer">기본 문구로 되돌리기</button>
+            <button type="button" @click="cancelSmsTplEdit" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold cursor-pointer">취소</button>
+            <button type="button" @click="saveSmsTpl" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black cursor-pointer shadow">💾 틀 저장</button>
+          </div>
+        </template>
 
-        <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+        <div v-if="!smsEditMode" class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
           <a v-if="smsTarget.phone" :href="'sms:' + smsTarget.phone + '?body=' + encodeURIComponent(smsText)"
             class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black cursor-pointer shadow flex items-center space-x-1.5">
             <span>📱 스마트폰 문자앱으로 바로 열기</span>
@@ -3662,7 +3683,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           products: ['더클래식', '더윈터', '더어드벤처', '더 가디언즈', '더플레이', '더에코'].map(n => ({ name: n, kind: '공연', runMin: 50, setupMin: 50, people: '', price: '', intro: '마술 + 버블 + 벌룬 + 빛과 그림자극 올인원 초청공연' }))
             .concat(['매직벌룬쇼', '매직버블쇼', '매직쉐도우'].map(n => ({ name: n, kind: '공연', runMin: '', setupMin: '', people: '', price: '', intro: '' })))
             .concat([{ name: '강연/체험', kind: '강연·체험', runMin: '', setupMin: '', people: '', price: '', intro: '' }]),
-          items: []
+          items: [],
+          smsTemplates: {}
         };
         const PRODUCT_KINDS = ['공연', '체험부스', '설치·장식', '진행', '강연·체험', '기타'];
         const ITEM_UNITS = ['회', '명', '개', '시간', 'km', '식'];
@@ -3673,7 +3695,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             owner: Object.assign({}, d.owner, p.owner || {}),
             companies: Array.isArray(p.companies) ? p.companies.map(c => Object.assign({ name: '', en: '', label: '', taxType: '과세', note: '', bizNo: '', bank: '' }, c)) : d.companies,
             products: Array.isArray(p.products) ? p.products.map(x => Object.assign({ name: '', kind: '공연', runMin: '', setupMin: '', people: '', price: '', intro: '' }, x)) : d.products,
-            items: Array.isArray(p.items) ? p.items.map(x => Object.assign({ name: '', price: '', unit: '회' }, x)) : d.items
+            items: Array.isArray(p.items) ? p.items.map(x => Object.assign({ name: '', price: '', unit: '회' }, x)) : d.items,
+            smsTemplates: (p.smsTemplates && typeof p.smsTemplates === 'object') ? Object.assign({}, p.smsTemplates) : {} // ★ v3.0 고친 문자 틀
           };
         };
         const profile = ref(normalizeProfile(null));
@@ -6230,80 +6253,68 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const smsType = ref('confirm');
         const smsText = ref('');
 
-        const buildSmsTemplate = (target, type) => {
+        // ★ v3.0: 안내 문자 틀 — {기관}·{날짜} 같은 칸을 채워 만듦. 대표님이 고친 틀은 설정(profile.smsTemplates)에 저장, 없으면 기본 틀
+        const DEFAULT_SMS = {
+          confirm: "안녕하세요, {기관} {담당자}! 😊\n{발행사업자} 대표 아티스트 {활동명}({대표})입니다.\n\n다가오는 [{기관}] 초청공연 예약 확정 안내드립니다.\n\n■ 공연일시 : {날짜} ({요일}) {시간}\n■ 프로그램 : 키즈니버스 「{공연}」 (마술·버블·벌룬·그림자극 50분 올인원)\n■ 공연장소 : {장소}\n■ 공연금액 : ₩{금액} ({계산서종류})\n\n[📌 사전 협조 안내]\n• 원활하고 안전한 무대 세팅을 위해 공연 시작 약 50분 전에 현장에 도착할 예정입니다.\n• 무대 근처에 220V 전원 콘센트 1구와 차량 1대 주차 공간 확인 부탁드립니다.\n\n필요하신 행정서류(사업자등록증, 통장사본, 교육계획안 등)가 있으시면 언제든 편하게 말씀해 주세요! 감사합니다. 🎭✨\n- {활동명} 드림 ({연락처})",
+          remind: "안녕하세요, {기관} {담당자}! 😊\n아티스트 {활동명}({대표})입니다.\n\n내일({날짜} {시간}) 진행되는 [{기관}] 「{공연}」 공연 전일 안부 인사드립니다!\n\n내일 공연 시작 약 50분 전까지 도착하여 음향·조명 및 안전 매트 세팅을 마칠 예정입니다.\n아이들과 선생님들 모두 신나고 안전하게 몰입할 수 있는 최고의 무대 준비해서 찾아뵙겠습니다! 🫧🎈\n\n내일 현장에서 반갑게 뵙겠습니다. 감사합니다!\n- {발행사업자} {활동명} 드림 ({연락처})",
+          settle: "안녕하세요, {기관} {담당자}! 😊\n{발행사업자} 대표 {대표}({활동명})입니다.\n\n오늘 [{기관}] 친구들의 반짝이는 눈망울과 큰 함성 덕분에 저도 무대 위에서 큰 에너지를 얻고 돌아왔습니다. 현장에서 따뜻하게 배려해 주신 선생님들께 진심으로 감사드립니다!\n\n요청하신 공연 정산 및 행정서류 안내드립니다.\n■ 공연명 : 키즈니버스 「{공연}」 ({날짜})\n■ 정산금액 : ₩{금액}\n■ 발행사업자 : {발행사업자} ({정산계산서})\n{계산서안내}\n\n궁금하신 점 있으시면 언제든 연락 주세요. 감사합니다! 🙏\n- {발행사업자} {대표} 드림 ({연락처})",
+          thanks: "안녕하세요, {기관} {담당자}! 😊\n아이들의 상상력이 현실이 되는 공간, 키즈니버스 아티스트 {활동명}({대표})입니다.\n\n지난번 함께했던 「{공연}」 공연 때 아이들이 너무나 즐겁게 참여해 주었던 기억이 늘 따뜻하게 남아 있습니다. 🫧🎩\n\n다가오는 시즌을 맞아, 기존 관람 기관 원장님·선생님들께서 가장 만족도가 높으신 후속 연계 테마를 안내해 드립니다!\n\n✨ [{기관} 맞춤 차기 추천 프로그램]\n👉 「{추천공연}」\n• 이전 공연과 전혀 겹치지 않는 새로운 스토리텔링과 업그레이드된 마술·버블·벌룬·그림자 퍼포먼스로 50분간 진행됩니다.\n\n시즌 황금 일정은 조기에 마감되어, 단골 기관에 먼저 일정 우선권을 드리고 있습니다.\n원하시는 월/주간을 말씀해 주시면 맞춤 계획안과 견적서를 보내드리겠습니다! 늘 건강하고 행복한 하루 보내세요. 😊\n\n📞 직통 문의 : {연락처}\n🌐 공식 블로그 : {블로그}"
+        };
+        const SMS_LABELS = { confirm: '예약 확정', remind: '전일(D-1) 안부', settle: '정산·계산서', thanks: '감사·차기테마' };
+        const SMS_FIELDS = ['기관', '담당자', '날짜', '요일', '시간', '끝시간', '시간범위', '공연', '장소', '금액', '발행사업자', '계산서종류', '정산계산서', '계산서안내', '추천공연', '대표', '활동명', '연락처', '블로그'];
+        const smsVars = (target) => {
           const client = target.client || '기관';
-          const manager = target.manager || '담당자님';
           const showDate = target.showDate || '예정일';
-          const showTime = target.showTime || '예정시간';
-          const theme = target.theme || '더클래식';
           const issuer = target.issuer || '키즈니버스랩';
-          const amt = Number(target.amount || 0).toLocaleString();
-          const nextRec = recommendNextTheme(theme);
-
-          if (type === 'confirm') {
-            return `안녕하세요, ${client} ${manager}! 😊
-${issuer} 대표 아티스트 버블케이(고민준)입니다.
-
-다가오는 [${client}] 초청공연 예약 확정 안내드립니다.
-
-■ 공연일시 : ${showDate} (${getDayOfWeekKorean(showDate)}) ${showTime}
-■ 프로그램 : 키즈니버스 「${theme}」 (마술·버블·벌룬·그림자극 50분 올인원)
-■ 공연장소 : ${target.address || client + ' 내 공연장소'}
-■ 공연금액 : ₩${amt} (${issuer === '키즈니버스랩' ? '면세사업자 계산서' : '세금계산서/카드'})
-
-[📌 사전 협조 안내]
-• 원활하고 안전한 무대 세팅을 위해 공연 시작 약 50분 전에 현장에 도착할 예정입니다.
-• 무대 근처에 220V 전원 콘센트 1구와 차량 1대 주차 공간 확인 부탁드립니다.
-
-필요하신 행정서류(사업자등록증, 통장사본, 교육계획안 등)가 있으시면 언제든 편하게 말씀해 주세요! 감사합니다. 🎭✨
-- 버블케이 드림 (010-2485-8561)`;
-          }
-          if (type === 'remind') {
-            return `안녕하세요, ${client} ${manager}! 😊
-아티스트 버블케이(고민준)입니다.
-
-내일(${showDate} ${showTime}) 진행되는 [${client}] 「${theme}」 공연 전일 안부 인사드립니다!
-
-내일 공연 시작 약 50분 전까지 도착하여 음향·조명 및 안전 매트 세팅을 마칠 예정입니다.
-아이들과 선생님들 모두 신나고 안전하게 몰입할 수 있는 최고의 무대 준비해서 찾아뵙겠습니다! 🫧🎈
-
-내일 현장에서 반갑게 뵙겠습니다. 감사합니다!
-- ${issuer} 버블케이 드림 (010-2485-8561)`;
-          }
-          if (type === 'settle') {
-            return `안녕하세요, ${client} ${manager}! 😊
-${issuer} 대표 고민준(버블케이)입니다.
-
-오늘 [${client}] 친구들의 반짝이는 눈망울과 큰 함성 덕분에 저도 무대 위에서 큰 에너지를 얻고 돌아왔습니다. 현장에서 따뜻하게 배려해 주신 선생님들께 진심으로 감사드립니다!
-
-요청하신 공연 정산 및 행정서류 안내드립니다.
-■ 공연명 : 키즈니버스 「${theme}」 (${showDate})
-■ 정산금액 : ₩${amt}
-■ 발행사업자 : ${issuer} (${issuer === '키즈니버스랩' ? '면세 전자계산서' : '세금계산서'})
-${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계산서 받으실 이메일 주소와 사업자등록증을 회신 주시면 즉시 발행해 드리겠습니다.'}
-
-궁금하신 점 있으시면 언제든 연락 주세요. 감사합니다! 🙏
-- ${issuer} 고민준 드림 (010-2485-8561)`;
-          }
-          return `안녕하세요, ${client} ${manager}! 😊
-아이들의 상상력이 현실이 되는 공간, 키즈니버스 아티스트 버블케이(고민준)입니다.
-
-지난번 함께했던 「${theme}」 공연 때 아이들이 너무나 즐겁게 참여해 주었던 기억이 늘 따뜻하게 남아 있습니다. 🫧🎩
-
-다가오는 시즌을 맞아, 기존 관람 기관 원장님·선생님들께서 가장 만족도가 높으신 후속 연계 테마를 안내해 드립니다!
-
-✨ [${client} 맞춤 차기 추천 프로그램]
-👉 「${nextRec}」
-• 이전 공연과 전혀 겹치지 않는 새로운 스토리텔링과 업그레이드된 마술·버블·벌룬·그림자 퍼포먼스로 50분간 진행됩니다.
-
-시즌 황금 일정은 조기에 마감되어, 단골 기관에 먼저 일정 우선권을 드리고 있습니다.
-원하시는 월/주간을 말씀해 주시면 맞춤 계획안과 견적서를 보내드리겠습니다! 늘 건강하고 행복한 하루 보내세요. 😊
-
-📞 직통 문의 : 010-2485-8561
-🌐 공식 블로그 : https://blog.naver.com/itsshow001`;
+          const taxFree = ((companyOf(issuer) || {}).taxType || (issuer === '키즈니버스랩' ? '면세' : '과세')) === '면세';
+          const o = profile.value.owner || {};
+          return {
+            기관: client, 담당자: target.manager || '담당자님', 날짜: showDate, 요일: getDayOfWeekKorean(showDate), 시간: target.showTime || '예정시간',
+            끝시간: endTimeOf(target) || '', 시간범위: (target.showTime || '예정시간') + (endTimeOf(target) ? ' ~ ' + endTimeOf(target) : ''), 공연: target.theme || '더클래식', 장소: target.address || client + ' 내 공연장소',
+            금액: Number(target.amount || 0).toLocaleString(), 발행사업자: issuer,
+            계산서종류: taxFree ? '면세사업자 계산서' : '세금계산서/카드', 정산계산서: taxFree ? '면세 전자계산서' : '세금계산서',
+            계산서안내: target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계산서 받으실 이메일 주소와 사업자등록증을 회신 주시면 즉시 발행해 드리겠습니다.',
+            추천공연: recommendNextTheme(target.theme || '더클래식'), 대표: o.ceo || '', 활동명: o.artist || o.ceo || '', 연락처: o.phone || '', 블로그: o.blog || ''
+          };
+        };
+        const smsTemplateOf = (type) => ((profile.value.smsTemplates || {})[type]) || DEFAULT_SMS[type] || DEFAULT_SMS.thanks;
+        const fillSms = (tpl, vars) => String(tpl || '').replace(/\{([가-힣A-Za-z0-9]+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+        const buildSmsTemplate = (target, type) => fillSms(smsTemplateOf(type), smsVars(target));
+        // 문자 창에서 틀 고치기 (다음부터 이 문구로)
+        const smsEditMode = ref(false);
+        const smsTplDraft = ref('');
+        const isCustomSms = (type) => !!((profile.value.smsTemplates || {})[type]);
+        const startSmsTplEdit = () => { smsTplDraft.value = smsTemplateOf(smsType.value); smsEditMode.value = true; };
+        const cancelSmsTplEdit = () => { smsEditMode.value = false; };
+        const saveSmsTpl = () => {
+          const t = String(smsTplDraft.value || '');
+          if (!t.trim()) { showToast('문구가 비어 있어요.'); return; }
+          profile.value.smsTemplates = Object.assign({}, profile.value.smsTemplates || {}, { [smsType.value]: t });
+          saveProfile();
+          smsEditMode.value = false;
+          smsText.value = buildSmsTemplate(smsTarget.value, smsType.value);
+          showToast(`💾 '${SMS_LABELS[smsType.value] || '안내'}' 문자 틀을 저장했어요. 다음부터 이 문구로 나와요.`);
+        };
+        const resetSmsTpl = () => {
+          if (!confirm(`'${SMS_LABELS[smsType.value] || '안내'}' 문자를 처음 기본 문구로 되돌릴까요?`)) return;
+          const next = Object.assign({}, profile.value.smsTemplates || {}); delete next[smsType.value];
+          profile.value.smsTemplates = next; saveProfile();
+          smsTplDraft.value = smsTemplateOf(smsType.value);
+          smsText.value = buildSmsTemplate(smsTarget.value, smsType.value);
+          showToast('기본 문구로 되돌렸어요.');
+        };
+        const insertSmsField = (f) => {
+          const el = document.getElementById('sms-tpl-area'); const tag = '{' + f + '}';
+          const v = String(smsTplDraft.value || '');
+          if (el && typeof el.selectionStart === 'number') {
+            const a = el.selectionStart, b = el.selectionEnd;
+            smsTplDraft.value = v.slice(0, a) + tag + v.slice(b);
+            nextTick(() => { el.focus(); el.selectionStart = el.selectionEnd = a + tag.length; });
+          } else smsTplDraft.value = v + tag;
         };
 
         const openSmsModal = (showItem) => {
+          smsEditMode.value = false; // ★ v3.0
           smsTarget.value = { ...showItem };
           smsType.value = 'confirm';
           smsText.value = buildSmsTemplate(smsTarget.value, 'confirm');
@@ -6311,6 +6322,7 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
         };
 
         const openSmsForCustomer = (cust) => {
+          smsEditMode.value = false; // ★ v3.0
           smsTarget.value = {
             client: cust.client,
             manager: cust.manager || '원장님',
@@ -6329,6 +6341,7 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
         };
 
         const setSmsType = (type) => {
+          smsEditMode.value = false; // ★ v3.0
           smsType.value = type;
           smsText.value = buildSmsTemplate(smsTarget.value, type);
         };
@@ -7505,6 +7518,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           shows, customers, payables, taxRecords, cashAccounts, todoItems,
           runOf, endTimeOf, formTimeInfo, // ★ v3.0
           dupExcluded, isDupExcluded, toggleDupExclude, // ★ v3.0
+          SMS_LABELS, SMS_FIELDS, smsEditMode, smsTplDraft, isCustomSms, startSmsTplEdit, cancelSmsTplEdit, saveSmsTpl, resetSmsTpl, insertSmsField,
           lastYearOpen, lastYearAgain, recallSms, markRecallAsked,
           CANCEL_TYPE_INVALID, isFeeShow, amountDue, trash, trashDaysLeft, moveShowToTrash, trashFromCancelModal, onCancelFeeToggle, restoreFromTrash, deleteFromTrash, // ★ v3.0
           quoteLineSum, quoteSubtotal, quoteVatAmt, quoteTotal, quoteHasTravel, addQuoteLine, removeQuoteLine, saveQuoteToShow,
