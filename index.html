@@ -4173,13 +4173,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const brandName = computed(() => (profile.value.companies[0] && profile.value.companies[0].name) || '내 업체');
         const PREMIUM_FILES = { sns: '이츠쇼_SNS_ERP.html', shorts: '이츠쇼_쇼츠스튜디오.html' };
         const goPremiumApp = (k) => {
-          if (location.protocol !== 'file:') { showToast('📝 SNS·🎬 쇼츠는 PC에서 열어요. (공연관리와 같은 폴더의 파일을 같은 크롬으로)', 6000); return; }
+          if (location.protocol !== 'file:') { showToast('📝 SNS·🎬 쇼츠는 지금은 PC에서 열어요. 휴대폰에서도 쓸 수 있게 업데이트할 예정이에요.', 6000); return; }
           location.href = PREMIUM_FILES[k];
         };
         // ★ v3.0: 공연에서 바로 블로그 글·쇼츠로. SNS ERP·쇼츠 스튜디오와 같은 공연 키(번호|날짜)를 ?show= 로 넘김
         const canMakePost = (s) => !!s && (s.status === '완료' || s.status === '확정') && s.workType !== '서브';
         const goPostFor = (k, s) => {
-          if (location.protocol !== 'file:') { showToast('📝 블로그 글·🎬 쇼츠는 PC에서 만들어요. (공연관리와 같은 폴더의 파일을 같은 크롬으로)', 6000); return; }
+          if (location.protocol !== 'file:') { showToast('📝 블로그 글·🎬 쇼츠는 지금은 PC에서 만들어요. 휴대폰에서도 쓸 수 있게 업데이트할 예정이에요.', 6000); return; }
           location.href = PREMIUM_FILES[k] + '?show=' + encodeURIComponent(`${s.no}|${String(s.showDate || '').slice(0, 10)}`);
         };
         const goPostFromModal = (k) => { // 입력창에서는 고친 내용을 먼저 저장하고 넘어감
