@@ -1124,10 +1124,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <td class="py-2 px-1 text-slate-400 text-center">#{{ s.no }}</td>
                     <!-- 축약된 공연일시: 26.10.17 10:30 -->
                     <td class="py-2 px-1.5 whitespace-nowrap" :title="s.showDate + ' ' + s.showTime">
-                      <div class="flex items-center space-x-1">
-                        <span class="font-bold" :class="s.status === '취소' ? 'line-through text-slate-500' : 'text-white'">{{ formatCompactDate(s.showDate) }}</span>
-                        <span class="text-slate-400 text-[10px]">{{ s.showTime }}{{ endTimeOf(s) ? '~' + endTimeOf(s) : '' }}</span>
-                      </div>
+                      <!-- ★ v3.0: 끝나는 시간까지 붙으면 옆 칸과 겹쳐서 날짜·시간을 두 줄로 -->
+                      <div class="font-bold" :class="s.status === '취소' ? 'line-through text-slate-500' : 'text-white'">{{ formatCompactDate(s.showDate) }}</div>
+                      <div class="text-slate-400 text-[10px]">{{ s.showTime }}{{ endTimeOf(s) ? '~' + endTimeOf(s) : '' }}</div>
                       <div v-if="s.status !== '취소' && isWithin5Days(s.showDate)" class="mt-0.5">
                         <span class="px-1 py-0.2 rounded bg-amber-500 text-black font-black text-[9px]">🔥 {{ getDdayLabel(s.showDate) }}</span>
                       </div>
@@ -3919,7 +3918,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const defaultIssuer = () => (companyNames.value.includes(D().issuer) ? D().issuer : (companyNames.value[0] || D().issuer || ''));
         const fillTheme = (tpl, theme) => String(tpl || '').split('{공연}').join(theme || '');
         const secondCo = computed(() => ((profile.value.companies[1] || {}).name || '').trim());
-        const coShort = (c) => (c && (String(c.short || '').trim() || c.name)) || '';
+        const coShort = (c) => (c && (String(c.short || '').trim() || String(c.name || '').replace(/\s+/g, '').slice(0, 4))) || ''; // 짧은 이름이 없으면 앞 4글자
         const issuerShort = (iss) => (secondCo.value && iss === secondCo.value) ? coShort(profile.value.companies[1]) : coShort(profile.value.companies[0]);
         const taxFreeOf = (iss) => ((companyOf(iss) || {}).taxType) === '면세';
         // ★ v3.0: 판매판 구매자 표시 · 처음 질문 · 예시 자료
