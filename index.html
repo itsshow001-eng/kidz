@@ -4025,6 +4025,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           clearAllRecords();
           try { localStorage.removeItem(DEMO_KEY); localStorage.removeItem(STORAGE_KEY); } catch (e) {}
           isDemo.value = false;
+          cloudPulledUrl.value = ''; // ★ 다시 불러오기 전에는 구글 시트에 저장하지 않음 (빈 기록으로 시트를 덮지 않게)
+          try { localStorage.removeItem('itsshow_v23_cloud_pulled_url'); } catch (e) {}
           profile.value = normalizeProfile(null);
           wiz.value = { team: '', name: '', phone: '', kind: '공연', product: '', runMin: '', taxType: '과세' };
           firstRunOpen.value = true;
@@ -7029,6 +7031,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           cloudSyncUrl.value = String(d.u); cloudKey.value = String(d.k || '');
           try { localStorage.setItem('itsshow_v23_cloud_sync_url', cloudSyncUrl.value); localStorage.setItem('itsshow_v23_cloud_key', cloudKey.value); } catch (e) {}
           firstRunOpen.value = false;
+          if (isDemo.value) { // 예시 자료는 가짜라서 비우고 진짜 기록을 받음
+            clearAllRecords();
+            isDemo.value = false;
+            try { localStorage.removeItem(DEMO_KEY); localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+          }
           showToast('📱 PC와 연결했어요. 기록을 불러오는 중…', 6000);
           return true;
         };
@@ -7105,6 +7112,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const pushToCloud = async (silent = false, opts = {}) => {
           if (!cloudSyncUrl.value.trim()) {
             if (!silent) showToast('먼저 구글 웹앱 URL을 입력해 주세요.');
+            return;
+          }
+          // ★ v3.0: 예시 자료는 구글 시트에 올리지 않음 (진짜 기록을 덮어쓰지 않게)
+          if (isDemo.value) {
+            syncStatusText.value = '예시 자료 (시트에 안 올림)';
+            if (!silent) showToast('지금은 예시 자료라 구글 시트에 올리지 않아요. [예시 지우고 시작하기]를 누른 뒤 써 주세요.', 8000);
             return;
           }
           if (!opts.initial && !cloudPulled.value) {
@@ -7293,6 +7306,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             }
             if (!textData || textData.trim() === '' || textData.trim() === '{}') {
               // 구글 시트 A1 칸이 아직 비어있는 초기 상태라면 현재 로컬 데이터를 자동으로 첫 업로드!
+              if (isDemo.value) { // ★ v3.0: 예시 자료로 빈 시트를 채우지 않음
+                syncStatusText.value = '예시 자료 (시트에 안 올림)';
+                showToast('구글 시트가 비어 있어요. 지금은 예시 자료라 올리지 않았어요. [예시 지우고 시작하기]로 내 기록을 만든 뒤 다시 불러오기를 눌러 주세요.', 10000);
+                return;
+              }
               await pushToCloud(true, { initial: true });
               if (!cloudPulled.value) return; // 첫 업로드가 실패했으면(경고는 이미 표시됨) 성공 안내를 하지 않음
               syncStatusText.value = '초기 데이터 업로드 완료';
@@ -7342,6 +7360,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               syncShowsAndCustomers(true);
               saveBaseline(currentCounts()); // 확인을 거친 건수를 새 기준으로 삼습니다.
               markCloudPulled(); // 이제 이 주소로 저장해도 안전합니다.
+              if (isDemo.value) { isDemo.value = false; try { localStorage.removeItem(DEMO_KEY); } catch (e) {} } // ★ v3.0: 진짜 기록을 불러왔으니 예시 표시 끔
               clearUnsent(); // 구글 시트 내용으로 바꿨으니, 안 보낸 수정 표시도 지웁니다(그 수정은 자동 백업에 남아 있음).
               setKnownStamp(data.updatedAt || ''); // ★ 8-D: 이 기기가 '시트의 이 저장 시점'까지 봤다고 기억
               syncConflict.value = false;
@@ -7996,6 +8015,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           generateBlogContent();
           nextTick(() => renderCharts());
           // 앱 실행 시 자동으로 구글 시트 클라우드에서 최신 데이터 동기화 (비어있으면 자동 초기 업로드)
+          window.addEventListener('hashchange', () => { if (applySyncLink()) pullFromCloud(false); }); // 이미 열린 화면에서 링크를 눌렀을 때
           if (applySyncLink()) pullFromCloud(false); // ★ v3.0: PC의 '휴대폰 연결하기' 링크(QR)로 열림
           else if (cloudSyncUrl.value.trim()) {
             pullFromCloud(true);
