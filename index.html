@@ -3256,6 +3256,20 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
         </div>
 
+        <!-- ★ v3.0: 견적 줄 추가 · 부가세 · 일정에 저장 (인쇄에는 안 나옴) -->
+        <div class="no-print flex flex-wrap items-center gap-2 text-xs">
+          <span class="text-slate-400 font-bold">➕ 품목 추가:</span>
+          <button v-for="it in profile.items.filter(x => x.name)" :key="'qi' + it.name" type="button" @click="addQuoteLine(it)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold cursor-pointer">{{ it.name }}</button>
+          <button type="button" @click="addQuoteLine(null)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold cursor-pointer">+ 직접 적기</button>
+          <span v-if="!profile.items.some(x => x.name)" class="text-[11px] text-slate-500">(설정의 '추가 품목'에 적어 두면 여기 단추로 나와요)</span>
+          <span class="ml-auto inline-flex items-center gap-1 text-slate-400">부가세
+            <select v-model="quoteData.vatMode" class="px-2 py-1 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold">
+              <option value="없음">표시 안 함</option><option value="별도">별도 (+10%)</option><option value="포함">포함</option>
+            </select>
+          </span>
+          <button type="button" @click="saveQuoteToShow" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black cursor-pointer shadow">💾 이 견적을 일정에 저장</button>
+        </div>
+
         <!-- Printable A4 White Quote Sheet -->
         <div id="printable-quote-modal" class="bg-white text-slate-900 rounded-2xl p-5 sm:p-8 border border-slate-300 shadow-inner space-y-5 font-sans">
           <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b-2 border-slate-900 pb-4 gap-3">
@@ -3279,11 +3293,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div class="sm:col-span-5 bg-slate-900 text-white rounded-2xl p-4 flex flex-col justify-between">
               <div class="text-xs text-indigo-300 font-bold">총 견적 금액 ({{ (companyOf(quoteData.issuer) || {}).taxType === '면세' ? '면세사업자 · 부가세 면제' : '공급가액 기준' }})</div>
               <div class="my-2">
-                <div class="text-2xl font-black font-mono text-amber-400">₩ {{ Number(quoteData.amount || 0).toLocaleString() }}</div>
-                <div class="text-xs text-slate-300 mt-0.5">일금 {{ formatKoreanCurrency(Number(quoteData.amount || 0)) }} 정</div>
+                <div class="text-2xl font-black font-mono text-amber-400">₩ {{ quoteTotal.toLocaleString() }}</div>
+                <div class="text-xs text-slate-300 mt-0.5">일금 {{ formatKoreanCurrency(quoteTotal) }} 정</div>
+                <div v-if="quoteData.vatMode !== '없음'" class="text-[11px] text-slate-300 mt-0.5">공급가액 ₩{{ (quoteData.vatMode === '별도' ? quoteSubtotal : quoteSubtotal - quoteVatAmt).toLocaleString() }} · 부가세 ₩{{ quoteVatAmt.toLocaleString() }}{{ quoteData.vatMode === '포함' ? ' (포함)' : '' }}</div>
               </div>
               <div class="text-[11px] text-slate-400 border-t border-slate-700 pt-2">
-                음향·조명 장비 일체 및 출장비 모두 포함
+                음향·조명 장비 일체{{ quoteHasTravel ? '' : ' 및 출장비' }} 모두 포함
               </div>
             </div>
 
@@ -3335,6 +3350,23 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <span class="sm:hidden text-[10px] font-bold text-slate-500 mr-1.5 font-sans">금액 (원)</span>
                     <input type="number" v-model.number="quoteData.amount" step="50000" class="w-28 text-right font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300" />
                   </td>
+                </tr>
+                <!-- ★ v3.0: 추가 품목 줄 -->
+                <tr v-for="(l, li) in quoteData.lines" :key="'ql' + li" class="block sm:table-row border-b border-slate-300 sm:border-b-0">
+                  <td class="border border-slate-300 py-2 px-3 block sm:table-cell">
+                    <input type="text" v-model="l.name" placeholder="품목 (예: 출장비)" class="w-full font-bold text-slate-900 bg-transparent border-b border-slate-200" />
+                  </td>
+                  <td class="border border-slate-300 py-2 px-3 block sm:table-cell text-slate-700">
+                    <span class="flex flex-wrap items-center gap-1">
+                      <input type="number" min="0" v-model.number="l.qty" class="w-16 text-right font-mono text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300" />
+                      <input type="text" v-model="l.unit" class="w-16 text-slate-900 bg-transparent border-b border-slate-200" />
+                      × <input type="number" min="0" step="10000" v-model.number="l.price" class="w-28 text-right font-mono text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300" />
+                    </span>
+                  </td>
+                  <td class="border border-slate-300 py-2 px-3 sm:text-center block sm:table-cell">
+                    <button type="button" @click="removeQuoteLine(li)" class="no-print text-rose-600 font-bold cursor-pointer">✕ 빼기</button>
+                  </td>
+                  <td class="border border-slate-300 py-2 px-3 sm:text-right font-mono font-bold block sm:table-cell">{{ ((Number(l.qty) || 0) * (Number(l.price) || 0)).toLocaleString() }}</td>
                 </tr>
                 <tr class="block sm:table-row">
                   <td class="border border-slate-300 py-2 px-3 font-bold text-slate-700 block sm:table-cell">전문 무대 음향 · 조명 · 특수효과 세팅</td>
@@ -6119,10 +6151,44 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
             scheduleText: `${showItem.showDate || ''} ${showItem.showTime || ''}`.trim(),
             address: showItem.address || showItem.bizAddress || '',
             region: showItem.region || '',
-            amount: Number(showItem.amount) > 0 ? Number(showItem.amount) : 500000,
-            memo: showItem.memo || '음향·조명·특수효과 장비 풀세팅 및 출장비 일체 포함'
+            amount: Number(showItem.quoteMain) > 0 ? Number(showItem.quoteMain) : (Number(showItem.amount) > 0 ? Number(showItem.amount) : 500000),
+            memo: showItem.memo || '음향·조명·특수효과 장비 풀세팅 및 출장비 일체 포함',
+            // ★ v3.0: 견적서 여러 줄 (출장비·포토존·보조 인력 …). 공연 장부에는 합계만 금액으로 들어감
+            no: showItem.no,
+            lines: Array.isArray(showItem.quoteLines) ? JSON.parse(JSON.stringify(showItem.quoteLines)) : [],
+            vatMode: showItem.quoteVat || '없음'
           };
           quoteModalOpen.value = true;
+        };
+
+        // ★ v3.0: 견적서 여러 줄 계산
+        const quoteLineSum = computed(() => (quoteData.value.lines || []).reduce((t, l) => t + (Number(l.qty) || 0) * (Number(l.price) || 0), 0));
+        const quoteSubtotal = computed(() => (Number(quoteData.value.amount) || 0) + quoteLineSum.value);
+        const quoteVatAmt = computed(() => quoteData.value.vatMode === '별도' ? Math.round(quoteSubtotal.value * 0.1) : (quoteData.value.vatMode === '포함' ? quoteSubtotal.value - Math.round(quoteSubtotal.value / 1.1) : 0));
+        const quoteTotal = computed(() => quoteData.value.vatMode === '별도' ? quoteSubtotal.value + quoteVatAmt.value : quoteSubtotal.value);
+        const quoteHasTravel = computed(() => (quoteData.value.lines || []).some(l => /출장/.test(l.name || '')));
+        const addQuoteLine = (it) => {
+          if (!Array.isArray(quoteData.value.lines)) quoteData.value.lines = [];
+          quoteData.value.lines.push(it ? { name: it.name, qty: 1, unit: it.unit || '회', price: Number(it.price) || 0 } : { name: '', qty: 1, unit: '회', price: 0 });
+        };
+        const removeQuoteLine = (i) => { quoteData.value.lines.splice(i, 1); };
+        const saveQuoteToShow = () => {
+          const target = shows.value.find(x => x.no === quoteData.value.no);
+          if (!target) { showToast('이 견적의 일정을 찾지 못했어요.'); return; }
+          const total = quoteTotal.value;
+          const lines = (quoteData.value.lines || []).filter(l => String(l.name || '').trim() !== '' || Number(l.price) > 0)
+            .map(l => ({ name: String(l.name || '').trim(), qty: Number(l.qty) || 0, unit: l.unit || '회', price: Number(l.price) || 0 }));
+          const before = Number(target.amount) || 0;
+          if (before !== total && !confirm(`이 견적을 일정에 저장할까요?\n\n장부 금액: ₩${before.toLocaleString()} → ₩${total.toLocaleString()}\n(공연 ₩${(Number(quoteData.value.amount) || 0).toLocaleString()}${lines.length ? ' + 추가 ' + lines.length + '줄' : ''}${quoteData.value.vatMode === '별도' ? ' + 부가세' : ''})`)) return;
+          target.amount = total;
+          target.quoteMain = Number(quoteData.value.amount) || 0;
+          target.quoteLines = lines;
+          target.quoteVat = quoteData.value.vatMode || '없음';
+          target.updatedAt = nowStamp();
+          syncShowsAndCustomers(true);
+          saveAllToStorage();
+          nextTick(() => renderCharts());
+          showToast(`💾 견적을 '${target.client}' 일정에 저장했어요. 장부 금액 ₩${total.toLocaleString()}`);
         };
 
         const printQuoteSheet = () => {
@@ -7224,6 +7290,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
         return {
           shows, customers, payables, taxRecords, cashAccounts, todoItems,
           runOf, endTimeOf, formTimeInfo, // ★ v3.0
+          quoteLineSum, quoteSubtotal, quoteVatAmt, quoteTotal, quoteHasTravel, addQuoteLine, removeQuoteLine, saveQuoteToShow,
           listWhen, ledgerShows, ledgerCounts, todayDividerNo, scrollLedgerToToday, // ★ v3.0
           profile, PRODUCT_KINDS, ITEM_UNITS, companyNames, productNames, companyOf, productOf, saveProfile, runTimeText, // ★ v3.0
           addCompany, removeCompany, addProduct, removeProduct, moveProduct, addItem, removeItem,
