@@ -1168,7 +1168,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <td class="py-2 px-1 font-sans text-slate-300 text-center whitespace-nowrap">{{ s.region || '-' }}</td>
                     <!-- 테마 -->
                     <td class="py-2 px-1 font-sans text-center truncate">
-                      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold inline-block truncate max-w-full" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span><span v-if="s.status === '문의'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">문의</span><span v-if="workTypeOf(s) !== '공연'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">{{ workTypeOf(s) }}</span>
+                      <!-- ★ v3.0: '문의'는 상태 칸에 있어서 여기선 뺌(좁은 칸에서 잘려 보였음). 강연·서브는 아랫줄에 -->
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold inline-block truncate max-w-full" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span>
+                      <div v-if="workTypeOf(s) !== '공연'" class="mt-0.5"><span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">{{ workTypeOf(s) }}</span></div>
                     </td>
                     <!-- 공연료 -->
                     <td class="py-2 px-1.5 text-right font-bold whitespace-nowrap" :class="s.status === '취소' ? 'line-through text-slate-500' : 'text-white'">
@@ -3611,6 +3613,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           class="w-full py-3 rounded-2xl font-bold text-sm cursor-pointer" :class="a.id === mainAccountId ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white'">
           {{ a.id === mainAccountId ? '⭐ ' : '' }}{{ a.name || '이름 없는 통장' }}<span v-if="a.memo" class="font-normal text-[11px]"> · {{ a.memo }}</span>
         </button>
+        <!-- ★ v3.0: 통장이 없거나 새 통장일 때 여기서 바로 추가 -->
+        <div class="rounded-xl border border-slate-700 p-2.5 space-y-1.5">
+          <div class="text-slate-400">{{ cashAccounts.length ? '다른 통장이면 이름을 적어 추가해요' : '아직 등록한 통장이 없어요. 통장 이름을 적어 주세요 (처음 적은 통장이 ⭐ 주통장)' }}</div>
+          <div class="flex gap-1.5">
+            <input type="text" v-model="payAccNewName" placeholder="예: 농협 사업자통장" class="flex-1 min-w-0 px-3 py-2 rounded-xl border" @keyup.enter="addAccountAndPay" />
+            <button type="button" @click="addAccountAndPay" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer whitespace-nowrap">추가하고 완납</button>
+          </div>
+        </div>
         <div class="grid grid-cols-2 gap-2">
           <button type="button" @click="choosePaidAccount('')" class="py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold cursor-pointer">통장 안 적고 완납</button>
           <button type="button" @click="payAccPick = null" class="py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold cursor-pointer">취소</button>
@@ -3959,6 +3969,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           profile.value = makeStarterProfile(w);
           profile.value.items = [{ name: '출장비', price: 50000, unit: '회' }, { name: '포토존', price: 100000, unit: '식' }];
           clearAllRecords();
+          cashAccounts.value = [{ id: 'ACC-1', name: '예시 사업자통장', memo: '', balance: 0, main: true }]; // ★ 예시에서도 입금 통장 고르기를 볼 수 있게
           const t = referenceToday.value;
           const demo = [
             { d: -12, client: '예시 새싹유치원', status: '완료', pay: '완납', amount: 450000, time: '10:30', region: '서울' },
@@ -4967,7 +4978,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const accountOf = (id) => (id ? cashAccounts.value.find(a => a.id === id) : null) || null;
         const sortedAccounts = computed(() => cashAccounts.value.slice().sort((a, b) => (b.id === mainAccountId.value ? 1 : 0) - (a.id === mainAccountId.value ? 1 : 0)));
         const addCashAccount = () => {
-          const n = cashAccounts.value.reduce((m, a) => Math.max(m, Number(String(a.id || '').replace(/\D/g, '')) || 0), 0) + 1;
+          // 지운 통장 번호를 다시 쓰지 않도록 공연 기록에 남은 통장 번호까지 봄
+          const ids = cashAccounts.value.map(a => a.id).concat(shows.value.map(s => s.paidAccount).filter(Boolean));
+          const n = ids.reduce((m, id) => Math.max(m, Number(String(id || '').replace(/\D/g, '')) || 0), 0) + 1;
           cashAccounts.value.push({ id: 'ACC-' + n, name: '새 통장', memo: '', balance: 0, main: cashAccounts.value.length === 0 });
           saveAllToStorage();
         };
@@ -6900,8 +6913,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const markShowPaid = (showItem) => {
           const target = shows.value.find(s => s.no === showItem.no);
           if (!target) return;
-          if (cashAccounts.value.length) { payAccPick.value = { no: target.no }; return; }
-          finishPaid(target, '');
+          payAccNewName.value = '';
+          payAccPick.value = { no: target.no }; // 통장이 없어도 창을 띄워서 바로 추가할 수 있게
+        };
+        const payAccNewName = ref('');
+        const addAccountAndPay = () => {
+          const nm = String(payAccNewName.value || '').trim();
+          if (!nm) { showToast('통장 이름을 적어 주세요. (예: 농협 사업자통장)'); return; }
+          addCashAccount();
+          const acc = cashAccounts.value[cashAccounts.value.length - 1];
+          acc.name = nm;
+          choosePaidAccount(acc.id);
         };
         const choosePaidAccount = (accId) => {
           const target = payAccPick.value && shows.value.find(s => s.no === payAccPick.value.no);
@@ -7922,7 +7944,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           dupExcluded, isDupExcluded, toggleDupExclude, // ★ v3.0
           openSmsAs, brandName, goPremiumApp,
           foldCls, foldClick, // ★ v3.0 설정 칸 접기
-          payAccPick, choosePaidAccount, accountOf, sortedAccounts, mainAccountId, addCashAccount, setMainAccount, removeCashAccount, receivedByAccount, // ★ v3.0 통장
+          payAccPick, choosePaidAccount, payAccNewName, addAccountAndPay, accountOf, sortedAccounts, mainAccountId, addCashAccount, setMainAccount, removeCashAccount, receivedByAccount, // ★ v3.0 통장
           secondCo, coShort, issuerShort, license, firstRunOpen, isDemo, wiz, finishFirstRun, startDemo, endDemo, firstRunFromCloud, // ★ v3.0
           SMS_LABELS, SMS_FIELDS, smsEditMode, smsTplDraft, isCustomSms, startSmsTplEdit, cancelSmsTplEdit, saveSmsTpl, resetSmsTpl, insertSmsField,
           lastYearOpen, lastYearAgain, recallSms, markRecallAsked,
