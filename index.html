@@ -2738,6 +2738,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <!-- ★ v2.9: 공연 직후 기록 (완료로 바꿀 때 채우기) -->
           <div class="sm:col-span-3 p-3 rounded-2xl border space-y-2" :class="editingShowForm.status === '완료' ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-slate-950/60 border-slate-700'">
             <div class="text-xs font-bold" :class="editingShowForm.status === '완료' ? 'text-emerald-300' : 'text-slate-400'">🎤 공연 직후 기록 <span class="font-normal text-[10px]">(블로그 후기 재료와 다음 섭외 참고가 돼요)</span></div>
+            <!-- ★ v3.0: 이 공연으로 바로 블로그 글·쇼츠 (PC에서 같은 폴더의 SNS ERP·쇼츠 스튜디오가 이 공연을 골라 둔 채로 열림) -->
+            <div v-if="isEditingShow && canMakePost(editingShowForm)" class="flex flex-wrap items-center gap-2 text-[11px]">
+              <button type="button" @click="goPostFromModal('sns')" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold cursor-pointer">📝 저장하고 블로그 글 만들기</button>
+              <button type="button" @click="goPostFromModal('shorts')" class="px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold cursor-pointer">🎬 저장하고 쇼츠 만들기</button>
+              <span class="text-slate-400">PC에서 이 공연을 골라 둔 채로 열려요</span>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div class="sm:col-span-2">
                 <label class="text-slate-400 block mb-1">현장 한 줄 메모</label>
@@ -2975,6 +2981,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
         </div>
 
+        <!-- ★ v3.0: 이 공연으로 바로 블로그 글·쇼츠 -->
+        <div v-if="canMakePost(summaryShow)" class="grid grid-cols-2 gap-2 pt-1">
+          <button @click="goPostFor('sns', summaryShow)" type="button" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold cursor-pointer">📝 블로그 글 만들기</button>
+          <button @click="goPostFor('shorts', summaryShow)" type="button" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold cursor-pointer">🎬 쇼츠 만들기</button>
+        </div>
         <div class="grid grid-cols-2 gap-2 pt-1">
           <button @click="showInLedger(summaryShow)" type="button" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold cursor-pointer">📒 공연장부에서 보기</button>
           <button @click="editFromSummary" type="button" class="py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer">✏️ 수정</button>
@@ -4164,6 +4175,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const goPremiumApp = (k) => {
           if (location.protocol !== 'file:') { showToast('📝 SNS·🎬 쇼츠는 PC에서 열어요. (공연관리와 같은 폴더의 파일을 같은 크롬으로)', 6000); return; }
           location.href = PREMIUM_FILES[k];
+        };
+        // ★ v3.0: 공연에서 바로 블로그 글·쇼츠로. SNS ERP·쇼츠 스튜디오와 같은 공연 키(번호|날짜)를 ?show= 로 넘김
+        const canMakePost = (s) => !!s && (s.status === '완료' || s.status === '확정') && s.workType !== '서브';
+        const goPostFor = (k, s) => {
+          if (location.protocol !== 'file:') { showToast('📝 블로그 글·🎬 쇼츠는 PC에서 만들어요. (공연관리와 같은 폴더의 파일을 같은 크롬으로)', 6000); return; }
+          location.href = PREMIUM_FILES[k] + '?show=' + encodeURIComponent(`${s.no}|${String(s.showDate || '').slice(0, 10)}`);
+        };
+        const goPostFromModal = (k) => { // 입력창에서는 고친 내용을 먼저 저장하고 넘어감
+          if (location.protocol !== 'file:') { goPostFor(k, editingShowForm.value); return; }
+          saveShowModal();
+          if (showModalOpen.value) return; // 저장하지 않았으면(확인 취소 등) 그대로
+          goPostFor(k, editingShowForm.value);
         };
         const runTimeText = (name) => { const x = productOf(name); const m = x && Number(x.runMin); return m > 0 ? `약 ${m}분` : '약 50분'; };
         const showFormOpen = ref({ talk: true, perf: true, after: true, biz: true }); // ★ v2.9: 공연 입력창 묶음 펼침 상태
@@ -8069,7 +8092,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           shows, customers, payables, taxRecords, cashAccounts, todoItems,
           runOf, endTimeOf, formTimeInfo, // ★ v3.0
           dupExcluded, isDupExcluded, toggleDupExclude, // ★ v3.0
-          openSmsAs, brandName, goPremiumApp,
+          openSmsAs, brandName, goPremiumApp, canMakePost, goPostFor, goPostFromModal,
           foldCls, foldClick, // ★ v3.0 설정 칸 접기
           phoneLinkOpen, phoneLinkSvg, openPhoneLink, copyPhoneLink, phoneLinkUrl, // ★ v3.0 휴대폰 연결 QR
           payAccPick, choosePaidAccount, payAccNewName, addAccountAndPay, accountOf, sortedAccounts, mainAccountId, addCashAccount, setMainAccount, removeCashAccount, receivedByAccount, // ★ v3.0 통장
