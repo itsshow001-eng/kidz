@@ -875,7 +875,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div>
               <label class="text-[11px] text-slate-400 block mb-1">📌 진행/취소 상태</label>
               <select v-model="filterStatus" class="w-full px-2 py-1.5 rounded-xl border text-xs cursor-pointer font-bold">
-                <option value="ALL">전체 (취소포함)</option>
+                <option value="ALL">전체 (취소포함 · 입력 실수 제외)</option>
                 <option value="ACTIVE">🟢 정상 일정만</option>
                 <option value="5DAYS">🔥 5일내 임박</option>
                 <option value="문의">🟡 문의(미정)만</option>
@@ -1167,6 +1167,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                         :class="s.status === '취소' ? 'bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600 hover:text-white' : 'bg-rose-500/20 text-rose-300 hover:bg-rose-600 hover:text-white'">
                         {{ s.status === '취소' ? '복구' : '취소' }}
                       </button>
+                      <button v-if="s.status === '취소' && s.cancelType === CANCEL_TYPE_INVALID" @click="moveShowToTrash(s)" class="px-1.5 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white text-[10px] cursor-pointer" title="휴지통으로 (30일 보관)">🗑️</button>
                      </div>
                     </td>
                   </tr>
@@ -1237,6 +1238,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <button @click="duplicateShowQuick(s)" class="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-bold">복사</button>
                     <button @click="openEditShowModal(s)" class="px-2 py-1 rounded-lg bg-slate-700 text-white text-[11px] font-bold">수정</button>
                     <button @click="toggleCancelShow(s)" class="px-2 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-[11px] font-bold">{{ s.status === '취소' ? '복구' : '취소' }}</button>
+                    <button v-if="s.status === '취소' && s.cancelType === CANCEL_TYPE_INVALID" @click="moveShowToTrash(s)" class="px-2 py-1 rounded-lg bg-slate-700 text-white text-[11px] font-bold">🗑️ 휴지통</button>
                   </div>
                 </div>
               </div>
@@ -1302,7 +1304,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                       <td class="py-3 px-4 font-sans">
                         <span class="font-bold text-indigo-300">{{ u.issuer }}</span> · <span class="text-slate-400">{{ u.adminDoc || '없음' }}</span>
                       </td>
-                      <td class="py-3 px-4 text-right font-black text-rose-400 text-sm whitespace-nowrap">₩{{ u.amount.toLocaleString() }}</td>
+                      <td class="py-3 px-4 text-right font-black text-rose-400 text-sm whitespace-nowrap"><span v-if="isFeeShow(u)" class="text-[10px] font-sans text-amber-300">위약금 </span>₩{{ amountDue(u).toLocaleString() }}</td>
                       <td class="py-3 px-4 text-center font-sans">
                         <button @click="markShowPaid(u)" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer shadow">
                           ✓ 입금완납 확인
@@ -1321,7 +1323,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                   </div>
                   <div class="flex items-center justify-between gap-2">
                     <div class="font-bold text-sm text-white truncate">{{ u.client }}</div>
-                    <div class="font-mono font-black text-sm text-rose-400 shrink-0">₩{{ u.amount.toLocaleString() }}</div>
+                    <div class="font-mono font-black text-sm text-rose-400 shrink-0"><span v-if="isFeeShow(u)" class="text-[10px] font-sans text-amber-300">위약금 </span>₩{{ amountDue(u).toLocaleString() }}</div>
                   </div>
                   <div class="flex items-center justify-between pt-1">
                     <span class="text-xs text-slate-400 truncate">{{ u.manager || '담당자' }} {{ u.phone }}</span>
@@ -2081,6 +2083,24 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
 
+          <!-- ★ v3.0: 휴지통 -->
+          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
+            <div class="pb-2 border-b border-slate-700/60">
+              <h3 class="text-sm font-bold text-white">🗑️ 휴지통 ({{ trash.length }}건 · 30일 보관)</h3>
+              <p class="text-xs text-slate-400">잘못 적어 지운 일정이에요. 30일이 지나면 저절로 지워져요. 진짜 취소된 공연은 휴지통이 아니라 장부에 '취소'로 남아요.</p>
+            </div>
+            <div v-if="trash.length === 0" class="text-xs text-slate-400">비어 있어요.</div>
+            <div v-for="(t, ti) in trash" :key="'tr' + ti" class="flex flex-wrap items-center gap-2 text-xs rounded-xl border border-slate-700 p-2.5">
+              <span class="font-mono text-slate-300">{{ t.show.showDate || '날짜 없음' }} {{ t.show.showTime || '' }}</span>
+              <span class="font-bold text-white">{{ t.show.client || '이름 없음' }}</span>
+              <span class="text-slate-400">· {{ trashDaysLeft(t) }}일 뒤 지워짐</span>
+              <span class="ml-auto flex gap-2">
+                <button type="button" @click="restoreFromTrash(ti)" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer">↩️ 되돌리기</button>
+                <button type="button" @click="deleteFromTrash(ti)" class="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold cursor-pointer">완전히 지우기</button>
+              </span>
+            </div>
+          </div>
+
           <!-- ★ NEW: PC & 모바일 실시간 클라우드(구글 시트) 연동 패널 ★ -->
           <div class="rounded-2xl bg-indigo-950/30 border border-indigo-500/50 p-5 space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-indigo-500/30">
@@ -2327,6 +2347,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div>
               <label class="text-rose-200 block mb-1 font-bold">취소 사유 (한 줄 메모)</label>
               <input type="text" v-model="editingShowForm.cancelReason" placeholder="예: 원 사정으로 취소 요청" class="w-full px-3 py-2 rounded-xl border" />
+            </div>
+            <div v-if="editingShowForm.cancelType !== CANCEL_TYPE_INVALID">
+              <label class="text-amber-200 block mb-1 font-bold">💰 위약금 (없으면 0)</label>
+              <input type="number" min="0" step="10000" v-model.number="editingShowForm.cancelFee" class="w-full px-3 py-2 rounded-xl border font-mono" />
+            </div>
+            <div v-if="editingShowForm.cancelType !== CANCEL_TYPE_INVALID && Number(editingShowForm.cancelFee) > 0">
+              <label class="text-amber-200 block mb-1 font-bold">공연자에게 줄 위약금</label>
+              <input type="number" min="0" step="10000" v-model.number="editingShowForm.cancelFeePayout" class="w-full px-3 py-2 rounded-xl border font-mono" />
             </div>
           </div>
           <div class="sm:col-span-2">
@@ -3416,10 +3444,32 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <label class="text-slate-300 block mb-1 font-bold">취소 사유 (한 줄 메모 · 선택)</label>
             <input type="text" v-model="cancelForm.reason" placeholder="예: 원 사정으로 취소 요청" class="w-full px-3 py-2 rounded-xl border" />
           </div>
+          <!-- ★ v3.0: 취소 위약금 -->
+          <div v-if="cancelForm.type && cancelForm.type !== CANCEL_TYPE_INVALID" class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/40 space-y-2">
+            <label class="flex items-center gap-2 font-bold text-amber-200 cursor-pointer">
+              <input type="checkbox" v-model="cancelForm.feeOn" @change="onCancelFeeToggle" /> 💰 위약금을 받기로 했어요
+            </label>
+            <template v-if="cancelForm.feeOn">
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" @click="cancelForm.fee = Math.round(cancelForm.base * 0.5)" class="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold cursor-pointer">50%</button>
+                <button type="button" @click="cancelForm.fee = cancelForm.base" class="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold cursor-pointer">100%</button>
+                <input type="number" min="0" step="10000" v-model.number="cancelForm.fee" class="w-28 px-3 py-2 rounded-xl border font-mono" />
+                <span class="text-slate-400">원 (공연 금액 ₩{{ cancelForm.base.toLocaleString() }})</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-slate-300">공연자에게 줄 위약금 (선택 · 첫 정산대상에게, 정산 화면에 나와요)</span>
+                <input type="number" min="0" step="10000" v-model.number="cancelForm.feePayout" class="w-28 px-3 py-2 rounded-xl border font-mono" />
+                <span class="text-slate-400">원</span>
+              </div>
+              <p class="text-[10px] text-amber-200/80">위약금은 매출·받을 돈(미입금)에 '위약금'으로 잡혀요. 받으면 미수금 화면에서 [입금완납 확인]을 누르세요.</p>
+            </template>
+          </div>
+          <p v-if="cancelForm.type === CANCEL_TYPE_INVALID" class="text-[11px] text-slate-400">🗑️ 잘못 적은 일정이면 아래 [휴지통으로 보내기]로 목록에서 치울 수 있어요. 30일 안에는 되돌릴 수 있어요.</p>
         </div>
         <div class="flex flex-wrap items-center justify-end gap-2 pt-1">
           <button @click="cancelModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold cursor-pointer">닫기 (취소 안 함)</button>
-          <button @click="confirmCancelShow" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black cursor-pointer shadow-lg">🚫 취소로 표시하기</button>
+          <button v-if="cancelForm.type === CANCEL_TYPE_INVALID" type="button" @click="trashFromCancelModal" class="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold cursor-pointer">🗑️ 휴지통으로 보내기</button>
+            <button @click="confirmCancelShow" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black cursor-pointer shadow-lg">🚫 취소로 표시하기</button>
         </div>
       </div>
     </div>
@@ -3649,6 +3699,53 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const st = toMin(f.showTime), r = runOf(f);
           return { run: r, end: st !== null && r > 0 ? fromMin(st + r) : '', productRun: Number((productOf(f.theme) || {}).runMin) || 0, others: showModalMode.value === 'bulk' && !isEditingShow.value ? [] : sameDayGaps(f, shows.value) };
         });
+        // ★ v3.0: 휴지통 — 잘못 적은 일정(입력 실수)을 목록에서 치움. 30일 보관 뒤 저절로 지움. 동기화·백업에 함께 담김
+        const trash = ref([]);
+        const TRASH_DAYS = 30;
+        const trashDaysLeft = (t) => Math.max(0, TRASH_DAYS - Math.floor((Date.now() - new Date(t.trashedAt).getTime()) / 86400000));
+        const moveShowToTrash = (showItem) => {
+          if (!showItem) return false;
+          if (!confirm(`'${showItem.client || '이름 없음'}' (${showItem.showDate || '날짜 없음'}) 일정을 휴지통으로 보낼까요?\n\n목록·달력·돈 계산에서 빠지고, ${TRASH_DAYS}일 안에는 설정 → 휴지통에서 되돌릴 수 있어요.`)) return false;
+          takeSnapshot('휴지통으로 보내기 직전 자동 백업');
+          trash.value.push({ trashedAt: new Date().toISOString(), show: JSON.parse(JSON.stringify(showItem)) });
+          shows.value = shows.value.filter(x => x.no !== showItem.no);
+          syncShowsAndCustomers(true);
+          saveBaseline(currentCounts()); // 일부러 지운 것이라 건수 감소 경고를 띄우지 않음
+          saveAllToStorage();
+          nextTick(() => renderCharts());
+          showToast(`🗑️ 휴지통으로 보냈어요. (${TRASH_DAYS}일 안에 되돌릴 수 있어요)`);
+          return true;
+        };
+        const onCancelFeeToggle = () => { const cf = cancelForm.value; if (cf.feeOn && !cf.fee) cf.fee = Math.round(cf.base * 0.5); }; // 처음 켜면 50%
+        const trashFromCancelModal = () => {
+          const target = shows.value.find(x => x.no === cancelTargetNo.value);
+          if (!target) { cancelModalOpen.value = false; return; }
+          if (moveShowToTrash(target)) cancelModalOpen.value = false;
+        };
+        const restoreFromTrash = (i) => {
+          const t = trash.value[i]; if (!t) return;
+          const rec = JSON.parse(JSON.stringify(t.show));
+          if (shows.value.some(x => x.no === rec.no)) rec.no = Math.max(0, ...shows.value.map(x => Number(x.no) || 0)) + 1; // 번호가 겹치면 새 번호
+          shows.value.push(rec);
+          trash.value.splice(i, 1);
+          syncShowsAndCustomers(true);
+          saveAllToStorage();
+          nextTick(() => renderCharts());
+          showToast(`↩️ '${rec.client}' 일정을 되돌렸어요. (상태: ${rec.status}${rec.cancelType ? ' · ' + rec.cancelType : ''})`);
+        };
+        const deleteFromTrash = (i) => {
+          const t = trash.value[i]; if (!t) return;
+          if (!confirm(`'${t.show.client || '이름 없음'}' (${t.show.showDate || ''}) 일정을 완전히 지울까요?\n\n⚠️ 완전히 지우면 되돌릴 수 없어요. (자동 백업에는 남아요)`)) return;
+          takeSnapshot('휴지통에서 완전히 지우기 직전 자동 백업');
+          trash.value.splice(i, 1);
+          saveAllToStorage();
+          showToast('완전히 지웠어요.');
+        };
+        const purgeOldTrash = () => {
+          const keep = trash.value.filter(t => trashDaysLeft(t) > 0);
+          if (keep.length !== trash.value.length) { trash.value = keep; return true; }
+          return false;
+        };
         const runTimeText = (name) => { const x = productOf(name); const m = x && Number(x.runMin); return m > 0 ? `약 ${m}분` : '약 50분'; };
         const showFormOpen = ref({ talk: true, perf: true, after: true, biz: true }); // ★ v2.9: 공연 입력창 묶음 펼침 상태
 
@@ -3658,11 +3755,15 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const isInquiry = (s) => !!s && s.status === '문의';
         const isDirectSettle = (s) => !!s && s.settleMode === '공연자 직접';
         const isMoneyShow = (s) => !!s && s.status !== '취소' && s.status !== '문의';
-        const revenueOf = (s) => isDirectSettle(s) ? (Number(s.commission) || 0) : (Number(s.amount) || 0);
+        // ★ v3.0: 취소됐지만 위약금을 받기로 한 일정 → 위약금만 매출·미수금·공연자 지급에 잡힘
+        const isFeeShow = (s) => !!s && s.status === '취소' && Number(s.cancelFee) > 0;
+        const isCountedMoney = (s) => isMoneyShow(s) || isFeeShow(s);
+        const amountDue = (s) => isFeeShow(s) ? (Number(s.cancelFee) || 0) : (Number(s.amount) || 0);
+        const revenueOf = (s) => isFeeShow(s) ? (Number(s.cancelFee) || 0) : (isDirectSettle(s) ? (Number(s.commission) || 0) : (Number(s.amount) || 0));
         // ★ v2.9: 함께한 사람(서브 인원 등). 첫 번째 정산대상은 예전처럼 settleTarget·settleAmt, 더 줄 사람은 s.crew 목록에 둡니다
         const crewOf = (s) => (s && Array.isArray(s.crew)) ? s.crew.filter(c => c && String(c.name || '').trim() !== '') : [];
         const crewFeeOf = (s) => crewOf(s).reduce((a, c) => a + (Number(c.fee) || 0), 0);
-        const payoutOf = (s) => isDirectSettle(s) ? 0 : (Number(s.settleAmt) || 0) + crewFeeOf(s);
+        const payoutOf = (s) => isFeeShow(s) ? (Number(s.cancelFeePayout) || 0) : (isDirectSettle(s) ? 0 : (Number(s.settleAmt) || 0) + crewFeeOf(s));
         const netOf = (s) => revenueOf(s) - payoutOf(s);
         const workTypeOf = (s) => (s && s.workType) || '공연';
 
@@ -3799,7 +3900,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           cashAccounts: cashAccounts.value,
           todoItems: todoItems.value,
           performers: performers.value,
-          profile: profile.value // ★ v3.0
+          profile: profile.value, // ★ v3.0
+          trash: trash.value // ★ v3.0 휴지통
         });
 
         // 지금 데이터를 통째로 복사해 보관합니다. 성공하면 true.
@@ -3850,6 +3952,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           if (Array.isArray(d.todoItems)) todoItems.value = d.todoItems;
           if (Array.isArray(d.performers)) performers.value = d.performers;
           if (d.profile && typeof d.profile === 'object') profile.value = normalizeProfile(d.profile); // ★ v3.0
+          if (Array.isArray(d.trash)) trash.value = d.trash;
           syncShowsAndCustomers(true);
           saveAllToStorage(false); // 복원한 데이터를 클라우드로 자동 전송하지는 않습니다.
           nextTick(() => renderCharts());
@@ -4078,12 +4181,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const makeUid = () => 'S' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         // 복사해서 새로 만들 때, 원본의 이름표·시각·취소이력이 따라오지 않도록 지웁니다.
         const stripRecordMeta = (rec) => { ['uid', 'createdAt', 'updatedAt', 'cancelLog'].forEach(k => { delete rec[k]; }); return rec; };
-        const clearCancelFields = (rec) => { ['cancelType', 'cancelReason', 'cancelDate', 'cancelFrom'].forEach(k => { delete rec[k]; }); };
+        const clearCancelFields = (rec) => { ['cancelType', 'cancelReason', 'cancelDate', 'cancelFrom', 'cancelFee', 'cancelFeePayout'].forEach(k => { delete rec[k]; }); }; // ★ v3.0 위약금도
         // 지금 취소 정보를 '취소 이력'에 한 줄 남기고 현재 취소 항목은 비웁니다. (복구해도 기록은 남음)
         const archiveCancelInfo = (rec) => {
           if (rec.cancelType || rec.cancelDate || rec.cancelReason) {
             if (!Array.isArray(rec.cancelLog)) rec.cancelLog = [];
-            rec.cancelLog.push({ type: rec.cancelType || '', reason: rec.cancelReason || '', date: rec.cancelDate || '', restoredAt: nowStamp() });
+            rec.cancelLog.push({ type: rec.cancelType || '', reason: rec.cancelReason || '', date: rec.cancelDate || '', fee: Number(rec.cancelFee) || 0, restoredAt: nowStamp() });
           }
           clearCancelFields(rec);
         };
@@ -4093,6 +4196,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           rec.cancelType = info.type;
           rec.cancelReason = info.reason || '';
           rec.cancelDate = info.date;
+          // ★ v3.0: 위약금 (입력 실수는 위약금 없음)
+          const fee = info.type === CANCEL_TYPE_INVALID ? 0 : (Number(info.fee) || 0);
+          if (fee > 0) { rec.cancelFee = fee; rec.cancelFeePayout = Number(info.feePayout) || 0; }
+          else { delete rec.cancelFee; delete rec.cancelFeePayout; }
         };
         const applyRestore = (rec) => {
           const back = rec.cancelFrom || '확정';   // 취소 직전 상태(완료였으면 완료)로 되돌림. 옛 기록은 예전처럼 '확정'
@@ -4142,6 +4249,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               todoItems.value = Array.isArray(parsed.todoItems) && parsed.todoItems.length > 0 ? parsed.todoItems : JSON.parse(JSON.stringify(DEFAULT_TODOS));
               performers.value = Array.isArray(parsed.performers) ? parsed.performers : [];
               profile.value = normalizeProfile(parsed.profile); // ★ v3.0: 없으면 지금까지 박혀 있던 값으로
+              trash.value = Array.isArray(parsed.trash) ? parsed.trash.filter(t => t && t.show && trashDaysLeft(t) > 0) : []; // ★ v3.0 휴지통 (30일 지난 것은 지움)
               if (migratedShowCount) {
                 showToast('예전 ERP(v2.2)가 이 브라우저에 저장해 둔 데이터를 가져왔어요 (공연 ' + migratedShowCount + '건). 예전 데이터는 그대로 남아 있어요. 설정 탭에서 구글 시트 주소를 넣고 [클라우드에서 불러오기]를 눌러 주세요.', 14000);
                 migratedShowCount = 0;
@@ -4163,6 +4271,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           todoItems.value = JSON.parse(JSON.stringify(DEFAULT_TODOS));
           performers.value = Array.isArray(rawInit.performers) ? JSON.parse(JSON.stringify(rawInit.performers)) : [];
           profile.value = normalizeProfile(null); // ★ v3.0
+          trash.value = [];
         };
 
         const DEFAULT_CLOUD_URL = '';
@@ -4220,7 +4329,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               cashAccounts: cashAccounts.value,
               todoItems: todoItems.value,
               performers: performers.value,
-              profile: profile.value // ★ v3.0
+              profile: profile.value, // ★ v3.0
+              trash: trash.value // ★ v3.0 휴지통
             }));
           } catch (e) {
             syncStatusText.value = '⚠️ 이 기기 저장 실패';
@@ -4371,7 +4481,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const monthRevenue = computed(() => {
           const today = referenceToday.value;
           const ym = today.slice(0, 7);
-          const list = shows.value.filter(s => isMoneyShow(s) && String(s.showDate || '').startsWith(ym));
+          const list = shows.value.filter(s => isCountedMoney(s) && String(s.showDate || '').startsWith(ym));
           const done = list.filter(s => s.showDate <= today).reduce((a, s) => a + revenueOf(s), 0);
           const plan = list.filter(s => s.showDate > today).reduce((a, s) => a + revenueOf(s), 0);
           const net = list.reduce((a, s) => a + netOf(s), 0);
@@ -4421,7 +4531,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         });
 
         const periodShows = computed(() => {
-          const activeShows = shows.value.filter(s => isMoneyShow(s));
+          const activeShows = shows.value.filter(s => isCountedMoney(s)); // ★ v3.0: 위약금 포함
           if (selectedYearMonth.value === 'ALL') return activeShows;
           return activeShows.filter(s => s.showDate && s.showDate.startsWith(selectedYearMonth.value));
         });
@@ -4429,18 +4539,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const periodTotalRevenue = computed(() => periodShows.value.reduce((acc, s) => acc + revenueOf(s), 0));
         const periodItsshowRevenue = computed(() => periodShows.value.filter(s => s.issuer !== '키즈니버스랩').reduce((acc, s) => acc + revenueOf(s), 0));
         const periodKidsniverseRevenue = computed(() => periodShows.value.filter(s => s.issuer === '키즈니버스랩').reduce((acc, s) => acc + revenueOf(s), 0));
-        const overallTotalRevenue = computed(() => shows.value.filter(s => isMoneyShow(s)).reduce((acc, s) => acc + revenueOf(s), 0));
+        const overallTotalRevenue = computed(() => shows.value.filter(s => isCountedMoney(s)).reduce((acc, s) => acc + revenueOf(s), 0));
         // ★ v2.9: 실수익 = 매출 - 공연자·서브 인원 지급(세전)
         const periodPayout = computed(() => periodShows.value.reduce((acc, s) => acc + payoutOf(s), 0));
         const periodNet = computed(() => periodShows.value.reduce((acc, s) => acc + netOf(s), 0));
 
         const unpaidShows = computed(() => {
           return shows.value
-            .filter(s => isMoneyShow(s) && !isDirectSettle(s) && s.payStatus === '미입금') // 공연자 직접 정산은 회사가 받을 돈이 아님
+            .filter(s => (isFeeShow(s) || (isMoneyShow(s) && !isDirectSettle(s))) && s.payStatus === '미입금') // 공연자 직접 정산은 회사가 받을 돈이 아님 · ★ v3.0 위약금 포함
             .sort((a, b) => (a.showDate || '').localeCompare(b.showDate || ''));
         });
 
-        const totalUnpaidAmount = computed(() => unpaidShows.value.reduce((acc, s) => acc + (Number(s.amount) || 0), 0));
+        const totalUnpaidAmount = computed(() => unpaidShows.value.reduce((acc, s) => acc + amountDue(s), 0));
 
         const pendingPayables = computed(() => payables.value.filter(p => p.status !== '결제완료' && p.amount > 0));
         const totalPendingPayables = computed(() => pendingPayables.value.reduce((acc, p) => acc + (Number(p.amount) || 0), 0));
@@ -4458,6 +4568,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           return shows.value.filter(s => {
             if (selectedYearMonth.value !== 'ALL' && (!s.showDate || !s.showDate.startsWith(selectedYearMonth.value))) return false;
             if (filterStatus.value === 'ACTIVE' && s.status === '취소') return false;
+            if (filterStatus.value === 'ALL' && s.status === '취소' && s.cancelType === CANCEL_TYPE_INVALID) return false; // ★ v3.0
             if (filterStatus.value === '5DAYS' && (s.status === '취소' || !isWithin5Days(s.showDate))) return false;
             if (['문의', '확정', '완료', '취소'].includes(filterStatus.value) && s.status !== filterStatus.value) return false;
             if (filterStatus.value === 'INVALID' && !(s.status === '취소' && s.cancelType === CANCEL_TYPE_INVALID)) return false;
@@ -4518,7 +4629,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           for (let i = 0; i < firstDay; i++) cells.push({ day: null, shows: [] });
           for (let d = 1; d <= lastDate; d++) {
             const dateStr = `${ymPrefix}-${String(d).padStart(2, '0')}`;
-            const dayShows = shows.value.filter(s => s.showDate === dateStr);
+            const dayShows = shows.value.filter(s => s.showDate === dateStr && !(s.status === '취소' && s.cancelType === CANCEL_TYPE_INVALID)); // ★ v3.0 입력 실수는 달력에서 숨김
             cells.push({
               day: d,
               dateStr,
@@ -4668,6 +4779,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         // ★ v2.9: 한 공연에서 돈을 줄 사람 목록. rec = 지급 상태(settleStatus·settlePaidDate·taxRecordId·invoiceRecv)를 적는 곳
         //   (첫 번째 정산대상은 공연 기록 자체, 함께한 사람은 crew의 각 줄)
         const payeesOf = (s) => {
+          // ★ v3.0: 위약금 일정은 '공연자 위약금 지급'만 (첫 정산대상에게)
+          if (isFeeShow(s)) {
+            const c0 = crewOf(s)[0] || {};
+            const who = String(s.settleTarget || '').trim() || String(c0.name || '').trim(); // 첫 정산대상, 없으면 함께한 사람 첫 번째
+            return (Number(s.cancelFeePayout) > 0 && who && s.settleStatus !== '정산건없음')
+              ? [{ key: 'fee', name: who, gross: Number(s.cancelFeePayout) || 0, rec: s, role: '위약금', perfId: String(s.settleTarget || '').trim() ? '' : (c0.performerId || '') }] : [];
+          }
           if (!isMoneyShow(s) || isDirectSettle(s)) return [];
           const list = [];
           if (Number(s.settleAmt) > 0 && String(s.settleTarget || '').trim() !== '' && s.settleStatus !== '정산건없음') {
@@ -5542,7 +5660,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const cancelForm = ref({ type: '', reason: '', date: '' });
         const openCancelModal = (showItem) => {
           cancelTargetNo.value = showItem.no;
-          cancelForm.value = { type: '', reason: '', date: referenceToday.value };
+          cancelForm.value = { type: '', reason: '', date: referenceToday.value, feeOn: false, fee: 0, feePayout: 0, base: Number(showItem.amount) || 0 }; // ★ v3.0 위약금
           cancelModalOpen.value = true;
         };
         const confirmCancelShow = () => {
@@ -5552,7 +5670,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           if (!cf.type) { alert('취소 유형을 선택해 주세요.\n(진짜 취소와 입력 실수를 나중에 구분해서 볼 수 있어요)'); return; }
           if (cf.type === '기타' && !String(cf.reason || '').trim()) { alert('유형이 "기타"일 때는 취소 사유를 한 줄 적어 주세요.'); return; }
           if (!vIsRealDate(cf.date)) { alert('취소일을 달력에서 올바르게 선택해 주세요.'); return; }
-          applyCancel(target, { type: cf.type, reason: String(cf.reason || '').trim(), date: cf.date });
+          applyCancel(target, { type: cf.type, reason: String(cf.reason || '').trim(), date: cf.date, fee: cf.feeOn ? cf.fee : 0, feePayout: cf.feeOn ? cf.feePayout : 0 });
           target.updatedAt = nowStamp();
           cancelModalOpen.value = false;
           syncShowsAndCustomers(true);
@@ -5979,7 +6097,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
 
         const exportHometaxInvoiceBatch = () => {
-          const targetShows = filteredShows.value.filter(s => isMoneyShow(s) && !isDirectSettle(s) && (Number(s.amount) || 0) > 0);
+          const targetShows = filteredShows.value.filter(s => (isFeeShow(s) || (isMoneyShow(s) && !isDirectSettle(s))) && amountDue(s) > 0); // ★ v3.0 위약금 포함
           if (targetShows.length === 0) {
             showToast('발행할 공연 내역이 없습니다.');
             return;
@@ -6000,8 +6118,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               cust.bizOwner || s.manager || '',
               s.bizAddress || cust.bizAddress || s.address || '',
               s.email || cust.email || '',
-              `키즈니버스 문화예술공연 (${s.theme || '더클래식'})`,
-              Number(s.amount) || 0,
+              `키즈니버스 문화예술공연 (${s.theme || '더클래식'})${isFeeShow(s) ? ' 취소 위약금' : ''}`,
+              amountDue(s),
               s.phone || cust.phone || '',
               s.memo || ''
             ]);
@@ -6475,6 +6593,7 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
               todoItems: todoItems.value,
               performers: performers.value,
               profile: profile.value, // ★ v3.0
+              trash: trash.value, // ★ v3.0 휴지통
               updatedAt: sentAt
             });
             // ★ v2.5 (C): 구글의 답장(ok / conflict / denied / busy …)을 직접 읽습니다.
@@ -6634,6 +6753,7 @@ ${target.email ? '■ 계산서 발송 이메일 : ' + target.email : '■ 계�
               // ★ v2.6: 예전 버전(v2.5 이하)이 저장한 시트에는 공연자 명부가 없을 수 있음 → 이 기기 명부를 그대로 둠
               if (Array.isArray(data.performers)) performers.value = data.performers;
               if (data.profile && typeof data.profile === 'object') profile.value = normalizeProfile(data.profile); // ★ v3.0 (없으면 이 기기 것 유지)
+              if (Array.isArray(data.trash)) trash.value = data.trash; // ★ v3.0 휴지통
               if (performers.value.length === 0) seedPerformersFromShows(true);
               syncShowsAndCustomers(true);
               saveBaseline(currentCounts()); // 확인을 거친 건수를 새 기준으로 삼습니다.
@@ -7078,10 +7198,10 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
         const renderCharts = () => {
           const months = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
           const itsshowSeries = months.map(m => {
-            return Math.round(shows.value.filter(s => isMoneyShow(s) && s.showDate && s.showDate.startsWith(m) && s.issuer !== '키즈니버스랩').reduce((a, b) => a + revenueOf(b), 0) / 10000);
+            return Math.round(shows.value.filter(s => isCountedMoney(s) && s.showDate && s.showDate.startsWith(m) && s.issuer !== '키즈니버스랩').reduce((a, b) => a + revenueOf(b), 0) / 10000);
           });
           const kidsSeries = months.map(m => {
-            return Math.round(shows.value.filter(s => isMoneyShow(s) && s.showDate && s.showDate.startsWith(m) && s.issuer === '키즈니버스랩').reduce((a, b) => a + revenueOf(b), 0) / 10000);
+            return Math.round(shows.value.filter(s => isCountedMoney(s) && s.showDate && s.showDate.startsWith(m) && s.issuer === '키즈니버스랩').reduce((a, b) => a + revenueOf(b), 0) / 10000);
           });
 
           const ctx1 = document.getElementById('monthlyRevenueChart')?.getContext('2d');
@@ -7204,6 +7324,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
             if (Array.isArray(d.todoItems)) todoItems.value = d.todoItems;
             if (Array.isArray(d.performers)) performers.value = d.performers;
             if (d.profile && typeof d.profile === 'object') profile.value = normalizeProfile(d.profile); // ★ v3.0
+            if (Array.isArray(d.trash)) trash.value = d.trash;
             if (d.blogExtras && typeof d.blogExtras === 'object' && Object.keys(d.blogExtras).length && confirm('이 백업에 블로그(SNS ERP) 기록도 들어 있어요. 함께 되돌릴까요?')) {
               BLOG_EXTRA_KEYS.forEach(k => { if (typeof d.blogExtras[k] === 'string') { try { localStorage.setItem(k, d.blogExtras[k]); } catch (e) {} } });
             }
@@ -7290,6 +7411,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
         return {
           shows, customers, payables, taxRecords, cashAccounts, todoItems,
           runOf, endTimeOf, formTimeInfo, // ★ v3.0
+          CANCEL_TYPE_INVALID, isFeeShow, amountDue, trash, trashDaysLeft, moveShowToTrash, trashFromCancelModal, onCancelFeeToggle, restoreFromTrash, deleteFromTrash, // ★ v3.0
           quoteLineSum, quoteSubtotal, quoteVatAmt, quoteTotal, quoteHasTravel, addQuoteLine, removeQuoteLine, saveQuoteToShow,
           listWhen, ledgerShows, ledgerCounts, todayDividerNo, scrollLedgerToToday, // ★ v3.0
           profile, PRODUCT_KINDS, ITEM_UNITS, companyNames, productNames, companyOf, productOf, saveProfile, runTimeText, // ★ v3.0
