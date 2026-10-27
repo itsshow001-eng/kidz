@@ -213,6 +213,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   html:not(.dark) .hover\:text-black:hover { color: #111827; }
   html:not(.dark) .bg-slate-700, html:not(.dark) .bg-slate-700\/80 { background-color: #e2e8f0; }
   html:not(.dark) .hover\:bg-slate-600:hover { background-color: #cbd5e1; }
+  /* ★ v3.0: 접는 칸 — 첫 줄(제목)만 보이고, 누르면 펼침 */
+  .itt-fold > :first-child { cursor: pointer; position: relative; padding-right: 72px; }
+  .itt-fold > :first-child::after { content: '펼치기 ▼'; position: absolute; right: 0; top: 0; font-size: 11px; font-weight: 800; color: #818cf8; background: rgba(99,102,241,.15); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .itt-fold.open > :first-child::after { content: '접기 ▲'; }
+  .itt-fold:not(.open) > :not(:first-child) { display: none !important; }
+  .itt-fold:not(.open) > :first-child { border-bottom: 0 !important; padding-bottom: 0 !important; }
+  .itt-fold:not(.open) > :first-child p { display: none; }
+  html:not(.dark) .itt-fold > :first-child::after { color: #4338ca; }
   .itt-first { z-index: 80; } /* ★ v3.0 처음 질문 창은 맨 위 */
   tr.ledger-today-line > td { border-top: 3px solid #f59e0b; }
   div.ledger-today-line { border-top: 3px solid #f59e0b; position: relative; }
@@ -1883,7 +1891,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
 
           <!-- Quick Add Form -->
-          <div class="rounded-2xl bg-slate-800/90 border border-indigo-500/40 p-5 space-y-4 shadow-xl">
+          <div :class="foldCls('todoAdd')" @click="foldClick('todoAdd', $event)" class="rounded-2xl bg-slate-800/90 border border-indigo-500/40 p-5 space-y-4 shadow-xl">
             <div class="flex items-center justify-between border-b border-slate-700/60 pb-2.5">
               <h3 class="text-sm font-bold text-white">➕ 새 To-Do(할 일) 또는 소품·장비 구매필요 항목 등록</h3>
               <span class="text-[11px] text-rose-300 font-bold">💡 중요도를 [🔴 상]으로 선택하면 메인 브리핑 상단에 즉시 노출됩니다!</span>
@@ -2049,7 +2057,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
 
           <!-- ★ v3.0: 내 업체 정보 · 내 공연·상품 · 추가 품목 (견적서·입력창 목록이 여기 값을 씀) -->
-          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-4">
+          <div :class="foldCls('biz')" @click="foldClick('biz', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-4">
             <div class="pb-2 border-b border-slate-700/60">
               <h3 class="text-sm font-bold text-white">🏢 내 업체 정보</h3>
               <p class="text-xs text-slate-400">견적서의 공급자 칸과 발행 사업자 목록에 쓰여요. 고치면 바로 저장돼요.</p>
@@ -2084,7 +2092,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
 
-          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
+          <div :class="foldCls('products')" @click="foldClick('products', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-700/60">
               <div>
                 <h3 class="text-sm font-bold text-white">🎭 내 공연·상품</h3>
@@ -2113,7 +2121,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
 
-          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
+          <div :class="foldCls('items')" @click="foldClick('items', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-700/60">
               <div>
                 <h3 class="text-sm font-bold text-white">➕ 추가 품목</h3>
@@ -2132,7 +2140,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
 
           <!-- ★ v3.0: 새 일정·견적서 기본값 -->
-          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 text-xs">
+          <div :class="foldCls('defaults')" @click="foldClick('defaults', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 text-xs">
             <div class="pb-2 border-b border-slate-700/60">
               <h3 class="text-sm font-bold text-white">📝 새 일정 · 견적서 기본값</h3>
               <p class="text-xs text-slate-400">[+ 새 공연]을 누를 때 미리 채워지는 값과 견적서·계산서 문구예요. {공연} 자리에는 공연 이름이 들어가요.</p>
@@ -2163,7 +2171,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
 
           <!-- ★ v3.0: 문의 문자 어필 칸 -->
-          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 text-xs">
+          <div :class="foldCls('appeal')" @click="foldClick('appeal', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 text-xs">
             <div class="pb-2 border-b border-slate-700/60">
               <h3 class="text-sm font-bold text-white">📣 문의 문자에 넣을 우리 팀 자랑</h3>
               <p class="text-xs text-slate-400">'통화 확인 · 문의' 문자 아래에 붙어서, 여러 곳을 비교하는 담당자가 우리 팀을 기억하게 해요. 비워 둔 줄은 문자에 안 나와요.</p>
@@ -2180,7 +2188,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
 
           <!-- ★ v3.0: 휴지통 -->
-          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
+          <div :class="foldCls('trash')" @click="foldClick('trash', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
             <div class="pb-2 border-b border-slate-700/60">
               <h3 class="text-sm font-bold text-white">🗑️ 휴지통 ({{ trash.length }}건 · 30일 보관)</h3>
               <p class="text-xs text-slate-400">잘못 적어 지운 일정이에요. 30일이 지나면 저절로 지워져요. 진짜 취소된 공연은 휴지통이 아니라 장부에 '취소'로 남아요.</p>
@@ -2198,11 +2206,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
 
           <!-- ★ NEW: PC & 모바일 실시간 클라우드(구글 시트) 연동 패널 ★ -->
-          <div id="itt-cloud" class="rounded-2xl bg-indigo-950/30 border border-indigo-500/50 p-5 space-y-4">
+          <div :class="foldCls('cloud')" @click="foldClick('cloud', $event)" id="itt-cloud" class="rounded-2xl bg-indigo-950/30 border border-indigo-500/50 p-5 space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-indigo-500/30">
               <div>
                 <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-                  <span>☁️ PC ↔ 스마트폰(모바일) 실시간 데이터 동기화 (Google Apps Script 연동)</span>
+                  <span>☁️ 구글 시트 연결 (PC ↔ 휴대폰 같은 기록)</span>
                   <span v-if="cloudSyncUrl" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono">연결됨</span>
                 </h3>
                 <p class="text-xs text-slate-300 mt-0.5">구글 시트에서 발급받은 웹앱 URL을 아래에 한 번만 입력해 두면, 모바일에서 등록한 일정이 PC에서도 그대로 열립니다.</p>
@@ -2227,7 +2235,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <p class="text-[11px] text-slate-400">🔒 비밀키는 이 기기(브라우저)에만 저장돼요. 다른 사람과 나누는 화면·파일에 적어 두지 마세요.</p>
           </div>
 
-          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-4">
+          <div :class="foldCls('bank')" @click="foldClick('bank', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-4">
             <div class="flex items-center justify-between pb-2 border-b border-slate-700/60">
               <div>
                 <h3 class="text-sm font-bold text-white">🏦 내 통장</h3>
@@ -2262,7 +2270,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 flex flex-col justify-between">
+            <div :class="foldCls('excel')" @click="foldClick('excel', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 flex flex-col justify-between">
               <div class="space-y-1">
                 <h3 class="text-sm font-bold text-white">📥 전체 ERP 데이터 엑셀(.xlsx) 다운로드</h3>
                 <p class="text-xs text-slate-400">현재 화면에서 수정·추가한 공연 마스터(취소 기록 포함), 고객관리(CRM), 원천징수 내역을 시트별 엑셀 파일로 내려받습니다.</p>
@@ -2272,7 +2280,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </button>
             </div>
 
-            <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 flex flex-col justify-between">
+            <div :class="foldCls('backup')" @click="foldClick('backup', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 flex flex-col justify-between">
               <div class="space-y-1">
                 <h3 class="text-sm font-bold text-white">💾 JSON 안전 백업 · 되돌리기</h3>
                 <p class="text-xs text-slate-400">브라우저 기록을 지우기 전에 JSON 백업 파일을 받아 두고, 필요하면 그 파일로 되돌릴 수 있어요.</p>
@@ -2309,7 +2317,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
 
-          <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
+          <div :class="foldCls('snaps')" @click="foldClick('snaps', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
             <div class="space-y-1">
               <h3 class="text-sm font-bold text-white">🛟 자동 백업 목록 (이 기기에 최근 {{ snapshotMeta.length }}개 보관)</h3>
               <p class="text-xs text-slate-400">하루 첫 실행, 클라우드 불러오기 직전, 초기화·복원 직전에 자동으로 만들어집니다. 문제가 생기면 아래에서 그 시점으로 되돌릴 수 있어요. 브라우저 데이터를 지우면 이 목록도 함께 사라지니, 중요한 시점은 JSON으로 내려받아 따로 보관하세요.</p>
@@ -3988,9 +3996,21 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
         const firstRunFromCloud = () => {
           firstRunOpen.value = false;
+          setFold('cloud', true);
           switchTab('settings');
           showToast('구글 시트 주소와 비밀키를 넣고 [클라우드에서 불러오기]를 눌러 주세요.', 9000);
           nextTick(() => { const el = document.getElementById('itt-cloud'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+        };
+        // ★ v3.0: 설정 칸 접기 — 제목만 보이고 누르면 펼침. 펼친 칸은 이 기기에 기억 (기록 데이터와 상관없음)
+        const FOLD_KEY = 'itsshow_v23_fold_open';
+        const foldOpen = ref((() => { try { const v = JSON.parse(localStorage.getItem(FOLD_KEY) || '{}'); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } })());
+        const setFold = (key, val) => { foldOpen.value = { ...foldOpen.value, [key]: val }; try { localStorage.setItem(FOLD_KEY, JSON.stringify(foldOpen.value)); } catch (e) {} };
+        const foldCls = (key) => ['itt-fold', foldOpen.value[key] ? 'open' : ''];
+        const foldClick = (key, e) => {
+          const head = e.currentTarget.firstElementChild;
+          if (!head || !head.contains(e.target)) return; // 펼친 내용 안을 누른 건 무시
+          if (e.target.closest('button, input, select, textarea, a, label')) { if (!foldOpen.value[key]) setFold(key, true); return; } // 제목 줄의 단추는 그대로 쓰고 칸은 펼침
+          setFold(key, !foldOpen.value[key]);
         };
         const filePrefix = () => profile.value.companies.map(coShort).filter(Boolean).join('_') || '공연관리';
         const addCompany = () => { profile.value.companies.push({ name: '', short: '', en: '', label: '', taxType: '과세', note: '', bizNo: '', bank: '' }); };
@@ -7902,6 +7922,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           runOf, endTimeOf, formTimeInfo, // ★ v3.0
           dupExcluded, isDupExcluded, toggleDupExclude, // ★ v3.0
           openSmsAs, brandName, goPremiumApp,
+          foldCls, foldClick, // ★ v3.0 설정 칸 접기
           payAccPick, choosePaidAccount, accountOf, sortedAccounts, mainAccountId, addCashAccount, setMainAccount, removeCashAccount, receivedByAccount, // ★ v3.0 통장
           secondCo, coShort, issuerShort, license, firstRunOpen, isDemo, wiz, finishFirstRun, startDemo, endDemo, firstRunFromCloud, // ★ v3.0
           SMS_LABELS, SMS_FIELDS, smsEditMode, smsTplDraft, isCustomSms, startSmsTplEdit, cancelSmsTplEdit, saveSmsTpl, resetSmsTpl, insertSmsField,
