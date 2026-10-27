@@ -2683,19 +2683,21 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <h3 class="text-base font-bold text-white">🔍 중복 의심 고객 ({{ duplicateGroups.length }}묶음)</h3>
           <button @click="dupModalOpen = false" class="text-slate-400 hover:text-white text-sm cursor-pointer">✕</button>
         </div>
-        <p class="text-[11px] text-slate-400 leading-relaxed">이름이 비슷하거나 전화번호·사업자번호가 같은 고객끼리 묶었어요. 같은 업체면 <strong class="text-white">남길 고객번호</strong>를 고르고 [합치기]를 누르세요. 다른 업체면 [다른 업체예요]를 누르면 다음부터 안 나와요.</p>
+        <p class="text-[11px] text-slate-400 leading-relaxed">이름이 비슷하거나 전화번호·사업자번호가 같은 고객끼리 묶었어요. 같은 업체면 <strong class="text-white">남길 고객번호</strong>를 고르고 [합치기]를 누르세요. 묶음 안에 다른 곳이 섞여 있으면 그 고객만 <strong class="text-white">[이 고객 빼기]</strong> 한 뒤 [합치기]를 누르세요. 묶음 전체가 다른 업체면 [다른 업체예요].</p>
 
         <div v-if="duplicateGroups.length === 0" class="p-4 text-center text-xs text-emerald-300">✅ 중복으로 보이는 고객이 없어요.</div>
         <div v-for="(g, gi) in duplicateGroups" :key="g.key" class="rounded-2xl bg-slate-950/90 border border-slate-800 p-3 space-y-2">
           <div class="text-xs font-bold text-amber-300">묶음 {{ gi + 1 }}</div>
           <label v-for="m in g.members" :key="g.key + m.c.custId" class="flex items-start gap-2 p-2 rounded-xl border cursor-pointer text-[11px]"
-            :class="dupKeepChoice[g.key] === m.c.custId ? 'border-emerald-500/50 bg-emerald-950/40' : 'border-slate-800'">
-            <input type="radio" :name="'keep-' + gi" :value="m.c.custId" v-model="dupKeepChoice[g.key]" class="mt-0.5 accent-emerald-500" />
+            :class="isDupExcluded(g, m.c.custId) ? 'border-slate-800 opacity-50' : (dupKeepChoice[g.key] === m.c.custId ? 'border-emerald-500/50 bg-emerald-950/40' : 'border-slate-800')">
+            <input type="radio" :name="'keep-' + gi" :value="m.c.custId" v-model="dupKeepChoice[g.key]" :disabled="isDupExcluded(g, m.c.custId)" class="mt-0.5 accent-emerald-500" />
             <span class="min-w-0 flex-1">
               <span class="flex flex-wrap items-center gap-1.5">
                 <span class="font-mono text-indigo-300">[{{ m.c.custId }}]</span>
                 <span class="font-bold text-white">{{ m.c.client }}</span>
-                <span v-if="dupKeepChoice[g.key] === m.c.custId" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">남길 번호</span>
+                <span v-if="dupKeepChoice[g.key] === m.c.custId && !isDupExcluded(g, m.c.custId)" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">남길 번호</span>
+                <span v-if="isDupExcluded(g, m.c.custId)" class="px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 font-bold">다른 업체 · 빼기</span>
+                <button type="button" @click.prevent.stop="toggleDupExclude(g, m.c.custId)" class="ml-auto px-2 py-0.5 rounded-lg border border-slate-700 text-slate-300 font-bold cursor-pointer">{{ isDupExcluded(g, m.c.custId) ? '다시 넣기' : '이 고객 빼기' }}</button>
               </span>
               <span class="block text-slate-400">{{ m.c.region || '지역 없음' }} · {{ m.c.manager || '담당자 없음' }} · {{ m.c.phone || '전화 없음' }}<template v-if="m.c.bizNo"> · {{ m.c.bizNo }}</template></span>
               <span class="block text-slate-400">공연 {{ m.count }}회<template v-if="m.c.lastDate"> · 최근 {{ m.c.lastDate }}</template></span>
@@ -5449,9 +5451,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const dice = (a, b) => {
           if (a.length < 2 || b.length < 2) return 0;
           const A = bigrams(a), B = bigrams(b).slice();
+          const lenB = B.length; // ★ v3.0: 고침 — 예전엔 맞춘 조각을 뺀 뒤 길이로 나눠 점수가 부풀었음(이름만 비슷한 다른 곳이 묶임)
           let hit = 0;
           A.forEach(x => { const k = B.indexOf(x); if (k >= 0) { hit++; B.splice(k, 1); } });
-          return (2 * hit) / (A.length + B.length);
+          return (2 * hit) / (A.length + lenB);
         };
         const digitsOnly = (v) => String(v || '').replace(/\D/g, '');
         // 두 고객(또는 입력 중인 정보)이 같은 업체일 가능성: 점수와 이유
@@ -5464,7 +5467,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           if (ta && tb && ta !== tb) return { score: 0, reason: '' };
           const ca = coreName(a.client), cb = coreName(b.client);
           if (ca.length >= 2 && ca === cb) return { score: 85, reason: '이름 거의 같음' };
-          if (ca.length >= 2 && cb.length >= 2 && (ca.includes(cb) || cb.includes(ca))) return { score: 70, reason: '이름 일부 같음' };
+          if (ca.length >= 2 && cb.length >= 2 && (ca.includes(cb) || cb.includes(ca)) && Math.min(ca.length, cb.length) / Math.max(ca.length, cb.length) >= 0.6) return { score: 70, reason: '이름 일부 같음' }; // ★ v3.0: 짧은 쪽이 60% 이상일 때만
           const ds = dice(ca, cb);
           if (ds >= 0.6) return { score: Math.round(50 + ds * 15), reason: '이름 비슷' };
           return { score: 0, reason: '' };
@@ -5523,6 +5526,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         // --- ② 이미 생긴 중복 찾기 · 합치기 (단골 고객 탭) ---
         const dupModalOpen = ref(false);
         const dupKeepChoice = ref({}); // 묶음 번호 → 남길 고객번호
+        const dupExcluded = ref({}); // ★ v3.0: 묶음 번호 → 이번에 합치지 않을(다른 업체) 고객번호 목록
+        const isDupExcluded = (g, id) => (dupExcluded.value[g.key] || []).includes(id);
+        const toggleDupExclude = (g, id) => {
+          const cur = dupExcluded.value[g.key] || [];
+          dupExcluded.value[g.key] = cur.includes(id) ? cur.filter(x => x !== id) : cur.concat(id);
+          if (isDupExcluded(g, dupKeepChoice.value[g.key])) { // 남길 번호를 뺐으면 남은 것 중 첫 번째로
+            const first = g.members.find(m => !isDupExcluded(g, m.c.custId));
+            dupKeepChoice.value[g.key] = first ? first.c.custId : '';
+          }
+        };
         const isMarkedNotDup = (a, b) => (Array.isArray(a.notDupWith) && a.notDupWith.includes(b.custId)) || (Array.isArray(b.notDupWith) && b.notDupWith.includes(a.custId));
         const duplicateGroups = computed(() => {
           const list = customers.value;
@@ -5551,6 +5564,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         });
         const openDupModal = () => {
           dupKeepChoice.value = {};
+          dupExcluded.value = {};
           duplicateGroups.value.forEach(g => { dupKeepChoice.value[g.key] = g.members[0].c.custId; }); // 공연이 가장 많은 번호를 기본으로
           dupModalOpen.value = true;
         };
@@ -5558,12 +5572,29 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const MERGE_FILL_FIELDS = ['manager', 'phone', 'email', 'region', 'bizName', 'bizNo', 'bizAddress', 'bizOwner', 'bizType', 'favTheme', 'company', 'nextContact'];
         const VIP_RANK = { '일반': 0, '⭐ VIP': 1, '💎 VVIP': 2 };
         const mergeDuplicateGroup = (g) => {
-          const keepId = dupKeepChoice.value[g.key] || g.members[0].c.custId;
+          // ★ v3.0: [빼기] 한 고객은 합치지 않고, 나머지 고객들과 '다른 업체'로 표시
+          const excluded = g.members.map(m => m.c).filter(c => isDupExcluded(g, c.custId));
+          const inGroup = g.members.map(m => m.c).filter(c => !isDupExcluded(g, c.custId));
+          const markExcluded = () => {
+            const allIds = g.members.map(m => m.c.custId);
+            excluded.forEach(x => {
+              const cx = customers.value.find(c => c.custId === x.custId); if (!cx) return;
+              cx.notDupWith = [...new Set([...(cx.notDupWith || []), ...allIds.filter(id => id !== cx.custId)])];
+            });
+          };
+          if (inGroup.length < 2) {
+            if (!excluded.length) return;
+            if (!confirm(`빼신 ${excluded.length}곳을 이 묶음과 다른 업체로 표시할까요?\n(합칠 고객이 2곳 이상 남지 않아 합치지는 않아요)`)) return;
+            markExcluded(); saveAllToStorage(); showToast('다른 업체로 표시했어요.');
+            if (duplicateGroups.value.length === 0) dupModalOpen.value = false;
+            return;
+          }
+          const keepId = (dupKeepChoice.value[g.key] && !isDupExcluded(g, dupKeepChoice.value[g.key])) ? dupKeepChoice.value[g.key] : inGroup[0].custId;
           const keep = customers.value.find(c => c.custId === keepId);
-          const others = g.members.map(m => m.c).filter(c => c.custId !== keepId);
+          const others = inGroup.filter(c => c.custId !== keepId);
           if (!keep || others.length === 0) return;
           const moved = shows.value.filter(s => others.some(o => o.custId === s.custId)).length;
-          if (!confirm(`[${keep.custId}] ${keep.client} 하나로 합칠까요?\n\n합쳐지는 번호: ${others.map(o => `[${o.custId}] ${o.client}`).join(', ')}\n옮겨지는 공연: ${moved}건\n\n· 비어 있는 연락처·이메일·사업자정보는 서로 채워 넣어요.\n· 합치기 전에 자동 백업을 남겨요 (설정 탭에서 되돌릴 수 있음).`)) return;
+          if (!confirm(`[${keep.custId}] ${keep.client} 하나로 합칠까요?\n\n합쳐지는 번호: ${others.map(o => `[${o.custId}] ${o.client}`).join(', ')}\n옮겨지는 공연: ${moved}건${excluded.length ? `\n빼고 그대로 두는 곳(다른 업체로 표시): ${excluded.map(o => `[${o.custId}] ${o.client}`).join(', ')}` : ''}\n\n· 비어 있는 연락처·이메일·사업자정보는 서로 채워 넣어요.\n· 합치기 전에 자동 백업을 남겨요 (설정 탭에서 되돌릴 수 있음).`)) return;
           if (!takeSnapshot('고객 합치기 직전 자동 백업')) {
             showToast('⚠️ 자동 백업을 만들지 못해 합치기를 멈췄어요. 설정 탭에서 JSON 백업을 먼저 받아 주세요.', 9000);
             return;
@@ -5577,6 +5608,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             if (o.client && normalizeName(o.client) !== normalizeName(keep.client) && !String(keep.memo || '').includes(alias)) keep.memo = [keep.memo, alias].filter(Boolean).join(' / ');
             if (Array.isArray(o.notDupWith)) keep.notDupWith = [...new Set([...(keep.notDupWith || []), ...o.notDupWith])];
           });
+          markExcluded();
           shows.value.forEach(s => { if (others.some(o => o.custId === s.custId)) { s.custId = keepId; s.updatedAt = nowStamp(); } });
           customers.value = customers.value.filter(c => !others.some(o => o.custId === c.custId));
           syncShowsAndCustomers(true); // 공연 횟수·매출 다시 계산
@@ -7411,6 +7443,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
         return {
           shows, customers, payables, taxRecords, cashAccounts, todoItems,
           runOf, endTimeOf, formTimeInfo, // ★ v3.0
+          dupExcluded, isDupExcluded, toggleDupExclude, // ★ v3.0
           CANCEL_TYPE_INVALID, isFeeShow, amountDue, trash, trashDaysLeft, moveShowToTrash, trashFromCancelModal, onCancelFeeToggle, restoreFromTrash, deleteFromTrash, // ★ v3.0
           quoteLineSum, quoteSubtotal, quoteVatAmt, quoteTotal, quoteHasTravel, addQuoteLine, removeQuoteLine, saveQuoteToShow,
           listWhen, ledgerShows, ledgerCounts, todayDividerNo, scrollLedgerToToday, // ★ v3.0
