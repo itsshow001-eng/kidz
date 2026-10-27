@@ -30,6 +30,18 @@
     input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value, input[type="month"]::-webkit-date-and-time-value { text-align: left; }
   </style>
   <title>이츠쇼타임 공연관리 v3.0</title>
+<script>/* ★ v3.0: 크롬이 이 파일의 저장 공간을 막았는지 먼저 확인 (막혔으면 빈 화면 대신 이유를 보여 줌) */
+(function () { try { var k = '__itt_storage_test__'; localStorage.setItem(k, '1'); localStorage.removeItem(k); } catch (e) {
+  var show = function () { var d = document.createElement('div'); d.id = 'itt-storage-blocked';
+    d.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;font:16px/1.7 -apple-system,"Malgun Gothic",sans-serif;text-align:center';
+    d.innerHTML = '<div style="max-width:560px"><div style="font-size:22px;font-weight:900;margin-bottom:12px">⚠️ 이 크롬에서는 기록을 저장할 수 없어요</div>'
+      + '<div>크롬이 이 프로그램의 저장 공간을 막고 있어요. 이럴 때 생겨요.</div>'
+      + '<div style="text-align:left;background:#1e293b;border-radius:14px;padding:14px 18px;margin:14px 0">· 크롬 설정 → 개인정보 보호 및 보안 → <b>서드 파티 쿠키</b>(또는 사이트 설정 → 쿠키 및 사이트 데이터)에서 <b>모든 쿠키 차단</b>이 켜져 있을 때 → 끈 뒤 다시 열어 주세요<br>· 회사·학교 PC라 관리자가 막아 둔 경우 → 내 PC에서 열어 주세요</div>'
+      + '<div style="color:#cbd5e1;font-size:14px">그래도 안 되면 프로그램을 받은 곳(세팅 대행)에 이 화면을 찍어 보내 주세요.</div></div>';
+    document.body.appendChild(d); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show); else show();
+} })();</script>
+
   <!-- ★ v3.0: 판매판 구매자 표시. 판매할 때 이 줄에 구매자 이름·번호를 적어 드림 (비어 있으면 아무것도 안 나옴) -->
   <script>window.ITT_LICENSE = { name: '', no: '' };</script>
   <!-- v2.3 오프라인판: Vue 3.4.38 · Chart.js 4.4.4 · SheetJS 0.18.5 · Tailwind(미리 빌드)를 파일 안에 내장 — 인터넷 없이도 열립니다 -->
@@ -2291,6 +2303,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <div class="space-y-1">
                 <h3 class="text-sm font-bold text-white">💾 JSON 안전 백업 · 되돌리기</h3>
                 <p class="text-xs text-slate-400">브라우저 기록을 지우기 전에 JSON 백업 파일을 받아 두고, 필요하면 그 파일로 되돌릴 수 있어요.</p>
+                <!-- ★ v3.0: 기록이 어디에 있는지 (파일로 여는 경우) -->
+                <p class="text-xs font-bold rounded-xl px-3 py-2 mt-1" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.45);color:#f59e0b">📌 기록은 이 PC의 이 크롬 안에 있어요. 다른 크롬 사용자·다른 브라우저·시크릿 창으로 열거나 '인터넷 사용 기록 삭제'(쿠키·사이트 데이터)를 하면 안 보여요. 폴더를 옮길 때는 세 파일을 함께 옮기고, 그 전에 JSON 백업을 받아 두세요.</p>
               </div>
               <div class="text-[11px] rounded-xl p-2.5 border" :class="backupAgeDays === null || backupAgeDays >= 7 ? 'bg-rose-500/10 border-rose-500/40 text-rose-200' : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200'">
                 {{ backupAgeDays === null ? '아직 백업 기록이 없어요.' : (backupAgeDays === 0 ? '오늘 백업했어요.' : '마지막 백업: ' + backupAgeDays + '일 전') }}
@@ -7109,6 +7123,30 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           }
         };
 
+        // ★ v3.0: SNS 관리판·설정·쇼츠 계획도 구글 시트로 함께 오감 (사진·영상 보관함은 크기가 커서 빼요)
+        //   덮어쓰기 안전 규칙: 이 기기에서 '마지막으로 맞춘 뒤 바뀌지 않은' 것만 시트 내용으로 바꿈.
+        //   이 기기에서 그 뒤에 고친 것이 있으면 그대로 두고 다음 저장 때 시트로 보냄 (PC에서 쓴 최신 글 관리판을 휴대폰이 덮지 않게)
+        const CLOUD_BLOG_KEYS = ['itsshow_blog_v1', 'itsshow_blog_settings', 'itsshow_blog_shorts_v1'];
+        const BLOG_SYNC_KEY = 'itsshow_v23_blog_sync_hash';
+        const strHash = (t) => { const x = String(t || ''); let h = 5381; for (let i = 0; i < x.length; i++) h = ((h << 5) + h + x.charCodeAt(i)) | 0; return x ? (h >>> 0).toString(36) + '.' + x.length : ''; };
+        const readBlogSync = () => { try { return JSON.parse(localStorage.getItem(BLOG_SYNC_KEY) || '{}') || {}; } catch (e) { return {}; } };
+        const writeBlogSync = (o) => { try { localStorage.setItem(BLOG_SYNC_KEY, JSON.stringify(o)); } catch (e) {} };
+        const blogExtraForCloud = () => { const o = {}; CLOUD_BLOG_KEYS.forEach(k => { try { const v = localStorage.getItem(k); if (v) o[k] = v; } catch (e) {} }); return o; };
+        const markBlogSent = (sent) => { const m = readBlogSync(); CLOUD_BLOG_KEYS.forEach(k => { m[k] = strHash(sent[k] || ''); }); writeBlogSync(m); };
+        const applyBlogFromCloud = (extra) => { // 이 기기에 더 새 것이 있어 그대로 둔 게 있으면 true
+          if (!extra || typeof extra !== 'object') return false;
+          const m = readBlogSync(); let keepLocal = false;
+          CLOUD_BLOG_KEYS.forEach(k => {
+            if (typeof extra[k] !== 'string') return;
+            let local = ''; try { local = localStorage.getItem(k) || ''; } catch (e) {}
+            if (local === extra[k]) { m[k] = strHash(local); return; }
+            if (!local || (m[k] && m[k] === strHash(local))) { try { localStorage.setItem(k, extra[k]); m[k] = strHash(extra[k]); } catch (e) {} }
+            else keepLocal = true;
+          });
+          writeBlogSync(m);
+          return keepLocal;
+        };
+
         const pushToCloud = async (silent = false, opts = {}) => {
           if (!cloudSyncUrl.value.trim()) {
             if (!silent) showToast('먼저 구글 웹앱 URL을 입력해 주세요.');
@@ -7181,6 +7219,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             const baseList = [known.stamp].concat(known.own).filter(Boolean).join(',');
             rememberOwnSent(sentAt); // 보냈는데 확인이 늦어져도, 나중에 '내가 보낸 것'임을 알아보기 위해 적어 둡니다.
             const extra = forceOverwrite ? { force: '1' } : { base: baseList };
+            const blogSent = blogExtraForCloud(); // ★ v3.0
             const bodyText = JSON.stringify({
               shows: shows.value,
               customers: customers.value,
@@ -7191,6 +7230,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               performers: performers.value,
               profile: profile.value, // ★ v3.0
               trash: trash.value, // ★ v3.0 휴지통
+              blogExtra: blogSent, // ★ v3.0 SNS·쇼츠 기록
               updatedAt: sentAt
             });
             // ★ v2.5 (C): 구글의 답장(ok / conflict / denied / busy …)을 직접 읽습니다.
@@ -7224,6 +7264,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             if (verdict === 'ok') {
               syncStatusText.value = `자동동기화 됨 (${nowTime})`;
               setKnownStamp(sentAt);
+              markBlogSent(blogSent); // ★ v3.0
               syncConflict.value = false;
               clearUnsent(sentAt);
               saveBaseline(nowCounts);
@@ -7356,6 +7397,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               if (Array.isArray(data.performers)) performers.value = data.performers;
               if (data.profile && typeof data.profile === 'object') profile.value = normalizeProfile(data.profile); // ★ v3.0 (없으면 이 기기 것 유지)
               if (Array.isArray(data.trash)) trash.value = data.trash; // ★ v3.0 휴지통
+              const blogKeptLocal = applyBlogFromCloud(data.blogExtra); // ★ v3.0 SNS·쇼츠 기록 (이 기기에서 더 고친 건 그대로)
               if (performers.value.length === 0) seedPerformersFromShows(true);
               syncShowsAndCustomers(true);
               saveBaseline(currentCounts()); // 확인을 거친 건수를 새 기준으로 삼습니다.
@@ -7369,6 +7411,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               const nowTime = new Date().toTimeString().slice(0, 5);
               syncStatusText.value = `최신 동기화 (${nowTime})`;
               if (!silent) showToast(`☁️ 클라우드 최신 데이터(${data.shows.length}건)를 불러왔습니다!`);
+              if (blogKeptLocal) setTimeout(() => pushToCloud(true), 500); // ★ v3.0: 이 기기의 더 새 SNS·쇼츠 기록을 시트로
             } else {
               // ★ 6-B: 예전에는 여기서 '이 기기 데이터를 클라우드에 덮어쓰기'를 했습니다. 이제는 모양이 이상한 응답이면 아무것도 덮어쓰지 않고 알리기만 합니다.
               syncStatusText.value = '⚠️ 클라우드 데이터 형식 이상';
@@ -7875,7 +7918,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
 
         // ★ v2.9 백업 강화: 공연관리 + SNS ERP(블로그 관리판·설정·실제 행사 정보)를 파일 하나로
         const LAST_BACKUP_KEY = 'itsshow_v23_last_backup';
-        const BLOG_EXTRA_KEYS = ['itsshow_blog_v1', 'itsshow_blog_settings', 'itsshow_v23_saved_blogs'];
+        const BLOG_EXTRA_KEYS = ['itsshow_blog_v1', 'itsshow_blog_settings', 'itsshow_v23_saved_blogs', 'itsshow_blog_shorts_v1']; // ★ v3.0 쇼츠 계획도
         const lastBackupAt = ref((() => { try { return localStorage.getItem(LAST_BACKUP_KEY) || ''; } catch (e) { return ''; } })());
         const markBackedUp = () => { lastBackupAt.value = new Date().toISOString(); try { localStorage.setItem(LAST_BACKUP_KEY, lastBackupAt.value); } catch (e) {} };
         const backupAgeDays = computed(() => lastBackupAt.value ? Math.floor((Date.now() - new Date(lastBackupAt.value).getTime()) / 86400000) : null);
