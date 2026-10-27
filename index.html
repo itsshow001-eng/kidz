@@ -177,6 +177,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   <!-- ERP-INLINE:END tailwind-css -->
 <style>
   /* ★ v3.0: 장부 '전체' 보기에서 오늘 이전 일정이 시작되는 줄 위에 오늘 표시 */
+  /* ★ v3.0: PC에서 화면을 내려도 왼쪽 메뉴가 따라오게 (머리말 바로 아래에 붙음) */
+  .erp-side-sticky { position: sticky; top: 61px; align-self: flex-start; height: calc(100vh - 61px); overflow-y: auto; }
   tr.ledger-today-line > td { border-top: 3px solid #f59e0b; }
   div.ledger-today-line { border-top: 3px solid #f59e0b; position: relative; }
   tr.ledger-today-line > td:first-child { position: relative; }
@@ -257,7 +259,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         :class="[
           isMobile
             ? (isSidebarOpen ? 'fixed inset-y-0 left-0 w-64 pt-4 shadow-2xl z-40' : 'fixed inset-y-0 -left-64 w-64')
-            : (isSidebarOpen ? 'w-60 min-w-[15rem]' : 'w-16 min-w-[4rem]')
+            : (isSidebarOpen ? 'w-60 min-w-[15rem] erp-side-sticky' : 'w-16 min-w-[4rem] erp-side-sticky')
         ]">
         <div class="p-3 space-y-1.5 flex-1">
           <div class="flex items-center justify-between px-2 py-1.5 border-b border-slate-800/80 mb-2">
