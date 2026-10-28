@@ -5821,6 +5821,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           return `CUST-${String(maxNum + 1).padStart(4, '0')}`;
         };
 
+        const BIZ_SYNC_FIELDS = ['email', 'bizName', 'bizNo', 'bizAddress']; // ★ v3.0 일정 ↔ 단골고객 사업자 정보
         const syncShowsAndCustomers = (silent = true) => {
           const custById = {};
           const custByName = {};
@@ -6397,6 +6398,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
           if (isEditingShow.value) {
             const idx = shows.value.findIndex(s => s.no === editingShowForm.value.no);
+            // ★ v3.0: 이 일정에서 사업자 정보를 바꾸거나 지웠으면 → 단골고객과 같은 고객의 다른 일정도 똑같이 (지운 칸이 다시 채워지지 않게)
+            const prevShow = idx !== -1 ? shows.value[idx] : null;
+            const changedBiz = prevShow ? BIZ_SYNC_FIELDS.filter(f => String(prevShow[f] || '').trim() !== String(editingShowForm.value[f] || '').trim()) : [];
+            if (changedBiz.length) {
+              const cid = editingShowForm.value.custId;
+              changedBiz.forEach(f => {
+                const v = f === 'bizNo' ? formatBizNo(editingShowForm.value[f] || '') : String(editingShowForm.value[f] || '').trim();
+                if (linkedCust) linkedCust[f] = v;
+                shows.value.forEach(o => { if (o !== prevShow && cid && o.custId === cid) o[f] = v; });
+              });
+            }
             if (idx !== -1) shows.value[idx] = { ...editingShowForm.value, updatedAt: nowStamp() };
             showToast('공연 정보 및 단골고객(CRM) 사업자 정보가 동기화 저장되었습니다.');
           } else if (showModalMode.value === 'bulk') {
@@ -6516,6 +6528,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             editingCustomerForm.value.bizAddress
           );
 
+          // ★ v3.0: 고치기 전 값(사업자 정보를 지웠는지 알려고)
+          const prevCust = isEditingCustomer.value ? { ...(customers.value.find(c => c.custId === editingCustomerForm.value.custId) || {}) } : {};
           if (isEditingCustomer.value) {
             const idx = customers.value.findIndex(c => c.custId === editingCustomerForm.value.custId);
             if (idx !== -1) customers.value[idx] = { ...editingCustomerForm.value, updatedAt: nowStamp() };
@@ -6529,10 +6543,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           shows.value.forEach(s => {
             if (s.custId === cid || normalizeName(s.client) === normalizeName(editingCustomerForm.value.client)) {
               s.custId = cid;
-              if (editingCustomerForm.value.email) s.email = editingCustomerForm.value.email;
-              if (editingCustomerForm.value.bizName) s.bizName = editingCustomerForm.value.bizName;
-              if (editingCustomerForm.value.bizNo) s.bizNo = editingCustomerForm.value.bizNo;
-              if (editingCustomerForm.value.bizAddress) s.bizAddress = editingCustomerForm.value.bizAddress;
+              // ★ v3.0: 사업자 정보는 단골고객이 기준 — 고친 값은 물론, 일부러 지운 칸도 일정에서 지움 (전에는 지워도 일정 값으로 다시 채워졌음)
+              BIZ_SYNC_FIELDS.forEach(f => {
+                const v = editingCustomerForm.value[f] || '';
+                if (v) s[f] = v;
+                else if (prevCust[f]) s[f] = '';
+              });
               if (editingCustomerForm.value.phone && !s.phone) s.phone = editingCustomerForm.value.phone;
               if (editingCustomerForm.value.manager && !s.manager) s.manager = editingCustomerForm.value.manager;
               syncedShowsCount++;
