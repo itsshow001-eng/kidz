@@ -2632,6 +2632,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <option value="계산서(면세)">계산서(면세)</option>
                 <option value="계산서">세금계산서</option>
                 <option value="원천징수">원천징수</option>
+                <option value="계산서 대행">계산서 대행</option>
               </select>
               <select v-model="editingShowForm.docIssued" class="w-full px-2 py-2 rounded-xl border text-xs font-bold"
                 :class="editingShowForm.docIssued === '발행완료' ? 'text-indigo-300 border-indigo-500/50' : 'text-amber-300 border-amber-500/50'">
@@ -2639,6 +2640,30 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <option value="발행완료">🟢 발행완료</option>
               </select>
             </div>
+          </div>
+          <!-- ★ v3.0: 계산서 대행 — 개인 공연자가 계산서를 요청받아 아는 업체가 대신 발행하고, 업체를 거쳐 돈을 받는 경우 (기록만, 세금 판단 안 함) -->
+          <div v-if="isProxy(editingShowForm)" class="sm:col-span-3 p-3 rounded-2xl border border-sky-500/30 bg-slate-950/60 space-y-2 text-xs">
+            <div class="font-bold text-sky-300">🧾 계산서 대행 <span class="font-normal text-[10px] text-slate-400">(고객 → 대행 업체 → 나. 업체가 뗀 몫은 그때그때 협의한 대로)</span></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="text-slate-400 block mb-1">대행 업체</label>
+                <input type="text" v-model="editingShowForm.proxyBiz" list="proxyBizList" placeholder="예: ○○기획" class="w-full px-3 py-2 rounded-xl border" />
+                <datalist id="proxyBizList"><option v-for="b in proxyBizNames" :key="'pb' + b" :value="b"></option></datalist>
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">업체가 뗀 몫 (원) <span class="text-[10px] text-slate-500">부가세·수수료 합쳐서</span></label>
+                <input type="number" min="0" v-model.number="editingShowForm.proxyCut" placeholder="0" class="w-full px-3 py-2 rounded-xl border" />
+              </div>
+              <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+                <input type="checkbox" v-model="editingShowForm.proxyWithhold" class="w-4 h-4" /> 업체가 3.3%를 떼고 보내요
+              </label>
+              <div>
+                <label class="text-slate-400 block mb-1">실제로 받은 금액 (원) <span class="text-[10px] text-slate-500">비우면 저절로 계산</span></label>
+                <input type="number" min="0" v-model="editingShowForm.proxyRecv" :placeholder="'자동 ' + proxyAutoRecv(editingShowForm).toLocaleString()" class="w-full px-3 py-2 rounded-xl border" />
+              </div>
+            </div>
+            <div class="text-slate-300">금액 ₩{{ (Number(editingShowForm.amount) || 0).toLocaleString() }} − 업체 몫 ₩{{ (Number(editingShowForm.proxyCut) || 0).toLocaleString() }}<span v-if="editingShowForm.proxyWithhold"> − 3.3% ₩{{ proxyTaxOf(editingShowForm).toLocaleString() }}</span> = <b class="text-emerald-300">받을 돈 ₩{{ proxyRecvOf(editingShowForm).toLocaleString() }}</b> <span class="text-slate-500">(미수금·실수익·통장 기록은 이 금액으로)</span></div>
+            <div class="text-[10px] text-slate-500">홈택스 일괄발행 엑셀에서는 빠져요(업체가 발행). 이렇게 받는 구조가 괜찮은지는 세무사와 확인하세요.</div>
           </div>
           <!-- ★ v2.9: 일 종류 (공연 / 강연 / 서브) -->
           <div>
@@ -2962,7 +2987,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <div class="font-sans text-violet-300 font-bold">🤝 공연자 직접 정산</div>
               <div class="text-slate-300">수수료 ₩{{ (Number(summaryShow.commission) || 0).toLocaleString() }} · {{ summaryShow.commissionReceived ? '받음' : '아직' }} → <b class="text-emerald-300">실수익 ₩{{ netOf(summaryShow).toLocaleString() }}</b></div>
             </template>
-            <div v-else class="text-slate-300">총액 ₩{{ revenueOf(summaryShow).toLocaleString() }} − 공연자 지급 ₩{{ payoutOf(summaryShow).toLocaleString() }} = <b class="text-emerald-300">실수익 ₩{{ netOf(summaryShow).toLocaleString() }}</b></div>
+            <div v-else class="text-slate-300">총액 ₩{{ revenueOf(summaryShow).toLocaleString() }} − 공연자 지급 ₩{{ payoutOf(summaryShow).toLocaleString() }}<span v-if="proxyCostOf(summaryShow)"> − 계산서 대행 ₩{{ proxyCostOf(summaryShow).toLocaleString() }}</span> = <b class="text-emerald-300">실수익 ₩{{ netOf(summaryShow).toLocaleString() }}</b></div>
           </div>
           <!-- ★ v2.9: 공연 직후 기록 -->
           <div v-if="summaryShow.fieldMemo || summaryShow.feedbackClient || summaryShow.feedbackPerformer || summaryShow.nextNote || summaryShow.photoSource" class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/40 space-y-1 text-[11px]">
@@ -4200,13 +4225,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         // ★ v3.0: 취소됐지만 위약금을 받기로 한 일정 → 위약금만 매출·미수금·공연자 지급에 잡힘
         const isFeeShow = (s) => !!s && s.status === '취소' && Number(s.cancelFee) > 0;
         const isCountedMoney = (s) => isMoneyShow(s) || isFeeShow(s);
-        const amountDue = (s) => isFeeShow(s) ? (Number(s.cancelFee) || 0) : (Number(s.amount) || 0);
+        // ★ v3.0: 계산서 대행 — 고객이 대행 업체에 내고, 업체가 뗀 몫(협의)·3.3%를 빼고 나에게 보냄
+        const isProxy = (s) => !!s && s.adminDoc === '계산서 대행';
+        const proxyTaxOf = (s) => { if (!isProxy(s) || !s.proxyWithhold) return 0; const base = Math.max(0, (Number(s.amount) || 0) - (Number(s.proxyCut) || 0)); return Math.round(base * 0.03) + Math.round(base * 0.003); };
+        const proxyAutoRecv = (s) => Math.max(0, (Number(s.amount) || 0) - (Number(s.proxyCut) || 0) - proxyTaxOf(s));
+        const proxyRecvOf = (s) => (s.proxyRecv === '' || s.proxyRecv == null || isNaN(Number(s.proxyRecv))) ? proxyAutoRecv(s) : Number(s.proxyRecv);
+        const proxyCostOf = (s) => (isProxy(s) && isMoneyShow(s) && !isDirectSettle(s)) ? Math.max(0, (Number(s.amount) || 0) - proxyRecvOf(s)) : 0;
+        const amountDue = (s) => isFeeShow(s) ? (Number(s.cancelFee) || 0) : (isProxy(s) && !isDirectSettle(s) ? proxyRecvOf(s) : (Number(s.amount) || 0));
         const revenueOf = (s) => isFeeShow(s) ? (Number(s.cancelFee) || 0) : (isDirectSettle(s) ? (Number(s.commission) || 0) : (Number(s.amount) || 0));
         // ★ v2.9: 함께한 사람(서브 인원 등). 첫 번째 정산대상은 예전처럼 settleTarget·settleAmt, 더 줄 사람은 s.crew 목록에 둡니다
         const crewOf = (s) => (s && Array.isArray(s.crew)) ? s.crew.filter(c => c && String(c.name || '').trim() !== '') : [];
         const crewFeeOf = (s) => crewOf(s).reduce((a, c) => a + (Number(c.fee) || 0), 0);
         const payoutOf = (s) => isFeeShow(s) ? (Number(s.cancelFeePayout) || 0) : (isDirectSettle(s) ? 0 : (Number(s.settleAmt) || 0) + crewFeeOf(s));
-        const netOf = (s) => revenueOf(s) - payoutOf(s);
+        const netOf = (s) => revenueOf(s) - payoutOf(s) - proxyCostOf(s); // ★ v3.0 계산서 대행 몫은 비용
         const workTypeOf = (s) => (s && s.workType) || '공연';
 
         const themeMode = ref(localStorage.getItem('itsshow_v23_theme') || 'dark');
@@ -5067,7 +5098,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             if (!d.startsWith(y)) return;
             const k = accountOf(s.paidAccount) ? s.paidAccount : '';
             const o = r[k] || (r[k] = { year: 0, month: 0, count: 0 });
-            o.year += revenueOf(s); o.count++; if (d.startsWith(m)) o.month += revenueOf(s);
+            const got = revenueOf(s) - proxyCostOf(s); // ★ v3.0 계산서 대행은 실제로 받은 금액
+            o.year += got; o.count++; if (d.startsWith(m)) o.month += got;
           });
           return r;
         });
@@ -5862,6 +5894,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             channel: '',
             adminDoc: D().adminDoc || '계산서',
             docIssued: '미발행',
+            proxyBiz: '', proxyCut: 0, proxyWithhold: false, proxyRecv: '', // ★ v3.0 계산서 대행
             email: '',
             bizName: '',
             bizNo: '',
@@ -6145,7 +6178,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         // ===== v2.8 비슷한 고객 찾기 · 중복 합치기 (END CUSTOMER DEDUPE) =====
 
         // ★ v2.9: 복사한 일정은 공연자 지급 기록(지급완료·원천징수 연결·계산서 받음)을 가져가지 않음. 함께한 사람·페이는 그대로
+        const proxyBizNames = computed(() => [...new Set(shows.value.map(s => String(s.proxyBiz || '').trim()).filter(Boolean))]); // ★ v3.0
         const resetSettleForCopy = (rec) => {
+          if (rec.proxyRecv !== undefined) rec.proxyRecv = ''; // ★ v3.0 실제 받은 금액은 새로
           if (rec.settleStatus === '정산완료') rec.settleStatus = '미정산';
           delete rec.settlePaidDate; delete rec.taxRecordId;
           if (rec.invoiceRecv) rec.invoiceRecv = '미수취';
@@ -6644,7 +6679,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
 
         const exportHometaxInvoiceBatch = () => {
-          const targetShows = filteredShows.value.filter(s => (isFeeShow(s) || (isMoneyShow(s) && !isDirectSettle(s))) && amountDue(s) > 0); // ★ v3.0 위약금 포함
+          const targetShows = filteredShows.value.filter(s => (isFeeShow(s) || (isMoneyShow(s) && !isDirectSettle(s))) && !isProxy(s) && amountDue(s) > 0); // ★ v3.0 위약금 포함, 계산서 대행은 업체가 발행
           if (targetShows.length === 0) {
             showToast('발행할 공연 내역이 없습니다.');
             return;
@@ -8092,7 +8127,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           shows, customers, payables, taxRecords, cashAccounts, todoItems,
           runOf, endTimeOf, formTimeInfo, // ★ v3.0
           dupExcluded, isDupExcluded, toggleDupExclude, // ★ v3.0
-          openSmsAs, brandName, goPremiumApp, canMakePost, goPostFor, goPostFromModal,
+          openSmsAs, brandName, goPremiumApp, isProxy, proxyTaxOf, proxyAutoRecv, proxyRecvOf, proxyCostOf, proxyBizNames, canMakePost, goPostFor, goPostFromModal,
           foldCls, foldClick, // ★ v3.0 설정 칸 접기
           phoneLinkOpen, phoneLinkSvg, openPhoneLink, copyPhoneLink, phoneLinkUrl, // ★ v3.0 휴대폰 연결 QR
           payAccPick, choosePaidAccount, payAccNewName, addAccountAndPay, accountOf, sortedAccounts, mainAccountId, addCashAccount, setMainAccount, removeCashAccount, receivedByAccount, // ★ v3.0 통장
