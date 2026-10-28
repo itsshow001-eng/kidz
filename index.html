@@ -30,6 +30,24 @@
     input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value, input[type="month"]::-webkit-date-and-time-value { text-align: left; }
   </style>
   <title>이츠쇼타임 공연관리 v3.0</title>
+<script>/* ★ v3.0: PC에서 파일로 열었는데 크롬이 아니면 (맥 사파리 등) 맨 위에 안내 — 브라우저마다 기록이 따로 저장되기 때문 */
+(function () { try {
+  if (location.protocol !== 'file:') return;
+  var ua = navigator.userAgent, name = '';
+  if (/Edg\//.test(ua)) name = '엣지'; else if (/Whale\//.test(ua)) name = '웨일'; else if (/OPR\//.test(ua)) name = '오페라';
+  else if (/Firefox\//.test(ua)) name = '파이어폭스'; else if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) name = '사파리'; else if (!/Chrome\//.test(ua)) name = '다른 브라우저';
+  if (!name) return;
+  try { if (sessionStorage.getItem('itt_browser_ok')) return; } catch (e) {}
+  var show = function () { var d = document.createElement('div'); d.id = 'itt-browser-note';
+    d.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99998;background:#f59e0b;color:#111827;padding:10px 16px;font:700 14px/1.5 -apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.25)';
+    d.innerHTML = '<span>⚠️ 이 프로그램은 <u>크롬(Chrome)</u>에서 열어 주세요. 지금은 ' + name + '로 열려 있어요. 브라우저마다 기록이 따로 저장돼서, 크롬에 적은 일정이 여기서는 안 보여요.'
+      + (name === '사파리' ? ' (맥: 파일 오른쪽 클릭 → 정보 가져오기 → 다음으로 열기: Chrome → 모두 변경)' : '') + '</span>';
+    var b = document.createElement('button'); b.textContent = '알겠어요'; b.style.cssText = 'border:0;border-radius:8px;padding:5px 12px;background:#111827;color:#fff;font:700 13px inherit;cursor:pointer';
+    b.onclick = function () { try { sessionStorage.setItem('itt_browser_ok', '1'); } catch (e) {} d.remove(); }; d.appendChild(b);
+    document.body.appendChild(d); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show); else show();
+} catch (e) {} })();</script>
+
 <script>/* ★ v3.0: 크롬이 이 파일의 저장 공간을 막았는지 먼저 확인 (막혔으면 빈 화면 대신 이유를 보여 줌) */
 (function () { try { var k = '__itt_storage_test__'; localStorage.setItem(k, '1'); localStorage.removeItem(k); } catch (e) {
   var show = function () { var d = document.createElement('div'); d.id = 'itt-storage-blocked';
