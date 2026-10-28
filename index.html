@@ -1069,14 +1069,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <div class="flex items-center justify-between border-b border-slate-800 pb-2">
                 <div class="flex items-center space-x-2">
                   <span class="text-xs font-mono font-black text-indigo-300">📌 {{ selectedCalendarDate }} ({{ getDayOfWeekKorean(selectedCalendarDate) }}) 일정</span>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-indigo-500/20 text-indigo-300 font-bold">{{ selectedDateShows.length }}건</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-indigo-500/20 text-indigo-300 font-bold">{{ selectedDateShows.filter(x => x.status !== '취소').length }}건<template v-if="selectedDateShows.some(x => x.status === '취소')"> · 취소 {{ selectedDateShows.filter(x => x.status === '취소').length }}</template></span>
                 </div>
                 <button @click="openNewShowOnSelectedDate" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold cursor-pointer">
                   ＋ 이 날짜에 등록
                 </button>
               </div>
               <div v-if="selectedDateShows.length > 0" class="space-y-2">
-                <div v-for="s in selectedDateShows" :key="'sel-' + s.no" @click="openEditShowModal(s)"
+                <template v-for="(s, i) in selectedDateShows" :key="'sel-' + s.no">
+                <!-- ★ v3.0: 취소된 일정은 아래로 모으고 흐리게 -->
+                <div v-if="s.status === '취소' && (i === 0 || selectedDateShows[i - 1].status !== '취소')" class="pt-2 text-[11px] font-bold text-slate-500">취소된 일정</div>
+                <div @click="openEditShowModal(s)" :class="s.status === '취소' ? 'opacity-50' : ''"
                   class="p-3 rounded-xl bg-slate-800/90 border border-slate-700 hover:border-indigo-400 flex items-center justify-between gap-2 cursor-pointer">
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center space-x-1.5">
@@ -1090,7 +1093,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <div v-if="s.venueName || s.eventName" class="text-[11px] text-emerald-300 truncate">→ {{ [s.venueName, s.eventName].filter(Boolean).join(' · ') }}</div>
                   </div>
                   <div class="text-right shrink-0 space-y-1">
-                    <div class="font-mono font-bold text-xs text-white">₩{{ (s.amount || 0).toLocaleString() }}</div>
+                    <div class="font-mono font-bold text-xs text-white" :class="s.status === '취소' && !isFeeShow(s) ? 'line-through' : ''">₩{{ (s.amount || 0).toLocaleString() }}</div>
                     <div class="flex flex-wrap items-center justify-end gap-1">
                       <a v-if="s.phone" :href="'tel:' + s.phone" @click.stop class="px-1.5 py-0.5 rounded bg-emerald-600/20 text-emerald-300 text-[10px] font-bold">📞</a>
                       <button @click.stop="openMapNavigation(s.address || s.venueName || s.client, s.region)" class="px-1.5 py-0.5 rounded bg-blue-600/20 text-blue-300 text-[10px] font-bold">📍길</button>
@@ -1099,6 +1102,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     </div>
                   </div>
                 </div>
+                </template>
               </div>
               <div v-else class="py-3 text-center text-xs text-slate-400">
                 선택한 날짜({{ selectedCalendarDate }})에는 등록된 공연이 없습니다.
@@ -4285,7 +4289,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const selectedDateShows = computed(() => {
           return shows.value
             .filter(s => s.showDate === selectedCalendarDate.value)
-            .sort((a, b) => (a.showTime || '').localeCompare(b.showTime || ''));
+            .sort((a, b) => ((a.status === '취소') - (b.status === '취소')) || (a.showTime || '').localeCompare(b.showTime || '')); // ★ v3.0 취소는 아래로
         });
 
         // Toast
@@ -5176,7 +5180,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           for (let i = 0; i < firstDay; i++) cells.push({ day: null, shows: [] });
           for (let d = 1; d <= lastDate; d++) {
             const dateStr = `${ymPrefix}-${String(d).padStart(2, '0')}`;
-            const dayShows = shows.value.filter(s => s.showDate === dateStr && !(s.status === '취소' && s.cancelType === CANCEL_TYPE_INVALID)); // ★ v3.0 입력 실수는 달력에서 숨김
+            const dayShows = shows.value.filter(s => s.showDate === dateStr && !(s.status === '취소' && s.cancelType === CANCEL_TYPE_INVALID)) // ★ v3.0 입력 실수는 달력에서 숨김
+              .sort((a, b) => ((a.status === '취소') - (b.status === '취소')) || (a.showTime || '').localeCompare(b.showTime || '')); // ★ v3.0 시간 순, 취소는 아래로
             cells.push({
               day: d,
               dateStr,
