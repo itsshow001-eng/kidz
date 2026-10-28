@@ -527,7 +527,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div @click="goToUnpaidView" class="rounded-2xl bg-slate-800/90 border border-rose-500/40 p-3 space-y-0.5 cursor-pointer hover:border-rose-400 transition-all">
               <div class="text-[11px] font-bold text-rose-300">받을 돈 (미입금 {{ unpaidShows.length }}건)</div>
               <div class="text-lg font-black text-rose-400 font-mono">₩{{ totalUnpaidAmount.toLocaleString() }}</div>
-              <div class="text-[10px] text-slate-400">누르면 완납 처리 화면</div>
+              <div class="text-[10px] text-slate-400 font-mono">공연 끝남 ₩{{ unpaidSplit.past.toLocaleString() }} · 예정 ₩{{ unpaidSplit.plan.toLocaleString() }}</div>
             </div>
             <div @click="openSettlementTab" class="rounded-2xl bg-slate-800/90 border border-amber-500/40 p-3 space-y-0.5 cursor-pointer hover:border-amber-400 transition-all">
               <div class="text-[11px] font-bold text-amber-300">줄 돈 (공연자 {{ settleSummary.count }}건 + 지급예정 {{ pendingPayables.length }}건)</div>
@@ -771,19 +771,22 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-800">
-                    <tr v-for="u in unpaidShows.slice(0, 12)" :key="u.no" class="hover:bg-slate-700/40">
+                    <template v-for="(u, i) in unpaidShows.slice(0, 12)" :key="u.no">
+                    <tr v-if="unpaidGroupHead(unpaidShows, i)"><td colspan="5" class="pt-2.5 pb-1 px-1.5 sm:px-2.5 font-sans text-[11px] font-bold" :class="isPastUnpaid(u) ? 'text-rose-300' : 'text-sky-300'">{{ unpaidGroupHead(unpaidShows, i) }}</td></tr>
+                    <tr class="hover:bg-slate-700/40" :class="isPastUnpaid(u) ? '' : 'opacity-60'">
                       <td class="py-2 px-1.5 sm:px-2.5 text-slate-300 whitespace-nowrap"><span class="sm:hidden">{{ formatCompactDate(u.showDate) }}</span><span class="hidden sm:inline">{{ u.showDate }}</span></td>
                       <td class="py-2 px-1.5 sm:px-2.5 font-sans font-bold text-white truncate" :title="u.client">{{ u.client }}</td>
                       <td class="py-2 px-2.5 font-sans hidden sm:table-cell truncate">
                         <span class="text-[10px] px-1.5 py-0.5 rounded font-bold" :class="(secondCo && u.issuer === secondCo) ? 'bg-emerald-500/20 text-emerald-300' : 'bg-indigo-500/20 text-indigo-300'">{{ u.issuer }}</span>
                       </td>
-                      <td class="py-2 px-1 sm:px-2.5 text-right font-bold text-rose-400 whitespace-nowrap">₩{{ u.amount.toLocaleString() }}</td>
+                      <td class="py-2 px-1 sm:px-2.5 text-right font-bold whitespace-nowrap" :class="isPastUnpaid(u) ? 'text-rose-400' : 'text-slate-300'">₩{{ amountDue(u).toLocaleString() }}</td>
                       <td class="py-2 px-1 sm:px-2.5 text-center font-sans">
                         <button @click="markShowPaid(u)" class="px-1.5 sm:px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold cursor-pointer shadow-sm">
                           <span class="sm:hidden">✓완납</span><span class="hidden sm:inline">✓ 완납처리</span>
                         </button>
                       </td>
                     </tr>
+                    </template>
                   </tbody>
                 </table>
               </div>
@@ -1346,6 +1349,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <div>
                 <span class="text-xs text-rose-300 font-bold block">현재 미입금(미수금) 합계 (취소건 제외)</span>
                 <div class="text-2xl font-black text-white font-mono mt-0.5">₩ {{ totalUnpaidAmount.toLocaleString() }} ({{ unpaidShows.length }}건)</div>
+                <div class="text-xs font-mono mt-1"><span class="text-rose-300 font-bold">⏰ 공연 끝남 ₩{{ unpaidSplit.past.toLocaleString() }} ({{ unpaidSplit.pastN }}건)</span> <span class="text-slate-500">·</span> <span class="text-sky-300">📅 예정 ₩{{ unpaidSplit.plan.toLocaleString() }} ({{ unpaidSplit.planN }}건)</span></div>
               </div>
               <p class="text-xs text-slate-300">
                 💡 통장에 입금이 확인되면 우측의 <strong class="text-emerald-400">[✓ 입금완납 확인]</strong> 버튼을 누르세요. 즉시 완납 처리됩니다.
@@ -1368,7 +1372,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-800 text-slate-200">
-                    <tr v-for="u in unpaidShows" :key="u.no" class="hover:bg-slate-700/35">
+                    <template v-for="(u, i) in unpaidShows" :key="u.no">
+                    <tr v-if="unpaidGroupHead(unpaidShows, i)" class="bg-slate-900/60"><td colspan="7" class="py-2 px-4 font-sans text-xs font-bold" :class="isPastUnpaid(u) ? 'text-rose-300' : 'text-sky-300'">{{ unpaidGroupHead(unpaidShows, i) }}</td></tr>
+                    <tr class="hover:bg-slate-700/35" :class="isPastUnpaid(u) ? '' : 'opacity-60'">
                       <td class="py-3 px-4 font-bold text-white whitespace-nowrap">{{ u.showDate }}</td>
                       <td class="py-3 px-4 font-sans font-bold text-white">{{ u.client }}</td>
                       <td class="py-3 px-4 font-sans text-slate-300">{{ u.manager }} <span class="font-mono text-slate-400">{{ u.phone }}</span></td>
@@ -1383,12 +1389,15 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                         </button>
                       </td>
                     </tr>
+                    </template>
                   </tbody>
                 </table>
               </div>
               <!-- Card List (화면 폭 1280px 미만: 표 대신 카드 — 좌우 스크롤·잘림 없음) -->
               <div class="xl:hidden divide-y divide-slate-800">
-                <div v-for="u in unpaidShows" :key="'mu-' + u.no" class="p-3.5 space-y-2">
+                <template v-for="(u, i) in unpaidShows" :key="'mu-' + u.no">
+                <div v-if="unpaidGroupHead(unpaidShows, i)" class="px-3.5 pt-3 pb-1 text-xs font-bold" :class="isPastUnpaid(u) ? 'text-rose-300' : 'text-sky-300'">{{ unpaidGroupHead(unpaidShows, i) }}</div>
+                <div class="p-3.5 space-y-2" :class="isPastUnpaid(u) ? '' : 'opacity-60'">
                   <div class="flex items-center justify-between">
                     <span class="font-mono text-xs font-bold text-slate-300">{{ u.showDate }}</span>
                     <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="(secondCo && u.issuer === secondCo) ? 'bg-emerald-500/20 text-emerald-300' : 'bg-indigo-500/20 text-indigo-300'">{{ u.issuer }}</span>
@@ -1404,6 +1413,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     </button>
                   </div>
                 </div>
+                </template>
               </div>
             </div>
           </div>
@@ -5069,6 +5079,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         });
 
         const totalUnpaidAmount = computed(() => unpaidShows.value.reduce((acc, s) => acc + amountDue(s), 0));
+        // ★ v3.0: 미수금을 '공연 끝남'(오늘 전)과 '예정'(오늘 포함 앞으로)으로 나눠 보기
+        const isPastUnpaid = (s) => !!s && String(s.showDate || '') < referenceToday.value;
+        const unpaidSplit = computed(() => {
+          const r = { past: 0, pastN: 0, plan: 0, planN: 0 };
+          unpaidShows.value.forEach(s => { if (isPastUnpaid(s)) { r.past += amountDue(s); r.pastN++; } else { r.plan += amountDue(s); r.planN++; } });
+          return r;
+        });
+        const unpaidGroupHead = (list, i) => (i === 0 || isPastUnpaid(list[i - 1]) !== isPastUnpaid(list[i])) ? (isPastUnpaid(list[i]) ? '⏰ 공연 끝남 · 받을 돈' : '📅 예정 공연 · 공연 뒤 받을 돈') : '';
 
         const pendingPayables = computed(() => payables.value.filter(p => p.status !== '결제완료' && p.amount > 0));
         const totalPendingPayables = computed(() => pendingPayables.value.reduce((acc, p) => acc + (Number(p.amount) || 0), 0));
@@ -8159,7 +8177,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           navItems, availableYearMonths, uniqueThemes,
           periodShows, periodTotalRevenue, periodItsshowRevenue, periodKidsniverseRevenue, overallTotalRevenue,
           periodPayout, periodNet, showFormOpen, crewOf, crewFeeOf, addCrewRow, removeCrewRow, onPickCrewPerformer, crewHint, formCrewSum, navSheet, navRemember, navLastApp, launchNav, resetNavApp, backupAgeDays, lastBackupAt, shareBackup, restoreFileInput, pickRestoreFile, restoreFromBackupFile, canAutoFolder, autoFolderName, autoFolderNeedsClick, chooseAutoFolder, runAutoBackup, openPerformerHistoryId, togglePerformerHistory, performerHistory, isInquiry, isDirectSettle, isMoneyShow, revenueOf, payoutOf, netOf, workTypeOf,
-          unpaidShows, totalUnpaidAmount, pendingPayables, totalPendingPayables, totalCashBalance, projectedNetCash,
+          unpaidShows, totalUnpaidAmount, isPastUnpaid, unpaidSplit, unpaidGroupHead, pendingPayables, totalPendingPayables, totalCashBalance, projectedNetCash,
           upcomingShows, filteredShows, themeStats,
           newTaxForm, calcNatTax, calcLocTax, calcTaxTotal, calcNetPay, addTaxRecord,
           filteredCustomers, recommendNextTheme,
