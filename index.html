@@ -2399,7 +2399,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         </div>
 
         <!-- ★ v3.0: 저작권 표시 -->
-        <footer class="pb-2 text-center text-[11px] text-slate-500" style="padding-top:24px">ⓒ 2026 키즈니버스랩(고민준) · 이츠쇼타임 PREMIUM<template v-if="license"> · {{ license.name }}님 전용{{ license.no ? ' · ' + license.no : '' }}</template> · 무단 복제·배포 금지</footer>
+        <footer class="pb-2 text-center text-[11px] text-slate-500 leading-relaxed" style="padding-top:24px;max-width:56rem;margin:0 auto">
+          <div v-if="license" class="font-bold">{{ license.name }}님 전용{{ license.no ? ' · ' + license.no : '' }}</div>
+          <div>ⓒ 2026 키즈니버스랩(고민준) (Kidsniverse Lab). All rights reserved. 본 프로그램(이츠쇼타임 PREMIUM)의 기획·화면 설계 및 고유 소스코드는 저작권법의 보호를 받는 저작물입니다. 등록된 사용자(라이선스 표기자) 외 무단 복제·배포·공유·개작 시 민·형사상 법적 책임을 질 수 있습니다. (한국저작권위원회 프로그램 저작권 등록 신청 예정)</div>
+        </footer>
       </main>
     </div>
 
