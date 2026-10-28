@@ -61,6 +61,7 @@
 } })();</script>
 
   <!-- ★ v3.0: 판매판 구매자 표시. 판매할 때 이 줄에 구매자 이름·번호를 적어 드림 (비어 있으면 아무것도 안 나옴) -->
+  <!-- ⓒ 2026 키즈니버스랩(고민준) · 이츠쇼타임 PREMIUM. 무단 복제·배포 금지. 체험단·구매자 본인만 사용할 수 있어요. (안에 든 외부 부품은 각자의 라이선스를 따릅니다) -->
   <script>window.ITT_LICENSE = { name: '', no: '' };</script>
   <!-- v2.3 오프라인판: Vue 3.4.38 · Chart.js 4.4.4 · SheetJS 0.18.5 · Tailwind(미리 빌드)를 파일 안에 내장 — 인터넷 없이도 열립니다 -->
   <!-- ERP-INLINE:BEGIN vue 3.4.38 -->
@@ -2397,6 +2398,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
         </div>
 
+        <!-- ★ v3.0: 저작권 표시 -->
+        <footer class="pb-2 text-center text-[11px] text-slate-500" style="padding-top:24px">ⓒ 2026 키즈니버스랩(고민준) · 이츠쇼타임 PREMIUM<template v-if="license"> · {{ license.name }}님 전용{{ license.no ? ' · ' + license.no : '' }}</template> · 무단 복제·배포 금지</footer>
       </main>
     </div>
 
