@@ -4721,7 +4721,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           if (okAmounts && amount === 0 && status !== '취소' && status !== '문의' && (changed('amount') || changed('status'))) {
             warnings.push('금액이 0원이에요. (견적 전이거나 무료 공연이면 그대로 두셔도 돼요)');
           }
-          if (okAmounts && status === '취소' && amount > 0 && (changed('status') || changed('amount'))) {
+          // ★ v3.0: 위약금을 적었으면 그 금액이 확정이라 경고하지 않음(저장 뒤 안내만)
+          const feeSet = Number(vNum(f.cancelFee)) > 0 && vStr(f.cancelType) !== CANCEL_TYPE_INVALID;
+          if (okAmounts && status === '취소' && amount > 0 && !feeSet && (changed('status') || changed('amount'))) {
             warnings.push(`취소 건인데 금액이 ${amount.toLocaleString()}원으로 남아 있어요. 의도하신 게 맞나요?`);
           }
           if (today && !errors.some(e => e.startsWith('공연일자')) && (changed('showDate') || changed('status'))) {
@@ -6649,6 +6651,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           syncShowsAndCustomers(true);
           saveAllToStorage();
           nextTick(() => renderCharts());
+          // ★ v3.0: 위약금 저장 안내 (원래 금액은 기록으로 남고, 매출·미수금은 위약금 기준)
+          const fs = editingShowForm.value;
+          if (fs && isFeeShow(fs)) showToast(`💰 원래 공연 금액 ₩${(Number(fs.amount) || 0).toLocaleString()} → 위약금 ₩${(Number(fs.cancelFee) || 0).toLocaleString()}으로 저장했어요. 매출·미수금은 위약금으로 계산돼요.`, 7000);
         };
 
         // ★ FEATURE 3 & REQUEST 2: 단골 고객(CRM) 수정 및 사업자·이메일 즉시 입력 모달 ★
