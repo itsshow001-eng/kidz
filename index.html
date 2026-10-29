@@ -802,7 +802,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <tr v-if="unpaidGroupHead(unpaidShows, i)"><td colspan="5" class="pt-2.5 pb-1 px-1.5 sm:px-2.5 font-sans text-[11px] font-bold" :class="isPastUnpaid(u) ? 'text-rose-300' : 'text-sky-300'">{{ unpaidGroupHead(unpaidShows, i) }}</td></tr>
                     <tr class="hover:bg-slate-700/40" :class="isPastUnpaid(u) ? '' : 'opacity-60'">
                       <td class="py-2 px-1.5 sm:px-2.5 text-slate-300 whitespace-nowrap"><span class="sm:hidden">{{ formatCompactDate(u.showDate) }}</span><span class="hidden sm:inline">{{ u.showDate }}</span></td>
-                      <td class="py-2 px-1.5 sm:px-2.5 font-sans font-bold text-white truncate" :title="u.client">{{ u.client }}</td>
+                      <td class="py-2 px-1.5 sm:px-2.5 font-sans font-bold text-white truncate" :title="u.client">{{ u.client }}<div v-if="payDueBadge(u)" class="text-[10px] font-bold truncate" :class="payDueBadge(u).cls">{{ payDueBadge(u).text }}</div></td>
                       <td class="py-2 px-2.5 font-sans hidden sm:table-cell truncate">
                         <span class="text-[10px] px-1.5 py-0.5 rounded font-bold" :class="(secondCo && u.issuer === secondCo) ? 'bg-emerald-500/20 text-emerald-300' : 'bg-indigo-500/20 text-indigo-300'">{{ u.issuer }}</span>
                       </td>
@@ -1437,7 +1437,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <tr v-if="unpaidGroupHead(unpaidShows, i)" class="bg-slate-900/60"><td colspan="7" class="py-2 px-4 font-sans text-xs font-bold" :class="isPastUnpaid(u) ? 'text-rose-300' : 'text-sky-300'">{{ unpaidGroupHead(unpaidShows, i) }}</td></tr>
                     <tr class="hover:bg-slate-700/35" :class="isPastUnpaid(u) ? '' : 'opacity-60'">
                       <td class="py-3 px-4 font-bold text-white whitespace-nowrap">{{ u.showDate }}</td>
-                      <td class="py-3 px-4 font-sans font-bold text-white">{{ u.client }}</td>
+                      <td class="py-3 px-4 font-sans font-bold text-white">{{ u.client }}<div v-if="payDueBadge(u)" class="text-[11px] font-bold" :class="payDueBadge(u).cls">{{ payDueBadge(u).text }}</div></td>
                       <td class="py-3 px-4 font-sans text-slate-300">{{ u.manager }} <span class="font-mono text-slate-400">{{ u.phone }}</span></td>
                       <td class="py-3 px-4 font-sans"><span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="getThemeBadgeClass(u.theme)">{{ u.theme }}</span></td>
                       <td class="py-3 px-4 font-sans">
@@ -1464,7 +1464,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="(secondCo && u.issuer === secondCo) ? 'bg-emerald-500/20 text-emerald-300' : 'bg-indigo-500/20 text-indigo-300'">{{ u.issuer }}</span>
                   </div>
                   <div class="flex items-center justify-between gap-2">
-                    <div class="font-bold text-sm text-white truncate">{{ u.client }}</div>
+                    <div class="min-w-0"><div class="font-bold text-sm text-white truncate">{{ u.client }}</div><div v-if="payDueBadge(u)" class="text-[11px] font-bold" :class="payDueBadge(u).cls">{{ payDueBadge(u).text }}</div></div>
                     <div class="font-mono font-black text-sm text-rose-400 shrink-0"><span v-if="isFeeShow(u)" class="text-[10px] font-sans text-amber-300">위약금 </span>₩{{ amountDue(u).toLocaleString() }}</div>
                   </div>
                   <div class="flex items-center justify-between pt-1">
@@ -1506,6 +1506,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                       <span class="font-mono font-bold text-slate-300 shrink-0">{{ row.s.showDate }}</span>
                       <span class="font-bold text-white truncate">{{ row.s.client }}</span>
                       <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0" :class="getThemeBadgeClass(row.s.theme)">{{ row.s.theme }}</span>
+                      <span v-if="!row.paid && settleDueBadge(row.s)" class="text-[10px] font-bold shrink-0" :class="settleDueBadge(row.s).cls">{{ settleDueBadge(row.s).text }}</span>
                     </div>
                     <span class="px-2 py-0.5 rounded text-[11px] font-bold shrink-0" :class="performerKindClass(row.kind)">{{ performerKindLabel(row.kind) }}</span>
                   </div>
@@ -2285,6 +2286,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <div><label class="text-slate-400 block mb-1">지역</label><input type="text" v-model="profile.defaults.region" @change="saveProfile" placeholder="예: 서울" class="w-full px-3 py-2 rounded-xl border" /></div>
               <div><label class="text-slate-400 block mb-1">담당자 호칭</label><input type="text" v-model="profile.defaults.manager" @change="saveProfile" placeholder="예: 담당자님" class="w-full px-3 py-2 rounded-xl border" /></div>
               <div><label class="text-slate-400 block mb-1">공연자</label><input type="text" v-model="profile.defaults.performer" @change="saveProfile" :placeholder="profile.owner.artist || '공연자 이름'" class="w-full px-3 py-2 rounded-xl border" /></div>
+              <!-- ★ v3.0: 일정마다 정하지 않으면 이 규칙으로 예정일을 셈 -->
+              <div><label class="text-slate-400 block mb-1">📅 입금 예정 (기본)</label>
+                <select v-model="profile.defaults.payDueRule" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border"><option value="">안 정함</option><option v-for="r in DUE_RULES" :key="'dpd' + r.v" :value="r.v">{{ r.t }}</option></select></div>
+              <div><label class="text-slate-400 block mb-1">📤 지급 예정 (기본)</label>
+                <select v-model="profile.defaults.settleDueRule" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border"><option value="">안 정함</option><option v-for="r in SETTLE_RULES" :key="'dsd' + r.v" :value="r.v">{{ r.t }}</option></select></div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div><label class="text-slate-400 block mb-1">견적서 제목</label><input type="text" v-model="profile.defaults.quoteTitle" @change="saveProfile" placeholder="예: 「{공연}」 초청 공연" class="w-full px-3 py-2 rounded-xl border" /></div>
@@ -2751,6 +2757,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <option value="">🏦 들어온 통장 (안 적음)</option>
               <option v-for="a in cashAccounts" :key="'pa' + a.id" :value="a.id">🏦 {{ a.name }}{{ a.main ? ' ⭐' : '' }}</option>
             </select>
+            <!-- ★ v3.0: 입금 예정일 (미입금일 때. 브리핑에 '이번 주 들어올 돈'·'예정일 지난 미입금'으로 뜸) -->
+            <template v-if="editingShowForm.payStatus !== '완납'">
+              <select v-model="editingShowForm.payDueRule" class="w-full px-3 py-2 rounded-xl border mt-1.5 text-xs">
+                <option value="">📅 입금 예정: {{ profile.defaults.payDueRule ? '기본(' + dueRuleText(profile.defaults.payDueRule) + ')' : '안 정함' }}</option>
+                <option v-for="r in DUE_RULES" :key="'pdr' + r.v" :value="r.v">📅 입금 예정: {{ r.t }}</option>
+                <option value="date">📅 입금 예정: 날짜 직접</option>
+              </select>
+              <input v-if="editingShowForm.payDueRule === 'date'" type="date" v-model="editingShowForm.payDueDate" class="w-full px-3 py-2 rounded-xl border mt-1.5 font-mono text-xs" />
+              <p v-if="payDueBadge(editingShowForm)" class="text-[10px] mt-1 font-bold" :class="payDueBadge(editingShowForm).cls">→ {{ payDueOf(editingShowForm) }} · {{ payDueBadge(editingShowForm).text }}</p>
+            </template>
           </div>
           <div>
             <label class="text-slate-400 block mb-1">발행 사업자 구분</label>
@@ -2841,6 +2857,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <label class="text-slate-400 block mb-1">외부 정산금액 (원)</label>
             <input type="number" v-model.number="editingShowForm.settleAmt" step="10000" class="w-full px-3 py-2 rounded-xl border font-mono" />
             <p v-if="showModalSettleHint" class="text-[10px] mt-1 leading-snug" :class="showModalSettleHint.cls">{{ showModalSettleHint.text }}</p>
+          </div>
+          <!-- ★ v3.0: 지급 예정일 (이 공연에서 줄 돈 모두. 브리핑에 '이번 주 지급할 돈'으로 뜸) -->
+          <div class="sm:col-span-3">
+            <label class="text-slate-400 block mb-1">📤 지급 예정일 <span class="text-[10px] text-slate-500">(위 정산대상 + 함께한 사람 모두)</span></label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <select v-model="editingShowForm.settleDueRule" class="w-full px-3 py-2 rounded-xl border text-xs">
+                <option value="">{{ profile.defaults.settleDueRule ? '기본(' + dueRuleText(profile.defaults.settleDueRule) + ')' : '안 정함' }}</option>
+                <option v-for="r in SETTLE_RULES" :key="'sdr' + r.v" :value="r.v">{{ r.t }}</option>
+                <option value="date">날짜 직접</option>
+              </select>
+              <input v-if="editingShowForm.settleDueRule === 'date'" type="date" v-model="editingShowForm.settleDueDate" class="w-full px-3 py-2 rounded-xl border font-mono text-xs" />
+              <p v-if="settleDueBadge(editingShowForm)" class="text-[10px] font-bold self-center" :class="settleDueBadge(editingShowForm).cls">→ {{ settleDueBadge(editingShowForm).text }}</p>
+            </div>
           </div>
           <!-- ★ v2.9: 함께한 사람 (서브 인원 등 여러 명 정산 · 각자 정산 탭에 따로 뜸) -->
           <div class="sm:col-span-3 p-3 rounded-2xl bg-slate-950/70 border border-amber-500/40 space-y-2">
@@ -5111,14 +5140,23 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const noMemo = shows.value.filter(s => s.status !== '취소' && s.showDate >= today && s.showDate <= in5 && !memoFirstLine(s)).sort(byDateTime);
           if (noMemo.length) list.push({ key: 'memo', icon: '⚠️', text: `협의 메모가 없는 공연 ${noMemo.length}건 (5일 이내)`, shows: noMemo });
           const before30 = addDaysToDateStr(today, -30);
-          const lateUnpaid = unpaidShows.value.filter(s => s.showDate && s.showDate <= before30);
+          // ★ v3.0: 입금 예정일이 있으면 예정일 기준, 없으면 예전처럼 공연 후 30일
+          const payLate = unpaidShows.value.filter(s => payDueOf(s) && payDueOf(s) < today);
+          if (payLate.length) list.push({ key: 'paylate', icon: '💸', text: `입금 예정일 지난 미입금 ${payLate.length}건 · ₩${payLate.reduce((a, s) => a + amountDue(s), 0).toLocaleString()}`, go: 'unpaid', urgent: true });
+          const in6 = addDaysToDateStr(today, 6);
+          const paySoon = unpaidShows.value.filter(s => payDueOf(s) && payDueOf(s) >= today && payDueOf(s) <= in6);
+          if (paySoon.length) list.push({ key: 'paysoon', icon: '📥', text: `이번 주 들어올 돈 ${paySoon.length}건 · ₩${paySoon.reduce((a, s) => a + amountDue(s), 0).toLocaleString()}`, go: 'unpaid' });
+          const lateUnpaid = unpaidShows.value.filter(s => s.showDate && s.showDate <= before30 && !payDueOf(s));
           if (lateUnpaid.length) list.push({ key: 'unpaid', icon: '💸', text: `입금 안 된 지난 공연 ${lateUnpaid.length}건 (30일 넘음) · ₩${lateUnpaid.reduce((a, s) => a + (Number(s.amount) || 0), 0).toLocaleString()}`, go: 'unpaid' });
           // ★ v2.9: 날짜가 지난 문의(미정) · 아직 못 받은 수수료
           const staleInquiry = shows.value.filter(s => isInquiry(s) && s.showDate && s.showDate < today);
           if (staleInquiry.length) list.push({ key: 'inquiry', icon: '🟡', text: `날짜가 지난 문의(미정) ${staleInquiry.length}건 → 확정 또는 취소로 정리`, shows: staleInquiry });
           const commissionDue = shows.value.filter(s => isMoneyShow(s) && isDirectSettle(s) && Number(s.commission) > 0 && !s.commissionReceived && s.showDate && s.showDate < today);
           if (commissionDue.length) list.push({ key: 'commission', icon: '🤝', text: `아직 못 받은 수수료 ${commissionDue.length}건 · ₩${commissionDue.reduce((a, s) => a + (Number(s.commission) || 0), 0).toLocaleString()}`, shows: commissionDue });
-          const pastSettle = shows.value.filter(s => isSettleOpen(s) && s.showDate < today);
+          // ★ v3.0: 지급 예정일 7일 안(지난 것 포함) → '이번 주 지급할 돈'. 예정일이 아직 먼 공연은 '미지급'에서 뺌
+          const settleSoon = shows.value.filter(s => isSettleOpen(s) && settleDueOf(s) && settleDueOf(s) <= addDaysToDateStr(today, 6));
+          if (settleSoon.length) { const due = settleSoon.flatMap(openPayeesOf); list.push({ key: 'settlesoon', icon: '📤', text: `이번 주 지급할 돈 ${due.length}건 · ₩${due.reduce((a, x) => a + x.gross, 0).toLocaleString()}${settleSoon.some(s => settleDueOf(s) < today) ? ' · 늦은 것 있음' : ''}`, go: 'settle', urgent: settleSoon.some(s => settleDueOf(s) < today) }); }
+          const pastSettle = shows.value.filter(s => isSettleOpen(s) && s.showDate < today && !settleSoon.includes(s) && !(settleDueOf(s) && settleDueOf(s) > today));
           if (pastSettle.length) { const due = pastSettle.flatMap(openPayeesOf); list.push({ key: 'settle', icon: '🎭', text: `공연자 미지급 ${due.length}건 (지난 공연) · ₩${due.reduce((a, x) => a + x.gross, 0).toLocaleString()}`, go: 'settle' }); }
           if (settleSummary.value.invoicePending > 0) list.push({ key: 'invoice', icon: '🧾', text: `사업자 공연자 계산서 미수취 ${settleSummary.value.invoicePending}건`, go: 'settle' });
           const waitTax = taxRecords.value.filter(t => t.reportStatus === '신고대기');
@@ -5225,6 +5263,49 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const totalUnpaidAmount = computed(() => unpaidShows.value.reduce((acc, s) => acc + amountDue(s), 0));
         // ★ v3.0: 미수금을 '공연 끝남'(오늘 전)과 '예정'(오늘 포함 앞으로)으로 나눠 보기
         const isPastUnpaid = (s) => !!s && String(s.showDate || '') < referenceToday.value;
+        // ★ v3.0: 입금 예정일·지급 예정일. 규칙(공연 후 7일 등)으로 적어 두면 공연 날짜가 바뀌어도 따라감. 비우면 설정의 기본 규칙
+        const DUE_RULES = [{ v: 'd0', t: '공연 당일' }, { v: 'd7', t: '공연 후 7일' }, { v: 'd14', t: '공연 후 14일' }, { v: 'eom', t: '공연한 달 말일' }, { v: 'nextm10', t: '다음 달 10일' }, { v: 'nextmEnd', t: '다음 달 말일' }];
+        const SETTLE_RULES = DUE_RULES.concat([{ v: 'afterpay', t: '입금 받은 날' }]);
+        const dueRuleText = (v) => ((SETTLE_RULES.find(r => r.v === v) || {}).t) || '';
+        const ymdOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const dueFromRule = (rule, s) => {
+          const sd = s && s.showDate;
+          if (!rule || !vIsRealDate(sd)) return '';
+          const [y, m] = sd.split('-').map(Number);
+          if (rule === 'd0') return sd;
+          if (rule === 'd7') return addDaysToDateStr(sd, 7);
+          if (rule === 'd14') return addDaysToDateStr(sd, 14);
+          if (rule === 'eom') return ymdOf(new Date(y, m, 0));
+          if (rule === 'nextm10') return ymdOf(new Date(y, m, 10));
+          if (rule === 'nextmEnd') return ymdOf(new Date(y, m + 1, 0));
+          if (rule === 'afterpay') return (s.payStatus === '완납' && vIsRealDate(s.payDate)) ? s.payDate : '';
+          return '';
+        };
+        const payDueOf = (s) => {
+          if (!s) return '';
+          const r = s.payDueRule || '';
+          if (r === 'date') return vIsRealDate(s.payDueDate) ? s.payDueDate : '';
+          return dueFromRule(r || D().payDueRule || '', s);
+        };
+        const settleDueOf = (s) => {
+          if (!s) return '';
+          const r = s.settleDueRule || '';
+          if (r === 'date') return vIsRealDate(s.settleDueDate) ? s.settleDueDate : '';
+          return dueFromRule(r || D().settleDueRule || '', s);
+        };
+        const settleWaitsPay = (s) => !!s && (s.settleDueRule || D().settleDueRule) === 'afterpay' && s.settleDueRule !== 'date' && !settleDueOf(s);
+        // 예정일 글자: 지났으면 빨강, 오늘·3일 안이면 노랑, 그 뒤면 하늘색
+        const dueBadge = (due, word) => {
+          if (!due) return null;
+          const today = referenceToday.value;
+          const days = Math.round((new Date(due + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+          const md = `${Number(due.slice(5, 7))}/${Number(due.slice(8, 10))}`;
+          if (days < 0) return { late: true, cls: 'text-rose-300', text: `${word} ${md} · ${-days}일 지남` };
+          if (days === 0) return { late: false, cls: 'text-amber-300', text: `오늘 ${word}` };
+          return { late: false, cls: days <= 3 ? 'text-amber-300' : 'text-sky-300', text: `${word} ${md} (D-${days})` };
+        };
+        const payDueBadge = (s) => dueBadge(payDueOf(s), '입금 예정');
+        const settleDueBadge = (s) => settleWaitsPay(s) ? { late: false, cls: 'text-slate-400', text: '입금 받으면 지급' } : dueBadge(settleDueOf(s), '지급 예정');
         const unpaidSplit = computed(() => {
           const r = { past: 0, pastN: 0, plan: 0, planN: 0 };
           unpaidShows.value.forEach(s => { if (isPastUnpaid(s)) { r.past += amountDue(s); r.pastN++; } else { r.plan += amountDue(s); r.planN++; } });
@@ -6105,7 +6186,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             bizName: '',
             bizNo: '',
             bizAddress: '',
-            workType: '공연',
+            workType: '공연', payDueRule: '', settleDueRule: '', // ★ v3.0
             venueName: '',
             eventName: '',
             settleMode: '회사 정산',
@@ -6149,6 +6230,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           }
           // ★ v2.9: 예전 기록에 없는 칸은 기본값으로 채워 둡니다 (저장하기 전에는 원본을 바꾸지 않음)
           if (!copy.workType) copy.workType = '공연';
+          if (copy.payDueRule === undefined) copy.payDueRule = ''; // ★ v3.0 예정일 칸(예전 기록은 '기본')
+          if (copy.settleDueRule === undefined) copy.settleDueRule = '';
           if (!copy.settleMode) copy.settleMode = '회사 정산';
           ['venueName', 'eventName', 'fieldMemo', 'feedbackClient', 'feedbackPerformer', 'nextNote', 'photoSource'].forEach(k => { if (copy[k] === undefined) copy[k] = ''; });
           if (copy.commission === undefined) copy.commission = 0;
@@ -6389,6 +6472,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           if (rec.proxyRecv !== undefined) rec.proxyRecv = ''; // ★ v3.0 실제 받은 금액은 새로
           if (rec.settleStatus === '정산완료') rec.settleStatus = '미정산';
           delete rec.settlePaidDate; delete rec.taxRecordId;
+          if (rec.payDueRule === 'date') { delete rec.payDueRule; delete rec.payDueDate; } // ★ v3.0 직접 적은 예정일은 새로(규칙은 그대로 따라감)
+          if (rec.settleDueRule === 'date') { delete rec.settleDueRule; delete rec.settleDueDate; }
           if (rec.invoiceRecv) rec.invoiceRecv = '미수취';
           if (Array.isArray(rec.crew)) rec.crew = rec.crew.map(c => ({ id: newCrewId(), performerId: c.performerId || '', name: c.name || '', role: c.role || '서브', fee: Number(c.fee) || 0, settleStatus: '미정산' }));
         };
@@ -8442,6 +8527,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           profile, PRODUCT_KINDS, ITEM_UNITS, companyNames, productNames, companyOf, productOf, saveProfile, runTimeText, // ★ v3.0
           addCompany, removeCompany, addProduct, removeProduct, moveProduct, addItem, removeItem,
           todoFilterType, todoFilterPriority, newTodoForm, highPriorityTodos, pendingTodosCount, totalPendingPurchaseCost, filteredTodos,
+          DUE_RULES, SETTLE_RULES, dueRuleText, payDueOf, settleDueOf, payDueBadge, settleDueBadge, // ★ v3.0 예정일
           TASK_KINDS, taskIcon, showKeyOf, showByKey, editingTodoId, tasksOfShow, taskTimeText, taskShowChoices, onPickTaskShow, todoFormConflicts, tasksOnDate, resetTodoForm, editTodoItem, openTaskFromCalendar, addTaskForShow, holidayOf, longBreakOf, // ★ v3.0
           addTodoItem, toggleTodoDone, deleteTodoItem,
           themeMode, isSidebarOpen, isMobile, activeTab, scheduleViewMode, financeSubTab, selectedYearMonth,
