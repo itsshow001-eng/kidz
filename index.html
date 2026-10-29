@@ -2217,7 +2217,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div class="pb-3 border-b border-slate-800">
             <h2 class="text-base sm:text-lg font-bold text-white">⚙️ 설정 · 백업</h2>
             <p v-if="license" class="text-xs text-amber-300 font-bold mt-0.5">이츠쇼타임 프리미엄 · {{ license.name }}님 전용{{ license.no ? ' · 구매번호 ' + license.no : '' }}</p>
-            <p class="text-xs text-slate-400 mt-0.5 hidden sm:block">내 업체 정보 · 공연·상품 · 견적서 기본값 · 통장 · 구글 시트 연결 · 백업을 여기서 정해요.</p>
+            <p class="text-xs text-slate-400 mt-0.5 hidden sm:block">내 업체 정보 · 콘텐츠·상품 · 견적서 기본값 · 통장 · 구글 시트 연결 · 백업을 여기서 정해요.</p>
           </div>
 
           <!-- ★ v3.0: 내 업체 정보 · 내 공연·상품 · 추가 품목 (견적서·입력창 목록이 여기 값을 씀) -->
@@ -2316,8 +2316,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <select v-model="profile.defaults.issuer" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border"><option v-for="n in companyNames" :key="'di' + n" :value="n">{{ n }}</option></select></div>
               <div><label class="text-slate-400 block mb-1">서류 종류</label>
                 <select v-model="profile.defaults.adminDoc" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border"><option value="없음">없음</option><option value="계산서(면세)">계산서(면세)</option><option value="계산서">세금계산서</option><option value="원천징수">원천징수</option></select></div>
-              <div><label class="text-slate-400 block mb-1">공연</label>
-                <select v-model="profile.defaults.theme" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border"><option value="">(첫 번째 공연)</option><option v-for="n in productNames" :key="'dt' + n" :value="n">{{ n }}</option></select></div>
+              <div><label class="text-slate-400 block mb-1">콘텐츠</label>
+                <select v-model="profile.defaults.theme" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border"><option value="">(첫 번째 콘텐츠)</option><option v-for="n in productNames" :key="'dt' + n" :value="n">{{ n }}</option></select></div>
               <div><label class="text-slate-400 block mb-1">금액 (원)</label><input type="number" min="0" step="10000" v-model.number="profile.defaults.amount" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
               <div><label class="text-slate-400 block mb-1">지역</label><input type="text" v-model="profile.defaults.region" @change="saveProfile" placeholder="예: 서울" class="w-full px-3 py-2 rounded-xl border" /></div>
               <div><label class="text-slate-400 block mb-1">담당자 호칭</label><input type="text" v-model="profile.defaults.manager" @change="saveProfile" placeholder="예: 담당자님" class="w-full px-3 py-2 rounded-xl border" /></div>
@@ -2331,7 +2331,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div><label class="text-slate-400 block mb-1">견적서 제목</label><input type="text" v-model="profile.defaults.quoteTitle" @change="saveProfile" placeholder="예: 「{공연}」 초청 공연" class="w-full px-3 py-2 rounded-xl border" /></div>
               <div><label class="text-slate-400 block mb-1">계산서 품목 이름 (홈택스 엑셀)</label><input type="text" v-model="profile.defaults.taxItem" @change="saveProfile" placeholder="예: 문화예술공연 ({공연})" class="w-full px-3 py-2 rounded-xl border" /></div>
-              <div><label class="text-slate-400 block mb-1">견적서 공연 설명 (공연마다 '한 줄 소개'가 없을 때)</label><input type="text" v-model="profile.defaults.quoteIntro" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border" /></div>
+              <div><label class="text-slate-400 block mb-1">견적서 콘텐츠 설명 (콘텐츠마다 '한 줄 소개'가 없을 때)</label><input type="text" v-model="profile.defaults.quoteIntro" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border" /></div>
               <div><label class="text-slate-400 block mb-1">견적서 특이사항 (처음 채워지는 말)</label><input type="text" v-model="profile.defaults.quoteMemo" @change="saveProfile" placeholder="예: 장비 세팅·출장비 포함" class="w-full px-3 py-2 rounded-xl border" /></div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -2371,12 +2371,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <h3 class="text-sm font-bold text-white">📣 문의 문자에 넣을 우리 팀 자랑</h3>
               <p class="text-xs text-slate-400">'통화 확인 · 문의' 문자 아래에 붙어서, 여러 곳을 비교하는 담당자가 우리 팀을 기억하게 해요. 비워 둔 줄은 문자에 안 나와요.</p>
             </div>
-            <div><label class="text-slate-400 block mb-1">한 줄 소개 (공연마다 '한 줄 소개'가 있으면 그게 먼저 나와요)</label><input type="text" v-model="profile.appeal.intro" @change="saveProfile" placeholder="예: 아이들이 직접 참여하는 마술·버블 공연, 50분 동안 쉴 틈 없이!" class="w-full px-3 py-2 rounded-xl border" /></div>
+            <div><label class="text-slate-400 block mb-1">한 줄 소개 (콘텐츠마다 '한 줄 소개'가 있으면 그게 먼저 나와요)</label><input type="text" v-model="profile.appeal.intro" @change="saveProfile" placeholder="예: 아이들이 직접 참여하는 마술·버블 공연, 50분 동안 쉴 틈 없이!" class="w-full px-3 py-2 rounded-xl border" /></div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div v-for="(pt, pi) in profile.appeal.points" :key="'ap' + pi"><label class="text-slate-400 block mb-1">강점 {{ pi + 1 }}</label><input type="text" v-model="profile.appeal.points[pi]" @change="saveProfile" :placeholder="['예: 아이들이 무대에 올라와 함께해요', '예: 음향·조명·안전매트까지 다 챙겨 가요', '예: 서류(사업자등록증 등) 바로 드려요'][pi]" class="w-full px-3 py-2 rounded-xl border" /></div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <div><label class="text-slate-400 block mb-1">공연 영상 링크</label><input type="text" v-model="profile.appeal.video" @change="saveProfile" placeholder="https://youtu.be/…" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+              <div><label class="text-slate-400 block mb-1">소개 영상 링크</label><input type="text" v-model="profile.appeal.video" @change="saveProfile" placeholder="https://youtu.be/…" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
               <div><label class="text-slate-400 block mb-1">후기 링크 (블로그 등)</label><input type="text" v-model="profile.appeal.review" @change="saveProfile" placeholder="https://blog.naver.com/…" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
               <div><label class="text-slate-400 block mb-1">문의 날짜 먼저 잡아 두는 기간 (일)</label><input type="number" min="1" v-model.number="profile.appeal.holdDays" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
             </div>
@@ -2386,7 +2386,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div :class="foldCls('trash')" @click="foldClick('trash', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
             <div class="pb-2 border-b border-slate-700/60">
               <h3 class="text-sm font-bold text-white">🗑️ 휴지통 ({{ trash.length }}건 · 30일 보관)</h3>
-              <p class="text-xs text-slate-400">잘못 적어 지운 일정이에요. 30일이 지나면 저절로 지워져요. 진짜 취소된 공연은 휴지통이 아니라 장부에 '취소'로 남아요.</p>
+              <p class="text-xs text-slate-400">잘못 적어 지운 일정이에요. 30일이 지나면 저절로 지워져요. 진짜 취소된 일정은 휴지통이 아니라 장부에 '취소'로 남아요.</p>
             </div>
             <div v-if="trash.length === 0" class="text-xs text-slate-400">비어 있어요.</div>
             <div v-for="(t, ti) in trash" :key="'tr' + ti" class="flex flex-wrap items-center gap-2 text-xs rounded-xl border border-slate-700 p-2.5">
@@ -2466,14 +2466,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </div>
               <button type="button" @click="addCashAccount" class="p-3.5 rounded-xl border border-dashed border-slate-700/80 text-xs font-bold text-indigo-300 cursor-pointer min-h-[62px]">+ 통장 추가</button>
             </div>
-            <p v-if="receivedByAccount['']" class="text-[11px] text-slate-400">통장을 안 적은 올해 입금: ₩{{ receivedByAccount[''].year.toLocaleString() }} ({{ receivedByAccount[''].count }}건) — 예전 기록은 공연 고치기 창의 '입금 상태' 아래에서 통장을 골라 둘 수 있어요.</p>
+            <p v-if="receivedByAccount['']" class="text-[11px] text-slate-400">통장을 안 적은 올해 입금: ₩{{ receivedByAccount[''].year.toLocaleString() }} ({{ receivedByAccount[''].count }}건) — 예전 기록은 일정 고치기 창의 '입금 상태' 아래에서 통장을 골라 둘 수 있어요.</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div :class="foldCls('excel')" @click="foldClick('excel', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 flex flex-col justify-between">
               <div class="space-y-1">
                 <h3 class="text-sm font-bold text-white">📥 전체 ERP 데이터 엑셀(.xlsx) 다운로드</h3>
-                <p class="text-xs text-slate-400">현재 화면에서 수정·추가한 공연 마스터(취소 기록 포함), 고객관리(CRM), 원천징수 내역을 시트별 엑셀 파일로 내려받습니다.</p>
+                <p class="text-xs text-slate-400">현재 화면에서 수정·추가한 일정 마스터(취소 기록 포함), 고객관리(CRM), 원천징수 내역을 시트별 엑셀 파일로 내려받습니다.</p>
               </div>
               <button @click="exportToExcel" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs cursor-pointer shadow-md">
                 📊 통합 ERP 엑셀 파일(.xlsx) 다운로드
