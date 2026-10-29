@@ -214,6 +214,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     html:not(.dark) .itt-x { color: #1e293b; background: #e2e8f0; border-color: #94a3b8; }
     .itt-mhead, .itt-mfoot { background: #121a33 !important; } /* 창 바탕(반투명)과 같은 색, 비치지 않게 */
     html:not(.dark) .itt-mhead, html:not(.dark) .itt-mfoot { background: #f8fafc !important; }
+    /* ★ v3.0: 하늘색(날씨·메일)에 쓰는 색 — 미리 만든 Tailwind 묶음에 없어서 여기 둠 */
+    .bg-sky-600 { background-color: #0284c7; } .bg-sky-600\/80 { background-color: rgba(2,132,199,.8); } .hover\:bg-sky-500:hover { background-color: #0ea5e9; } .hover\:bg-sky-600:hover { background-color: #0284c7; }
+    .border-sky-500 { border-color: #0ea5e9; } .border-sky-500\/50 { border-color: rgba(14,165,233,.5); } .border-sky-500\/40 { border-color: rgba(14,165,233,.4); } .bg-sky-500\/10 { background-color: rgba(14,165,233,.1); }
+    .text-sky-200 { color: #bae6fd; } html:not(.dark) .text-sky-200 { color: #0369a1; }
     @media (max-width: 639px) { .m-flow { max-height: none !important; overflow-y: visible !important; } .itt-mhead .itt-x-abs { position: absolute; right: 20px; top: 16px; } .itt-mhead h3 { padding-right: 46px; } }
   </style>
   <!-- ERP-INLINE:BEGIN tailwind-css 3.4.17 (미리 만들어 둔 스타일: 화면 코드에 새 디자인 클래스를 쓰면 refresh 필요) -->
@@ -531,7 +535,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <template v-else>
                 <div class="text-slate-200">{{ a.icon }} {{ a.text }}</div>
                 <div class="flex flex-wrap gap-1.5 mt-1.5">
-                  <button v-for="s in a.shows" :key="'am-' + (s.uid || s.no)" @click="a.smsType ? openSmsAs(s, a.smsType) : openShowSummary(s)" type="button" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold cursor-pointer">{{ shortDateLabel(s.showDate) }} {{ s.client }}</button>
+                  <button v-for="s in a.shows" :key="'am-' + (s.uid || s.no)" @click="a.mailType ? openMailModal(s, a.mailType) : (a.smsType ? openSmsAs(s, a.smsType) : openShowSummary(s))" type="button" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold cursor-pointer">{{ shortDateLabel(s.showDate) }} {{ s.client }}</button>
                 </div>
               </template>
             </div>
@@ -1164,6 +1168,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                       <button @click.stop="openMapNavigation(s.address || s.venueName || s.client, s.region)" class="px-1.5 py-0.5 rounded bg-blue-600/20 text-blue-300 text-[10px] font-bold">📍길</button>
                       <button @click.stop="openSmsModal(s)" class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">💬문자</button>
                       <button @click.stop="openQuoteModal(s)" class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">📄견적</button>
+                      <button @click.stop="openMailModal(s)" class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 text-[10px] font-bold">📧메일{{ mailSentOf(s).length ? '✓' : '' }}</button>
                     </div>
                   </div>
                 </div>
@@ -2245,6 +2250,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <div><label class="text-slate-400 block mb-1">짧은 설명 (견적서 발행 목록에 괄호로)</label><input type="text" v-model="c.label" @change="saveProfile" placeholder="예: 서울 · 면세사업자" class="w-full px-3 py-2 rounded-xl border" /></div>
                 <div class="sm:col-span-2"><label class="text-slate-400 block mb-1">사업자 구분 문구 (견적서)</label><input type="text" v-model="c.note" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border" /></div>
                 <div><label class="text-slate-400 block mb-1">사업자등록번호 (적으면 견적서에 나와요)</label><input type="text" v-model="c.bizNo" @change="saveProfile" placeholder="000-00-00000" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+                <div><label class="text-slate-400 block mb-1">보낼 서류 (📧 메일 준비)</label>
+                  <select v-model="c.docType" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border"><option value="사업자">사업자: 사업자등록증 + 통장 사본</option><option value="개인">개인(사업자 없음): 신분증 + 통장 사본</option></select></div>
                 <div><label class="text-slate-400 block mb-1">입금 계좌 (나중에 견적서·정산 문자에)</label><input type="text" v-model="c.bank" @change="saveProfile" placeholder="은행 · 계좌번호 · 예금주" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
                 <div class="sm:col-span-2 flex justify-end"><button type="button" @click="removeCompany(ci)" class="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold cursor-pointer">이 사업자 빼기</button></div>
               </div>
@@ -2339,6 +2346,23 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <button type="button" @click="setWeatherOn(weatherOn !== '1')" class="px-3 py-1 rounded-lg font-bold cursor-pointer" :class="weatherOn === '1' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300'">{{ weatherOn === '1' ? '켜져 있어요 (누르면 끄기)' : '꺼져 있어요 (누르면 켜기)' }}</button>
                 <span class="text-[10px] text-slate-500">좌표만 보내요 · {{ WX_NOTE }}</span></div>
               <p class="text-[10px] text-slate-500 mt-0.5">설날·추석·대체공휴일 등 2026~2028년 공휴일은 이미 들어 있어요. 빨간 날짜로 보이고, 주말과 이어져 3일 이상 쉬면 연휴로 칠해져요.</p></div>
+          </div>
+
+          <!-- ★ v3.0: 📧 메일 준비 틀 -->
+          <div :class="foldCls('mailtpl')" @click="foldClick('mailtpl', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 text-xs">
+            <div class="pb-2 border-b border-slate-700/60">
+              <h3 class="text-sm font-bold text-white">📧 메일 준비 틀</h3>
+              <p class="text-xs text-slate-400">일정의 [📧 메일]을 누르면 이 틀로 제목·본문이 채워져요. {기관} {담당자} {공연} {날짜} {금액} {계좌} {회사} {대표} {연락처} {서류목록} {입금안내} 자리에 값이 들어가요.</p>
+            </div>
+            <div><label class="text-slate-400 block mb-1">🌐 웹메일 쓰기 주소 (네이버가 기본, 지메일이면 https://mail.google.com)</label><input type="text" v-model="profile.defaults.mailWebUrl" @change="saveProfile" placeholder="https://mail.naver.com/v2/new" class="w-full px-3 py-2 rounded-xl border font-mono" /></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="space-y-1.5"><div class="flex items-center justify-between"><b class="text-slate-200">견적서 보내기</b><button type="button" @click="resetMailTpl('quote')" class="text-slate-400 underline cursor-pointer">처음 문구로</button></div>
+                <input type="text" v-model="mailQuoteSubject" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border" />
+                <textarea v-model="mailQuoteBody" @change="saveProfile" rows="8" class="w-full px-3 py-2 rounded-xl border"></textarea></div>
+              <div class="space-y-1.5"><div class="flex items-center justify-between"><b class="text-slate-200">공연 다음 날 서류·입금 안내</b><button type="button" @click="resetMailTpl('after')" class="text-slate-400 underline cursor-pointer">처음 문구로</button></div>
+                <input type="text" v-model="mailAfterSubject" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border" />
+                <textarea v-model="mailAfterBody" @change="saveProfile" rows="8" class="w-full px-3 py-2 rounded-xl border"></textarea></div>
+            </div>
           </div>
 
           <!-- ★ v3.0: 문의 문자 어필 칸 -->
@@ -3043,6 +3067,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <button type="button" @click="copyFromEditModal" class="px-3.5 py-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-xs font-bold cursor-pointer border border-indigo-500/40">
               📋 <span class="sm:hidden">복사</span><span class="hidden sm:inline">이 일정 복사하여 새로 등록</span>
             </button>
+            <button type="button" @click="openMailModal(editingShowForm)" class="px-3.5 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-600 text-sky-300 hover:text-white text-xs font-bold cursor-pointer border border-sky-500/40">📧 메일<span v-if="mailSentOf(editingShowForm).length"> ✓</span></button>
             <button type="button" @click="markCancelledInModal" class="px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer border"
               :class="editingShowForm.status === '취소' ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40'">
               <span class="sm:hidden">{{ editingShowForm.status === '취소' ? '🟢 취소 해제' : '🚫 취소 표시' }}</span><span class="hidden sm:inline">{{ editingShowForm.status === '취소' ? '🟢 취소 해제 (확정으로 복구)' : '🚫 취소된 일정으로 표시 (삭제안함)' }}</span>
@@ -3627,6 +3652,49 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     </div>
 
     <!-- ======================================================================= -->
+
+    <!-- ★ v3.0: 📧 메일 준비 (각자 쓰는 메일로 직접 보냄 · 서류는 체크리스트) -->
+    <div v-if="mailModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" @click.self="mailModalOpen = false">
+      <div class="bg-slate-900 border border-sky-500/50 rounded-3xl max-w-xl w-full p-6 space-y-3 shadow-2xl max-h-[92vh] overflow-y-auto text-xs">
+        <div class="itt-mhead bg-slate-900 flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="text-base font-bold text-white">📧 메일 준비 · {{ mailShow ? mailShow.client : '' }}</h3>
+          <button @click="mailModalOpen = false" class="itt-x itt-x-abs cursor-pointer" title="닫기">✕</button>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <button v-for="(lbl, k) in MAIL_TYPES" :key="'mt' + k" type="button" @click="setMailType(k)" class="px-3 py-1.5 rounded-xl border font-bold cursor-pointer"
+            :class="mailForm.type === k ? 'bg-sky-600 text-white border-sky-500' : 'bg-slate-900 text-slate-400 border-slate-700'">{{ lbl }}</button>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1"><label class="text-slate-400">받는 사람</label><button type="button" @click="copyMailPart(mailForm.to, '받는 사람')" class="text-sky-300 font-bold cursor-pointer">복사</button></div>
+          <input type="email" v-model="mailForm.to" placeholder="고객 이메일 (일정 ⑤ 계산서 정보·단골고객에 적으면 자동)" class="w-full px-3 py-2 rounded-xl border font-mono" />
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1"><label class="text-slate-400">제목</label><button type="button" @click="copyMailPart(mailForm.subject, '제목')" class="text-sky-300 font-bold cursor-pointer">복사</button></div>
+          <input type="text" v-model="mailForm.subject" class="w-full px-3 py-2 rounded-xl border" />
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1"><label class="text-slate-400">본문 <span class="text-[10px] text-slate-500">(여기서 고쳐도 돼요)</span></label><button type="button" @click="copyMailPart(mailForm.body, '본문')" class="text-sky-300 font-bold cursor-pointer">복사</button></div>
+          <textarea v-model="mailForm.body" rows="9" class="w-full px-3 py-2 rounded-xl border"></textarea>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5">
+          <div class="font-bold text-slate-200">📎 붙일 서류 (보내기 전에 체크)</div>
+          <label v-for="d in (mailShow ? mailDocs(mailForm.type, mailShow) : [])" :key="'md' + d" class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" v-model="mailForm.checks[d]" class="w-4 h-4 accent-emerald-500" /><span :class="mailForm.checks[d] ? 'text-emerald-300 line-through' : 'text-slate-300'">{{ d }}</span>
+          </label>
+          <div v-if="mailForm.type === 'quote'" class="pt-1"><button type="button" @click="mailShow && openQuoteModal(mailShow)" class="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 font-bold cursor-pointer">📄 견적서 열기 (PDF 저장)</button></div>
+          <div class="text-[10px] text-slate-500">서류 파일은 PC '이츠쇼 서류' 폴더(휴대폰은 사진첩·파일 앱)에 한 번 모아 두면 메일 쓰기 창에 끌어다 놓기만 하면 돼요.</div>
+          <div v-if="mailHasId" class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/40 text-rose-200 font-bold">🔒 신분증 사본이 들어가요. 받는 주소를 한 번 더 확인하고, 사본에 '○○ 공연 원천징수용'처럼 용도를 적어 두면 안전해요.</div>
+        </div>
+        <div v-if="mailShow && mailSentOf(mailShow).length" class="text-[11px] text-emerald-300">📧 보낸 기록: <span v-for="(m, i) in mailSentOf(mailShow)" :key="'ml' + i">{{ i ? ' · ' : '' }}{{ String(m.at || '').slice(5, 16).replace('T', ' ') }} {{ MAIL_TYPES[m.type] || m.type }}</span></div>
+        <div class="itt-mfoot bg-slate-900 flex flex-wrap items-center gap-2 pt-3 border-t border-slate-800">
+          <a :href="mailtoHref" class="px-3 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold">📱 메일 앱 열기</a>
+          <button type="button" @click="openWebMail" class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 font-bold cursor-pointer">🌐 웹메일 쓰기 열기</button>
+          <button v-if="canShare" type="button" @click="shareMail" class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 font-bold cursor-pointer">공유하기</button>
+          <button type="button" @click="markMailSent" class="ml-auto px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black cursor-pointer">✅ 보냈어요</button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL 5: 💬 상황별 안내 문자 / 카카오톡 템플릿 1초 자동완성 & 발송 모달 -->
     <!-- ======================================================================= -->
     <div v-if="smsModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm" @click.self="smsModalOpen = false">
@@ -3729,6 +3797,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <button @click="printQuoteSheet" class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black cursor-pointer shadow-lg">
               🖨️ PDF 저장 / 인쇄하기
             </button>
+            <button @click="openMailModal({ no: quoteData.no }, 'quote')" class="px-3 py-1.5 rounded-xl bg-sky-600/80 hover:bg-sky-500 text-white text-xs font-black cursor-pointer">📧 메일 준비</button>
             <button @click="quoteModalOpen = false" class="itt-x cursor-pointer" title="닫기">✕</button>
           </div>
         </div>
@@ -4190,7 +4259,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           if (!p || typeof p !== 'object') return d;
           return {
             owner: Object.assign({}, d.owner, p.owner || {}),
-            companies: Array.isArray(p.companies) ? p.companies.map(c => Object.assign({ name: '', short: ((d.companies.find(x => x.name === c.name) || {}).short) || '', en: '', label: '', taxType: '과세', note: '', bizNo: '', bank: '' }, c)) : d.companies,
+            companies: Array.isArray(p.companies) ? p.companies.map(c => Object.assign({ name: '', short: ((d.companies.find(x => x.name === c.name) || {}).short) || '', en: '', label: '', taxType: '과세', note: '', bizNo: '', bank: '', docType: '사업자' }, c)) : d.companies,
             products: Array.isArray(p.products) ? p.products.map(x => Object.assign({ name: '', kind: '공연', runMin: '', setupMin: '', people: '', price: '', intro: '' }, x)) : d.products,
             items: Array.isArray(p.items) ? p.items.map(x => Object.assign({ name: '', price: '', unit: '회' }, x)) : d.items,
             smsTemplates: (p.smsTemplates && typeof p.smsTemplates === 'object') ? Object.assign({}, p.smsTemplates) : {}, // ★ v3.0 고친 문자 틀
@@ -5227,6 +5296,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const waitInq = shows.value.filter(s => isInquiry(s) && s.showDate && s.showDate >= today && s.reqDate && s.reqDate <= addDaysToDateStr(today, -3) && !holdOver.includes(s));
           if (waitInq.length) list.push({ key: 'waitinq', icon: '⏰', text: `답 기다리는 문의 ${waitInq.length}건 (3일 넘음) → 눌러서 안부 문자`, shows: waitInq, smsType: 'follow' });
           if (lastYearAgain.value.length) list.push({ key: 'lastyear', icon: '🔁', text: `작년 이맘때 공연한 곳 ${lastYearAgain.value.length}곳 — 올해도 연락해 볼까요?`, go: 'lastyear' }); // ★ v3.0
+          // ★ v3.0: 공연 다음 날(지난 3일) 서류·입금 안내 메일을 아직 안 보낸 곳 (고객 이메일이 있는 곳만)
+          const mailDue = shows.value.filter(s => (s.status === '완료' || s.status === '확정') && s.showDate && s.showDate < today && s.showDate >= addDaysToDateStr(today, -3)
+            && !isDirectSettle(s) && workTypeOf(s) !== '서브' && mailToOf(s) && !mailSentOf(s, 'after').length).sort(byDateTime);
+          if (mailDue.length) list.push({ key: 'mailafter', icon: '📧', text: `공연 다음 날 서류 메일 보낼 곳 ${mailDue.length}건 → 눌러서 메일 준비`, shows: mailDue, mailType: 'after' });
           // ★ v3.0: 7일 안 공연 중 비·눈 소식
           const wetShows = weatherOn.value === '1' ? shows.value.filter(s => { const w = weatherOf(s); return w && w.wet; }).sort(byDateTime) : [];
           if (wetShows.length) list.push({ key: 'rain', icon: '☔', text: `공연 날 비·눈 소식 ${wetShows.length}건 (7일 안 · 예보는 바뀔 수 있어요)`, shows: wetShows });
@@ -7154,6 +7227,89 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
 
         // ★ NEW FEATURE 2: 상황별 안내 문자 / 카카오톡 템플릿 1초 자동완성 ★
+
+        // ★ v3.0: 📧 메일 준비 — 받는 사람·제목·본문을 채워 각자 쓰는 메일(앱·네이버 등)로 넘기고, 붙일 서류 체크리스트와 '보냄' 기록을 남김
+        //   메일은 대표님 메일에서 직접 보냄(설치·서버 없음). 서류 파일은 프로그램에 넣지 않음
+        const MAIL_TYPES = { quote: '견적서 보내기', after: '공연 다음 날 서류·입금 안내' };
+        const DEFAULT_MAIL = {
+          quote: { subject: '[{회사}] {기관} 「{공연}」 견적서 보내드립니다', body: '안녕하세요, {기관} {담당자}.\n{회사} {대표}입니다.\n\n문의 주신 {날짜} 「{공연}」 견적서와 서류를 보내드립니다.\n{서류목록}\n\n확인해 보시고 궁금한 점은 편하게 연락 주세요.\n감사합니다.\n\n{회사} {대표} 드림\n{연락처}' },
+          after: { subject: '[{회사}] {날짜} 「{공연}」 감사 인사와 정산 서류 보내드립니다', body: '안녕하세요, {기관} {담당자}.\n{회사} {대표}입니다.\n\n{날짜} 「{공연}」에 함께해 주셔서 감사합니다.\n정산에 필요한 서류를 보내드립니다.\n{서류목록}\n\n{입금안내}\n\n다음 행사 때도 불러 주시면 정성껏 준비하겠습니다.\n감사합니다.\n\n{회사} {대표} 드림\n{연락처}' }
+        };
+        const mailTpl = (type) => ({ subject: D()['mail_' + type + '_subject'] || DEFAULT_MAIL[type].subject, body: D()['mail_' + type + '_body'] || DEFAULT_MAIL[type].body });
+        const isPersonalIssuer = (iss) => ((companyOf(iss) || {}).docType) === '개인';
+        const mailDocs = (type, s) => {
+          const iss = (s && s.issuer) || defaultIssuer();
+          return (type === 'quote' ? ['견적서 (PDF)'] : []).concat([isPersonalIssuer(iss) ? '신분증 사본' : '사업자등록증 사본', '통장 사본']);
+        };
+        const mailToOf = (s) => {
+          if (!s) return '';
+          if (s.email) return String(s.email).trim();
+          const c = customers.value.find(x => (s.custId && x.custId === s.custId) || normalizeName(x.client) === normalizeName(s.client));
+          return (c && c.email) ? String(c.email).trim() : '';
+        };
+        const fillMail = (text, type, s) => {
+          const iss = s.issuer || defaultIssuer();
+          const co = companyOf(iss) || {};
+          const d = vIsRealDate(s.showDate) ? `${Number(s.showDate.slice(5, 7))}월 ${Number(s.showDate.slice(8, 10))}일` : '';
+          const bank = String(co.bank || '').trim();
+          const payLine = s.payStatus === '완납' ? '입금도 확인했습니다. 감사합니다.'
+            : [bank ? '입금 계좌: ' + bank : '', amountDue(s) > 0 ? '금액: ₩' + amountDue(s).toLocaleString() : ''].filter(Boolean).join('\n');
+          const contact = [profile.value.owner.phone, profile.value.owner.email].filter(Boolean).join(' · ');
+          const map = { '{회사}': iss || '', '{대표}': profile.value.owner.ceo || '', '{연락처}': contact, '{기관}': s.client || '', '{담당자}': s.manager || '담당자님',
+            '{공연}': s.theme || '', '{날짜}': d, '{금액}': amountDue(s) > 0 ? '₩' + amountDue(s).toLocaleString() : '', '{계좌}': bank,
+            '{서류목록}': mailDocs(type, s).map(x => '· ' + x).join('\n'), '{입금안내}': payLine };
+          return Object.keys(map).reduce((t, k) => t.split(k).join(map[k]), String(text || '')).replace(/\n{3,}/g, '\n\n');
+        };
+        const mailModalOpen = ref(false);
+        const mailForm = ref({ no: null, type: 'quote', to: '', subject: '', body: '', checks: {} });
+        const mailShow = computed(() => shows.value.find(x => x.no === mailForm.value.no) || null);
+        const setMailType = (type) => {
+          const s = mailShow.value; if (!s) return;
+          const t = mailTpl(type);
+          mailForm.value = Object.assign({}, mailForm.value, { type, subject: fillMail(t.subject, type, s), body: fillMail(t.body, type, s), checks: {} });
+        };
+        const openMailModal = (showItem, type) => {
+          const s = showItem && shows.value.find(x => (showItem.uid && x.uid === showItem.uid) || x.no === showItem.no);
+          if (!s) { showToast('먼저 일정을 저장한 뒤 메일을 준비해 주세요.'); return; }
+          const tp = type || (s.showDate && s.showDate < referenceToday.value ? 'after' : 'quote');
+          mailForm.value = { no: s.no, type: tp, to: mailToOf(s), subject: '', body: '', checks: {} };
+          setMailType(tp);
+          showModalOpen.value = false; quoteModalOpen.value = false; summaryShow.value = null;
+          mailModalOpen.value = true;
+        };
+        const mailHasId = computed(() => mailShow.value ? mailDocs(mailForm.value.type, mailShow.value).includes('신분증 사본') : false);
+        const mailtoHref = computed(() => { const f = mailForm.value; return 'mailto:' + encodeURIComponent(f.to || '').replace(/%40/g, '@').replace(/%2C/gi, ',') + '?subject=' + encodeURIComponent(f.subject || '') + '&body=' + encodeURIComponent(f.body || ''); });
+        const openWebMail = () => {
+          const f = mailForm.value; const base = String(D().mailWebUrl || 'https://mail.naver.com/v2/new').trim();
+          let url = base;
+          if (/mail\.google\.com/.test(base)) url = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(f.to || '') + '&su=' + encodeURIComponent(f.subject || '') + '&body=' + encodeURIComponent(f.body || '');
+          window.open(url, '_blank');
+          if (!/mail\.google\.com/.test(base)) showToast('메일 쓰기 창이 열려요. 받는 사람·제목·본문은 [복사] 버튼으로 붙여넣어 주세요.', 5000);
+        };
+        const shareMail = async () => {
+          const f = mailForm.value;
+          try { await navigator.share({ title: f.subject, text: (f.to ? '받는 사람: ' + f.to + '\n' : '') + f.subject + '\n\n' + f.body }); } catch (e) {}
+        };
+        const copyMailPart = async (text, label) => {
+          try { await navigator.clipboard.writeText(text || ''); }
+          catch (e) { const ta = document.createElement('textarea'); ta.value = text || ''; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+          showToast(`📋 ${label} 복사했어요. 메일 쓰기 창에 붙여넣으세요.`);
+        };
+        const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+        const markMailSent = () => {
+          const s = mailShow.value; if (!s) return;
+          const f = mailForm.value;
+          if (mailHasId.value && !confirm(`🔒 신분증 사본이 함께 나간 메일이에요.\n받는 주소가 맞는지 한 번 더 확인해 주세요: ${f.to || '(비어 있음)'}\n\n보냈다고 기록할까요?`)) return;
+          s.mailLog = (Array.isArray(s.mailLog) ? s.mailLog : []).concat([{ at: nowStamp(), type: f.type, to: f.to || '' }]);
+          s.updatedAt = nowStamp();
+          saveAllToStorage();
+          mailModalOpen.value = false;
+          showToast(`📧 '${s.client}' ${MAIL_TYPES[f.type]} 보냄으로 기록했어요.`);
+        };
+        const mailSentOf = (s, type) => (s && Array.isArray(s.mailLog) ? s.mailLog.filter(m => !type || m.type === type) : []);
+        const resetMailTpl = (type) => { delete profile.value.defaults['mail_' + type + '_subject']; delete profile.value.defaults['mail_' + type + '_body']; profile.value.defaults = Object.assign({}, profile.value.defaults); saveProfile(); showToast('메일 틀을 처음 문구로 되돌렸어요.'); };
+        const mailTplField = (type, part) => computed({ get: () => mailTpl(type)[part], set: (v) => { profile.value.defaults['mail_' + type + '_' + part] = v; } });
+        const mailQuoteSubject = mailTplField('quote', 'subject'), mailQuoteBody = mailTplField('quote', 'body'), mailAfterSubject = mailTplField('after', 'subject'), mailAfterBody = mailTplField('after', 'body');
         const smsModalOpen = ref(false);
         const smsTarget = ref({});
         const smsType = ref('confirm');
@@ -8663,7 +8819,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           addCompany, removeCompany, addProduct, removeProduct, moveProduct, addItem, removeItem,
           todoFilterType, todoFilterPriority, newTodoForm, highPriorityTodos, pendingTodosCount, totalPendingPurchaseCost, filteredTodos,
           DUE_RULES, SETTLE_RULES, dueRuleText, payDueOf, settleDueOf, payDueBadge, settleDueBadge, // ★ v3.0 예정일
-          scrollToCalendarTop, weatherOn, weatherOf, setWeatherOn, fetchWeather, WX_NOTE, performerFilterField, FIELD_ORDER, fieldsOf, fieldClass, fieldLabelOf, toggleField, performerChoices, TASK_KINDS, taskIcon, showKeyOf, showByKey, editingTodoId, tasksOfShow, taskTimeText, taskShowChoices, onPickTaskShow, todoFormConflicts, tasksOnDate, resetTodoForm, editTodoItem, openTaskFromCalendar, addTaskForShow, holidayOf, longBreakOf, // ★ v3.0
+          scrollToCalendarTop, MAIL_TYPES, mailModalOpen, mailForm, mailShow, setMailType, openMailModal, mailHasId, mailtoHref, openWebMail, shareMail, canShare, markMailSent, mailSentOf, mailDocs, resetMailTpl, mailQuoteSubject, mailQuoteBody, mailAfterSubject, mailAfterBody, copyMailPart, weatherOn, weatherOf, setWeatherOn, fetchWeather, WX_NOTE, performerFilterField, FIELD_ORDER, fieldsOf, fieldClass, fieldLabelOf, toggleField, performerChoices, TASK_KINDS, taskIcon, showKeyOf, showByKey, editingTodoId, tasksOfShow, taskTimeText, taskShowChoices, onPickTaskShow, todoFormConflicts, tasksOnDate, resetTodoForm, editTodoItem, openTaskFromCalendar, addTaskForShow, holidayOf, longBreakOf, // ★ v3.0
           addTodoItem, toggleTodoDone, deleteTodoItem,
           themeMode, isSidebarOpen, isMobile, activeTab, scheduleViewMode, financeSubTab, selectedYearMonth,
           referenceToday, setTodayToRealDate, isWithin5Days, getDdayLabel, next5DaysRangeLabel, next5DaysShows,
