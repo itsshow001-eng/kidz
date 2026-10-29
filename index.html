@@ -325,7 +325,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         <button @click="openNewShowModal('single')" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30 flex items-center space-x-1 cursor-pointer transition-all">
           <span>＋</span>
           <span class="sm:hidden">등록</span>
-          <span class="hidden sm:inline">새 공연</span>
+          <span class="hidden sm:inline">새 일정</span>
         </button>
 
         <button @click="toggleTheme" class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-sm cursor-pointer shrink-0" :title="themeMode === 'dark' ? '라이트 모드' : '다크 모드'">
@@ -391,7 +391,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </select>
           </div>
           <div class="pt-1 border-t border-slate-800/80 flex justify-between items-center text-[11px]">
-            <span class="text-slate-400">정상 진행 공연</span>
+            <span class="text-slate-400">진행 일정</span>
             <strong class="font-mono text-indigo-400">{{ activeShowsCount }}건</strong>
           </div>
           <div class="flex justify-between items-center text-[11px]">
@@ -470,7 +470,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <span>📊 오늘의 브리핑</span>
                 <span class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono badge-nowrap">{{ selectedYearMonth === 'ALL' ? '전체' : selectedYearMonth }}</span>
               </h2>
-              <p class="text-xs text-slate-400 mt-0.5 hidden sm:block">오늘부터 5일간 예정된 중점 공연 브리핑과 사업자별 매출·정산 요약입니다.</p>
+              <p class="text-xs text-slate-400 mt-0.5 hidden sm:block">오늘부터 5일간 예정된 중점 일정 브리핑과 사업자별 매출·정산 요약입니다.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <span class="text-xs text-slate-400">기준일(오늘):</span>
@@ -485,13 +485,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <!-- ★ v2.7 ① 오늘 · 내일 공연 (시간순 한 줄씩 · 누르면 상세 요약 카드) -->
           <div class="rounded-2xl bg-slate-800/90 border-2 border-amber-500/60 p-4 space-y-3 shadow-xl">
             <div class="flex items-center justify-between gap-2">
-              <h3 class="text-sm sm:text-base font-black text-white">🎪 오늘 · 내일 공연</h3>
+              <h3 class="text-sm sm:text-base font-black text-white">🎪 오늘 · 내일 일정</h3>
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold badge-nowrap">{{ todayShows.length + tomorrowShows.length }}건</span>
             </div>
             <!-- ★ v3.0: 날씨 켜기(기기마다 처음 한 번) · 주의 문구 -->
             <div v-if="weatherOn === ''" class="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/40 text-[11px] text-sky-200 space-y-1.5">
-              <div class="font-bold">☔ 공연 지역 날씨도 볼까요? (7일 안 공연)</div>
-              <div class="text-slate-300">무료 예보 서비스(Open-Meteo)에서 받아요. 공연 '지역' 칸으로 이 기기 안에서 위치를 찾고, 밖으로는 좌표만 보내요. 기관·고객 정보는 보내지 않아요.</div>
+              <div class="font-bold">☔ 일정 지역 날씨도 볼까요? (7일 안 일정)</div>
+              <div class="text-slate-300">무료 예보 서비스(Open-Meteo)에서 받아요. 일정 '지역' 칸으로 이 기기 안에서 위치를 찾고, 밖으로는 좌표만 보내요. 기관·고객 정보는 보내지 않아요.</div>
               <div class="flex gap-2"><button type="button" @click="setWeatherOn(true)" class="px-3 py-1 rounded-lg bg-sky-600 text-white font-bold cursor-pointer">켜기</button><button type="button" @click="setWeatherOn(false)" class="px-3 py-1 rounded-lg bg-slate-800 text-slate-300 font-bold cursor-pointer">안 볼래요</button></div>
             </div>
             <div v-if="weatherOn === '1' && todayShows.concat(tomorrowShows).some(s => weatherOf(s))" class="text-[10px] text-slate-500">☔ {{ WX_NOTE }} <a href="https://www.weather.go.kr" target="_blank" rel="noopener" class="underline text-sky-300">날씨누리</a></div>
@@ -517,10 +517,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 </span>
                 <span class="text-slate-500 shrink-0">›</span>
               </button>
-              <div v-if="g.shows.length === 0" class="text-xs text-slate-400">{{ g.label }}은 공연이 없어요.</div>
+              <div v-if="g.shows.length === 0" class="text-xs text-slate-400">{{ g.label }}은 일정이 없어요.</div>
             </div>
             <div v-if="todayShows.length === 0 && tomorrowShows.length === 0 && (weekShows[0] || nextShowAfterWeek)" class="text-xs text-slate-400 pt-1 border-t border-slate-700/60">
-              다음 공연: <button @click="openShowSummary(weekShows[0] || nextShowAfterWeek)" class="font-bold text-amber-300 underline cursor-pointer">{{ shortDateLabel((weekShows[0] || nextShowAfterWeek).showDate) }} {{ (weekShows[0] || nextShowAfterWeek).showTime }} {{ (weekShows[0] || nextShowAfterWeek).client }}</button>
+              다음 일정: <button @click="openShowSummary(weekShows[0] || nextShowAfterWeek)" class="font-bold text-amber-300 underline cursor-pointer">{{ shortDateLabel((weekShows[0] || nextShowAfterWeek).showDate) }} {{ (weekShows[0] || nextShowAfterWeek).showTime }} {{ (weekShows[0] || nextShowAfterWeek).client }}</button>
             </div>
           </div>
 
@@ -562,7 +562,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <span class="text-slate-500 shrink-0">›</span>
               </button>
             </div>
-            <div v-else class="text-xs text-slate-400">앞으로 7일 동안 잡힌 공연이 없어요.</div>
+            <div v-else class="text-xs text-slate-400">앞으로 7일 동안 잡힌 일정이 없어요.</div>
           </div>
 
           <!-- ★ v2.7 ④ 숫자 4개 (작게) -->
@@ -576,7 +576,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div @click="goToUnpaidView" class="rounded-2xl bg-slate-800/90 border border-rose-500/40 p-3 space-y-0.5 cursor-pointer hover:border-rose-400 transition-all">
               <div class="text-[11px] font-bold text-rose-300">받을 돈 (미입금 {{ unpaidShows.length }}건)</div>
               <div class="text-lg font-black text-rose-400 font-mono">₩{{ totalUnpaidAmount.toLocaleString() }}</div>
-              <div class="text-[10px] text-slate-400 font-mono">공연 끝남 ₩{{ unpaidSplit.past.toLocaleString() }} · 예정 ₩{{ unpaidSplit.plan.toLocaleString() }}</div>
+              <div class="text-[10px] text-slate-400 font-mono">일정 끝남 ₩{{ unpaidSplit.past.toLocaleString() }} · 예정 ₩{{ unpaidSplit.plan.toLocaleString() }}</div>
             </div>
             <div @click="openSettlementTab" class="rounded-2xl bg-slate-800/90 border border-amber-500/40 p-3 space-y-0.5 cursor-pointer hover:border-amber-400 transition-all">
               <div class="text-[11px] font-bold text-amber-300">줄 돈 (파트너 {{ settleSummary.count }}건 + 지급예정 {{ pendingPayables.length }}건)</div>
@@ -657,7 +657,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </div>
             </div>
             <div v-else class="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 text-center text-xs text-slate-400">
-              선택하신 기준일({{ referenceToday }})로부터 향후 5일 이내에는 예정된 공연이 없습니다.
+              선택하신 기준일({{ referenceToday }})로부터 향후 5일 이내에는 예정된 일정이 없습니다.
             </div>
           </div>
 
@@ -767,7 +767,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <table class="w-full table-fixed text-left text-xs font-mono">
                   <thead class="sticky top-0 bg-slate-900 text-slate-400 border-b border-slate-700">
                     <tr>
-                      <th class="py-2 px-1.5 sm:px-2.5 w-[76px] sm:w-[150px]">공연일시</th>
+                      <th class="py-2 px-1.5 sm:px-2.5 w-[76px] sm:w-[150px]">일시</th>
                       <th class="py-2 px-1.5 sm:px-2.5 font-sans">기관/업체명</th>
                       <th class="py-2 px-2.5 font-sans w-[92px] hidden sm:table-cell">테마</th>
                       <th class="py-2 px-1 sm:px-2.5 text-right w-[92px]">금액</th>
@@ -792,7 +792,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                       </td>
                     </tr>
                     <tr v-if="upcomingShows.length === 0">
-                      <td colspan="5" class="py-6 text-center text-slate-400 font-sans">예정된 공연이 없습니다.</td>
+                      <td colspan="5" class="py-6 text-center text-slate-400 font-sans">예정된 일정이 없습니다.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -847,7 +847,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <!-- KPI 1: 공연 매출 -->
             <div class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-1.5">
               <div class="flex justify-between items-center text-xs text-slate-400">
-                <span class="font-bold text-indigo-300">정상 공연 매출 ({{ selectedYearMonth === 'ALL' ? '전체' : selectedYearMonth }})</span>
+                <span class="font-bold text-indigo-300">정상 매출 ({{ selectedYearMonth === 'ALL' ? '전체' : selectedYearMonth }})</span>
                 <span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono text-[11px]">{{ periodShows.length }}건 (취소제외)</span>
               </div>
               <div class="text-2xl font-black text-white font-mono">₩ {{ periodTotalRevenue.toLocaleString() }}</div>
@@ -906,8 +906,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div class="lg:col-span-8 rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
               <div class="flex items-center justify-between pb-2 border-b border-slate-700/60">
                 <div>
-                  <h3 class="text-xs font-bold text-white uppercase tracking-wider">📈 {{ referenceToday.slice(0, 4) }}년 월별 공연 매출 추이<template v-if="secondCo"> ({{ profile.companies[0].name }} vs {{ secondCo }})</template></h3>
-                  <p class="text-[11px] text-slate-400">취소된 공연은 제외하고 실제 확정·완료된 공연 매출만 정확히 합산합니다 (단위: 만 원)</p>
+                  <h3 class="text-xs font-bold text-white uppercase tracking-wider">📈 {{ referenceToday.slice(0, 4) }}년 월별 매출 추이<template v-if="secondCo"> ({{ profile.companies[0].name }} vs {{ secondCo }})</template></h3>
+                  <p class="text-[11px] text-slate-400">취소된 일정은 제외하고 실제 확정·완료된 일정 매출만 정확히 합산합니다 (단위: 만 원)</p>
                 </div>
                 <span class="text-xs font-mono text-indigo-300">연간 누적: {{ formatKoreanCurrency(overallTotalRevenue) }}</span>
               </div>
@@ -918,7 +918,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
             <div class="lg:col-span-4 rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 flex flex-col justify-between">
               <div class="pb-2 border-b border-slate-700/60">
-                <h3 class="text-xs font-bold text-white uppercase tracking-wider">🎨 공연·상품별 비중</h3>
+                <h3 class="text-xs font-bold text-white uppercase tracking-wider">🎨 콘텐츠별 비중</h3>
                 <p class="text-[11px] text-slate-400">어떤 테마가 가장 많이 섭외되었는지 한눈에 확인</p>
               </div>
               <div class="h-48 w-full flex items-center justify-center">
@@ -1054,7 +1054,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </div>
               <div class="flex items-center space-x-2 text-xs font-mono">
                 <span class="hidden md:inline px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">노란테두리: 5일내 임박</span>
-                <span class="text-slate-300 badge-nowrap">이달 공연 <strong class="text-indigo-400">{{ calendarMonthShowsCount }}건</strong></span>
+                <span class="text-slate-300 badge-nowrap">이달 일정 <strong class="text-indigo-400">{{ calendarMonthShowsCount }}건</strong></span>
               </div>
             </div>
 
@@ -1175,7 +1175,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 </template>
               </div>
               <div v-else class="py-3 text-center text-xs text-slate-400">
-                선택한 날짜({{ selectedCalendarDate }})에는 등록된 공연이 없습니다.
+                선택한 날짜({{ selectedCalendarDate }})에는 등록된 일정이 없습니다.
               </div>
               <!-- ★ v3.0: 이 날의 업무 일정 (할 일 '📅 일정'. 돈·통계에는 안 들어감) -->
               <div v-if="tasksOnDate(selectedCalendarDate).length > 0" class="space-y-1.5">
@@ -1190,7 +1190,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                       <span v-if="t.done" class="text-[10px] text-emerald-300 font-bold">✓ 했음</span>
                     </div>
                     <div class="text-sm font-bold text-white truncate mt-0.5" :class="t.done ? 'line-through' : ''">{{ t.title }}</div>
-                    <div v-if="t.place || showByKey(t.showKey)" class="text-[11px] text-slate-400 truncate">{{ t.place }}<template v-if="showByKey(t.showKey)"> · 🎭 {{ showByKey(t.showKey).showDate }} {{ showByKey(t.showKey).client }} 공연 건</template></div>
+                    <div v-if="t.place || showByKey(t.showKey)" class="text-[11px] text-slate-400 truncate">{{ t.place }}<template v-if="showByKey(t.showKey)"> · 🎭 {{ showByKey(t.showKey).showDate }} {{ showByKey(t.showKey).client }} 일정 건</template></div>
                   </div>
                   <button v-if="t.place" @click.stop="openMapNavigation(t.place, '')" class="shrink-0 px-1.5 py-0.5 rounded bg-blue-600/20 text-blue-300 text-[10px] font-bold">📍길</button>
                 </div>
@@ -1434,7 +1434,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <div>
                 <span class="text-xs text-rose-300 font-bold block">현재 미입금(미수금) 합계 (취소건 제외)</span>
                 <div class="text-2xl font-black text-white font-mono mt-0.5">₩ {{ totalUnpaidAmount.toLocaleString() }} ({{ unpaidShows.length }}건)</div>
-                <div class="text-xs font-mono mt-1"><span class="text-rose-300 font-bold">⏰ 공연 끝남 ₩{{ unpaidSplit.past.toLocaleString() }} ({{ unpaidSplit.pastN }}건)</span> <span class="text-slate-500">·</span> <span class="text-sky-300">📅 예정 ₩{{ unpaidSplit.plan.toLocaleString() }} ({{ unpaidSplit.planN }}건)</span></div>
+                <div class="text-xs font-mono mt-1"><span class="text-rose-300 font-bold">⏰ 일정 끝남 ₩{{ unpaidSplit.past.toLocaleString() }} ({{ unpaidSplit.pastN }}건)</span> <span class="text-slate-500">·</span> <span class="text-sky-300">📅 예정 ₩{{ unpaidSplit.plan.toLocaleString() }} ({{ unpaidSplit.planN }}건)</span></div>
               </div>
               <p class="text-xs text-slate-300">
                 💡 통장에 입금이 확인되면 우측의 <strong class="text-emerald-400">[✓ 입금완납 확인]</strong> 버튼을 누르세요. 즉시 완납 처리됩니다.
@@ -2070,7 +2070,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                   <input type="time" v-model="newTodoForm.endTime" class="w-full px-3 py-2 rounded-xl border font-mono" />
                 </div>
                 <div class="lg:col-span-3">
-                  <label class="text-[11px] text-slate-400 block mb-1">어느 공연 건? (선택)</label>
+                  <label class="text-[11px] text-slate-400 block mb-1">어느 일정 건? (선택)</label>
                   <select v-model="newTodoForm.showKey" @change="onPickTaskShow" class="w-full px-3 py-2 rounded-xl border cursor-pointer">
                     <option value="">(연결 안 함)</option>
                     <option v-for="s in taskShowChoices" :key="'tsc-' + showKeyOf(s)" :value="showKeyOf(s)">{{ s.showDate }} {{ s.showTime || '' }} {{ s.client }}{{ s.status === '취소' ? ' (취소)' : '' }}</option>
@@ -2150,7 +2150,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     </td>
                     <td class="py-3 px-4 font-sans">
                       <div class="font-bold text-sm" :class="item.done ? 'line-through text-slate-500' : 'text-white'">{{ item.title }}</div>
-                      <div v-if="item.type === '일정' && (item.place || showByKey(item.showKey))" class="text-[11px] text-teal-300 mt-0.5">{{ item.place }}<template v-if="showByKey(item.showKey)"> · 🎭 {{ showByKey(item.showKey).client }} 공연 건</template></div>
+                      <div v-if="item.type === '일정' && (item.place || showByKey(item.showKey))" class="text-[11px] text-teal-300 mt-0.5">{{ item.place }}<template v-if="showByKey(item.showKey)"> · 🎭 {{ showByKey(item.showKey).client }} 일정 건</template></div>
                       <div v-if="item.memo" class="text-[11px] text-slate-400 mt-0.5">{{ item.memo }}</div>
                     </td>
                     <td class="py-3 px-3 text-slate-300 whitespace-nowrap">{{ item.dueDate || '상시' }}<div v-if="item.type === '일정' && taskTimeText(item)" class="text-[11px] text-amber-300">{{ taskTimeText(item) }}</div></td>
@@ -2188,7 +2188,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                         <span class="text-[11px] font-mono text-slate-400">{{ item.dueDate || '상시' }}<template v-if="item.type === '일정' && taskTimeText(item)"> {{ taskTimeText(item) }}</template></span>
                       </div>
                       <div class="font-bold text-sm mt-1 leading-snug" :class="item.done ? 'line-through text-slate-500' : 'text-white'">{{ item.title }}</div>
-                      <div v-if="item.type === '일정' && (item.place || showByKey(item.showKey))" class="text-[11px] text-teal-300 mt-0.5">{{ item.place }}<template v-if="showByKey(item.showKey)"> · 🎭 {{ showByKey(item.showKey).client }} 공연 건</template></div>
+                      <div v-if="item.type === '일정' && (item.place || showByKey(item.showKey))" class="text-[11px] text-teal-300 mt-0.5">{{ item.place }}<template v-if="showByKey(item.showKey)"> · 🎭 {{ showByKey(item.showKey).client }} 일정 건</template></div>
                       <div v-if="item.memo" class="text-[11px] text-slate-400 mt-0.5">{{ item.memo }}</div>
                     </div>
                   </div>
@@ -2309,7 +2309,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div :class="foldCls('defaults')" @click="foldClick('defaults', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3 text-xs">
             <div class="pb-2 border-b border-slate-700/60">
               <h3 class="text-sm font-bold text-white">📝 새 일정 · 견적서 기본값</h3>
-              <p class="text-xs text-slate-400">[+ 새 공연]을 누를 때 미리 채워지는 값과 견적서·계산서 문구예요. {공연} 자리에는 공연 이름이 들어가요.</p>
+              <p class="text-xs text-slate-400">[+ 새 일정]을 누를 때 미리 채워지는 값과 견적서·계산서 문구예요. {공연} 자리에는 콘텐츠 이름이 들어가요.</p>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <div><label class="text-slate-400 block mb-1">발행 사업자</label>
@@ -2342,7 +2342,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <!-- ★ v3.0: 달력 공휴일은 2026~2028년이 들어 있어요. 정부가 임시공휴일을 정하면 여기 더해요 -->
             <div><label class="text-slate-400 block mb-1">🎌 달력에 쉬는 날 더하기 (임시공휴일 등, 한 줄에 하나)</label>
               <textarea v-model="profile.defaults.extraHolidays" @change="saveProfile" rows="2" placeholder="예: 2026-10-02 임시공휴일" class="w-full px-3 py-2 rounded-xl border font-mono"></textarea>
-              <div class="mt-2 flex flex-wrap items-center gap-2"><span class="text-slate-400">☔ 공연 지역 날씨 (이 기기):</span>
+              <div class="mt-2 flex flex-wrap items-center gap-2"><span class="text-slate-400">☔ 일정 지역 날씨 (이 기기):</span>
                 <button type="button" @click="setWeatherOn(weatherOn !== '1')" class="px-3 py-1 rounded-lg font-bold cursor-pointer" :class="weatherOn === '1' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300'">{{ weatherOn === '1' ? '켜져 있어요 (누르면 끄기)' : '꺼져 있어요 (누르면 켜기)' }}</button>
                 <span class="text-[10px] text-slate-500">좌표만 보내요 · {{ WX_NOTE }}</span></div>
               <p class="text-[10px] text-slate-500 mt-0.5">설날·추석·대체공휴일 등 2026~2028년 공휴일은 이미 들어 있어요. 빨간 날짜로 보이고, 주말과 이어져 3일 이상 쉬면 연휴로 칠해져요.</p></div>
@@ -2359,7 +2359,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <div class="space-y-1.5"><div class="flex items-center justify-between"><b class="text-slate-200">견적서 보내기</b><button type="button" @click="resetMailTpl('quote')" class="text-slate-400 underline cursor-pointer">처음 문구로</button></div>
                 <input type="text" v-model="mailQuoteSubject" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border" />
                 <textarea v-model="mailQuoteBody" @change="saveProfile" rows="8" class="w-full px-3 py-2 rounded-xl border"></textarea></div>
-              <div class="space-y-1.5"><div class="flex items-center justify-between"><b class="text-slate-200">공연 다음 날 서류·입금 안내</b><button type="button" @click="resetMailTpl('after')" class="text-slate-400 underline cursor-pointer">처음 문구로</button></div>
+              <div class="space-y-1.5"><div class="flex items-center justify-between"><b class="text-slate-200">일정 다음 날 서류·입금 안내</b><button type="button" @click="resetMailTpl('after')" class="text-slate-400 underline cursor-pointer">처음 문구로</button></div>
                 <input type="text" v-model="mailAfterSubject" @change="saveProfile" class="w-full px-3 py-2 rounded-xl border" />
                 <textarea v-model="mailAfterBody" @change="saveProfile" rows="8" class="w-full px-3 py-2 rounded-xl border"></textarea></div>
             </div>
@@ -2554,7 +2554,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         <div class="itt-mhead bg-slate-900 flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-3 gap-2">
           <div class="flex items-center space-x-2">
             <h3 class="text-base font-bold text-white">
-              {{ isEditingShow ? '🎭 공연 상세 정보 수정 (#' + editingShowForm.no + ')' : (showModalMode === 'bulk' ? '🔁 정기 공연 스케줄 대량 등록' : '✨ 새 공연 스케줄 등록') }}
+              {{ isEditingShow ? '📋 일정 상세 정보 수정 (#' + editingShowForm.no + ')' : (showModalMode === 'bulk' ? '🔁 정기 일정 대량 등록' : '✨ 새 일정 등록') }}
             </h3>
             <span v-if="isEditingShow && editingShowForm.status === '취소'" class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 text-xs font-bold">🚫 취소된 일정</span>
           </div>
@@ -2589,7 +2589,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <input type="date" v-model="bulkConfig.endDate" class="w-full px-3 py-1.5 rounded-xl border font-mono" />
             </div>
             <div>
-              <label class="text-slate-300 block mb-1">반복 공연시간</label>
+              <label class="text-slate-300 block mb-1">반복 시간</label>
               <input type="text" v-model="editingShowForm.showTime" placeholder="13:00" class="w-full px-3 py-1.5 rounded-xl border font-mono" />
             </div>
           </div>
@@ -2619,11 +2619,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div class="font-bold text-indigo-200">① 첫 통화 <span class="font-normal text-[10px] text-slate-400">(문의 받으면 여기부터 적어요)</span></div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div v-if="isEditingShow || showModalMode === 'single'">
-            <label class="text-slate-400 block mb-1">공연일자 *</label>
+            <label class="text-slate-400 block mb-1">날짜 *</label>
             <input type="date" v-model="editingShowForm.showDate" class="w-full px-3 py-2 rounded-xl border font-mono" />
           </div>
           <div v-if="isEditingShow || showModalMode === 'single'">
-            <label class="text-slate-400 block mb-1">공연시간</label>
+            <label class="text-slate-400 block mb-1">시간</label>
             <input type="text" v-model="editingShowForm.showTime" placeholder="10:30" class="w-full px-3 py-2 rounded-xl border font-mono" />
           </div>
           <div>
@@ -2742,7 +2742,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <input type="text" v-model="editingShowForm.region" placeholder="서울, 경기, 충남..." class="w-full px-3 py-2 rounded-xl border" />
           </div>
           <div>
-            <label class="text-slate-400 block mb-1">공연 테마</label>
+            <label class="text-slate-400 block mb-1">콘텐츠</label>
             <select v-model="editingShowForm.theme" class="w-full px-3 py-2 rounded-xl border">
               <option v-for="n in productNames.filter(x => x !== '기타')" :key="n" :value="n">{{ n }}{{ (productOf(n) || {}).runMin ? ' · ' + productOf(n).runMin + '분' : '' }}</option>
               <option v-if="editingShowForm.theme && editingShowForm.theme !== '기타' && !productNames.includes(editingShowForm.theme)" :value="editingShowForm.theme">{{ editingShowForm.theme }}</option>
@@ -2784,13 +2784,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         </button>
         <div v-show="showFormOpen.talk" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="sm:col-span-3">
-            <label class="text-slate-400 block mb-1">상세 주소 (공연 장소)</label>
+            <label class="text-slate-400 block mb-1">상세 주소 (일정 장소)</label>
             <input type="text" v-model="editingShowForm.address" placeholder="상세 공연 장소 (길찾기에 쓰여요)" class="w-full px-3 py-2 rounded-xl border" />
           </div>
           <!-- ★ v3.0: 이 공연과 짝지은 업무 일정(미팅·답사·철수). 할 일 탭 '📅 일정'에 저장 -->
           <div v-if="isEditingShow && showModalMode !== 'bulk'" class="sm:col-span-3 p-2.5 rounded-xl bg-slate-900/70 border border-slate-700 border-dashed space-y-1.5">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-[11px] font-bold text-teal-300">📅 이 공연의 미팅 · 답사 · 철수 일정</span>
+              <span class="text-[11px] font-bold text-teal-300">📅 이 일정의 미팅 · 답사 · 철수</span>
               <button type="button" @click="addTaskForShow(shows.find(x => showKeyOf(x) === showKeyOf(editingShowForm)) || editingShowForm)" class="px-2 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold cursor-pointer">＋ 답사·미팅 추가</button>
             </div>
             <div v-for="t in tasksOfShow(editingShowForm)" :key="'sft-' + t.id" class="text-[11px] text-slate-300" :class="t.done ? 'line-through opacity-60' : ''">
@@ -2875,11 +2875,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
           <!-- ★ v2.9: 일 종류 (공연 / 강연 / 서브) -->
           <div>
-            <label class="text-slate-400 block mb-1">일 종류 <span class="text-[10px] text-slate-500">(서브 = 다른 파트너의 공연을 도와주는 일)</span></label>
+            <label class="text-slate-400 block mb-1">내 역할 <span class="text-[10px] text-slate-500">(서브는 블로그 글감·다음 날 메일 알림에서 빠져요)</span></label>
             <select v-model="editingShowForm.workType" class="w-full px-3 py-2 rounded-xl border font-bold">
-              <option value="공연">🎪 공연</option>
-              <option value="강연">🎤 강연</option>
-              <option value="서브">🤝 서브 (내가 돕는 일 · 받는 돈을 금액에)</option>
+              <option value="공연">🙋 직접 진행 (우리 일)</option>
+              <option value="서브">🤝 서브 (다른 팀 일을 도움 · 받는 돈을 금액에)</option>
+              <option v-if="editingShowForm.workType === '강연'" value="강연">🎤 강연 (예전 기록)</option>
             </select>
           </div>
           <div>
@@ -2969,21 +2969,21 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 고객이 파트너에게 바로 줘요. 회사 매출·실수익은 <b class="text-emerald-300">수수료 ₩{{ (Number(editingShowForm.commission) || 0).toLocaleString() }}</b>만 잡히고, 미수금·파트너 정산·계산서 목록에는 뜨지 않아요.
               </template>
               <template v-else>
-                공연 총액 ₩{{ (Number(editingShowForm.amount) || 0).toLocaleString() }} − 파트너 지급(세전) ₩{{ ((Number(editingShowForm.settleAmt) || 0) + formCrewSum).toLocaleString() }}<template v-if="formCrewSum > 0"> (정산대상 {{ (Number(editingShowForm.settleAmt) || 0).toLocaleString() }} + 함께한 사람 {{ formCrewSum.toLocaleString() }})</template>
+                총액 ₩{{ (Number(editingShowForm.amount) || 0).toLocaleString() }} − 파트너 지급(세전) ₩{{ ((Number(editingShowForm.settleAmt) || 0) + formCrewSum).toLocaleString() }}<template v-if="formCrewSum > 0"> (정산대상 {{ (Number(editingShowForm.settleAmt) || 0).toLocaleString() }} + 함께한 사람 {{ formCrewSum.toLocaleString() }})</template>
                 = <b class="text-emerald-300">실수익 ₩{{ ((Number(editingShowForm.amount) || 0) - (Number(editingShowForm.settleAmt) || 0) - formCrewSum).toLocaleString() }}</b>
               </template>
             </div>
           </div>
         </div>
         <button type="button" @click="showFormOpen.after = !showFormOpen.after" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left cursor-pointer">
-          <span class="flex-1 min-w-0 break-words font-bold text-slate-200">④ 공연 직후 기록 <span class="font-normal text-[10px] text-slate-400">(완료 후 현장 메모 · 피드백 · 사진)</span>
+          <span class="flex-1 min-w-0 break-words font-bold text-slate-200">④ 일정 직후 기록 <span class="font-normal text-[10px] text-slate-400">(완료 후 현장 메모 · 피드백 · 사진)</span>
           </span>
           <span class="shrink-0 text-[11px] text-slate-400">{{ showFormOpen.after ? '접기 ▲' : '펼치기 ▼' }}</span>
         </button>
         <div v-show="showFormOpen.after" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <!-- ★ v2.9: 공연 직후 기록 (완료로 바꿀 때 채우기) -->
           <div class="sm:col-span-3 p-3 rounded-2xl border space-y-2" :class="editingShowForm.status === '완료' ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-slate-950/60 border-slate-700'">
-            <div class="text-xs font-bold" :class="editingShowForm.status === '완료' ? 'text-emerald-300' : 'text-slate-400'">🎤 공연 직후 기록 <span class="font-normal text-[10px]">(블로그 후기 재료와 다음 섭외 참고가 돼요)</span></div>
+            <div class="text-xs font-bold" :class="editingShowForm.status === '완료' ? 'text-emerald-300' : 'text-slate-400'">🎤 일정 직후 기록 <span class="font-normal text-[10px]">(블로그 후기 재료와 다음 섭외 참고가 돼요)</span></div>
             <!-- ★ v3.0: 이 공연으로 바로 블로그 글·쇼츠 (PC에서 같은 폴더의 SNS ERP·쇼츠 스튜디오가 이 공연을 골라 둔 채로 열림) -->
             <div v-if="isEditingShow && canMakePost(editingShowForm)" class="flex flex-wrap items-center gap-2 text-[11px]">
               <button type="button" @click="goPostFromModal('sns')" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold cursor-pointer">📝 저장하고 블로그 글 만들기</button>
@@ -3125,14 +3125,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       </div>
     </div>
 
-    <!-- ★ v3.0: 🔁 작년 이맘때 공연한 곳 -->
+    <!-- ★ v3.0: 🔁 작년 이맘때 함께한 곳 -->
     <div v-if="lastYearOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" @click.self="lastYearOpen = false">
       <div class="bg-slate-900 border border-emerald-500/50 rounded-3xl max-w-2xl w-full p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <h3 class="text-base font-bold text-white">🔁 작년 이맘때 공연한 곳 ({{ lastYearAgain.length }}곳)</h3>
+          <h3 class="text-base font-bold text-white">🔁 작년 이맘때 함께한 곳 ({{ lastYearAgain.length }}곳)</h3>
           <button @click="lastYearOpen = false" class="itt-x cursor-pointer" title="닫기">✕</button>
         </div>
-        <p class="text-[11px] text-slate-400 leading-relaxed">작년 이 무렵(지금부터 2~8주 뒤 날짜)에 공연한 곳이에요. 해마다 하는 행사라면 지금 연락하면 좋아요. 올해 같은 무렵(±30일)에 이미 일정이 잡힌 곳, 재계약 가능성 '낮음', 최근 60일 안에 [연락함] 표시한 곳은 빼고 보여 줘요.</p>
+        <p class="text-[11px] text-slate-400 leading-relaxed">작년 이 무렵(지금부터 2~8주 뒤 날짜)에 함께한 곳이에요. 해마다 하는 행사라면 지금 연락하면 좋아요. 올해 같은 무렵(±30일)에 이미 일정이 잡힌 곳, 재계약 가능성 '낮음', 최근 60일 안에 [연락함] 표시한 곳은 빼고 보여 줘요.</p>
         <div v-if="lastYearAgain.length === 0" class="p-4 text-center text-xs text-emerald-300">지금 연락할 곳이 없어요.</div>
         <div v-for="x in lastYearAgain" :key="'ly-' + x.key" class="rounded-2xl bg-slate-950/90 border border-slate-800 p-3 space-y-2 text-xs">
           <div class="flex flex-wrap items-center gap-2">
@@ -3213,14 +3213,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
           <!-- ★ v2.9: 공연 직후 기록 -->
           <div v-if="summaryShow.fieldMemo || summaryShow.feedbackClient || summaryShow.feedbackPerformer || summaryShow.nextNote || summaryShow.photoSource" class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/40 space-y-1 text-[11px]">
-            <div class="font-bold text-emerald-300 text-xs">🎤 공연 직후 기록</div>
+            <div class="font-bold text-emerald-300 text-xs">🎤 일정 직후 기록</div>
             <div v-if="summaryShow.fieldMemo" class="text-white break-words">📝 {{ summaryShow.fieldMemo }}</div>
             <div v-if="summaryShow.feedbackClient" class="text-slate-200 break-words">🙋 클라이언트: {{ summaryShow.feedbackClient }}</div>
             <div v-if="summaryShow.feedbackPerformer" class="text-slate-200 break-words">🎭 파트너: {{ summaryShow.feedbackPerformer }}</div>
             <div v-if="summaryShow.nextNote" class="text-amber-200 break-words">📌 다음에: {{ summaryShow.nextNote }}</div>
             <div v-if="summaryShow.photoSource" class="text-slate-400">📷 {{ summaryShow.photoSource }}</div>
           </div>
-          <div v-else-if="summaryShow.status === '완료'" class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-[11px] text-amber-200">🎤 공연 직후 기록이 비어 있어요. [✏️ 수정]에서 현장 메모·피드백·사진 여부를 적어 두면 블로그 후기와 다음 섭외에 쓰여요.</div>
+          <div v-else-if="summaryShow.status === '완료'" class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-[11px] text-amber-200">🎤 일정 직후 기록이 비어 있어요. [✏️ 수정]에서 현장 메모·피드백·사진 여부를 적어 두면 블로그 후기와 다음 섭외에 쓰여요.</div>
           <div class="p-3 rounded-xl border space-y-1" :class="memoFirstLine(summaryShow) ? 'bg-slate-950/90 border-slate-800' : 'bg-amber-500/10 border-amber-500/40'">
             <div class="font-bold" :class="memoFirstLine(summaryShow) ? 'text-slate-300' : 'text-amber-300'">📝 협의 메모</div>
             <div v-if="memoFirstLine(summaryShow)" class="text-white break-words leading-relaxed" style="white-space: pre-wrap">{{ summaryShow.memo }}</div>
@@ -3285,7 +3285,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div class="sm:col-span-2 p-3 rounded-xl bg-slate-950/95 border border-slate-800 text-[11px] leading-relaxed">
             <div v-if="editingPerformerForm.kind === '개인'" class="text-indigo-300">👤 <strong>개인</strong>: 페이에서 3.3%(국세 3% + 지방세 0.3%)를 떼고 이체해요. 정산에서 [지급완료]를 누르면 <strong>3.3% 원천징수 장부에 자동 기록</strong>돼요.<br><span class="text-slate-400">※ 주민등록번호는 이 ERP에 적지 마세요. 홈택스 신고할 때만 사용하세요.</span></div>
             <div v-else-if="editingPerformerForm.kind === '사업자'" class="text-emerald-300">🏢 <strong>사업자</strong>: 파트너에게서 세금계산서(또는 계산서)를 <strong>받고</strong>, 페이를 <strong>전액</strong> 이체해요. 정산에서 계산서를 받았는지 체크할 수 있어요.</div>
-            <div v-else-if="editingPerformerForm.kind === '본인'" class="text-slate-300">🎪 <strong>대표 본인</strong>: 대표님이 직접 하는 공연이에요. 정산할 돈이 없어요.</div>
+            <div v-else-if="editingPerformerForm.kind === '본인'" class="text-slate-300">🎪 <strong>대표 본인</strong>: 대표님이 직접 하는 일이에요. 정산할 돈이 없어요.</div>
             <div v-else class="text-amber-300">❓ 아직 정하지 않았어요. 이 파트너에게 돈을 보내기 전에 꼭 개인/사업자를 정해 주세요.</div>
           </div>
 
@@ -3306,7 +3306,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
           <div>
-            <label class="text-slate-400 block mb-1">자세히 <span class="text-[10px] text-slate-500">(하는 공연·프로그램)</span></label>
+            <label class="text-slate-400 block mb-1">자세히 <span class="text-[10px] text-slate-500">(하는 콘텐츠)</span></label>
             <input type="text" v-model="editingPerformerForm.themes" placeholder="예: 버블쇼, 마술쇼 / 비누방울 체험" class="w-full px-3 py-2 rounded-xl border" />
           </div>
           <div>
@@ -3436,7 +3436,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
 
           <div>
-            <label class="text-slate-400 block mb-1">누적 공연 횟수 (회)</label>
+            <label class="text-slate-400 block mb-1">누적 진행 횟수 (회)</label>
             <input type="number" v-model.number="editingCustomerForm.count" min="1" class="w-full px-3 py-2 rounded-xl border font-mono" />
           </div>
           <div>
@@ -3462,7 +3462,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
 
           <div>
-            <label class="text-slate-400 block mb-1">최근 공연일</label>
+            <label class="text-slate-400 block mb-1">최근 일정일</label>
             <input type="date" v-model="editingCustomerForm.lastDate" class="w-full px-3 py-2 rounded-xl border font-mono" />
           </div>
           <div>
@@ -3786,7 +3786,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div class="flex items-center space-x-2">
             <span class="text-lg">📄</span>
             <div>
-              <h3 class="text-sm sm:text-base font-black text-white">공식 공연 견적서 생성기 (PDF 저장 / 인쇄 지원)</h3>
+              <h3 class="text-sm sm:text-base font-black text-white">공식 견적서 생성기 (PDF 저장 / 인쇄 지원)</h3>
               <p class="text-[11px] text-indigo-300">아래 내용을 자유롭게 수정한 뒤 [🖨️ PDF 저장 / 인쇄] 버튼을 누르세요.</p>
             </div>
           </div>
@@ -3821,7 +3821,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b-2 border-slate-900 pb-4 gap-3">
             <div>
               <div class="text-[11px] font-bold text-indigo-600 tracking-widest uppercase">OFFICIAL QUOTATION{{ profile.defaults.kit === 'itsshow' ? ' · KIDS PERFORMANCE' : '' }}</div>
-              <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-0.5">공 연 견 적 서</h1>
+              <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-0.5">견 적 서</h1>
               <p class="text-xs text-slate-600 mt-1">견적일자: <input type="text" v-model="quoteData.quoteDate" class="bg-transparent border-b border-slate-300 font-mono w-28 text-slate-900 font-bold" /></p>
             </div>
             <div class="text-left sm:text-right">
@@ -3872,7 +3872,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <thead class="bg-slate-100 text-slate-800 font-bold hidden sm:table-header-group">
                 <tr>
                   <th class="border border-slate-300 py-2 px-3">항목 / 프로그램명</th>
-                  <th class="border border-slate-300 py-2 px-3">공연 일시 / 장소</th>
+                  <th class="border border-slate-300 py-2 px-3">일시 / 장소</th>
                   <th class="border border-slate-300 py-2 px-3 text-center">러닝타임</th>
                   <th class="border border-slate-300 py-2 px-3 text-right">금액 (원)</th>
                 </tr>
@@ -3885,9 +3885,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <div class="text-[11px] text-slate-500 mt-0.5">{{ (productOf(quoteData.theme) || {}).intro || profile.defaults.quoteIntro }}</div>
                   </td>
                   <td class="border border-slate-300 py-2.5 px-3 font-mono block sm:table-cell">
-                    <span class="sm:hidden block text-[10px] font-bold text-slate-500 mb-0.5 font-sans">공연 일시 / 장소</span>
+                    <span class="sm:hidden block text-[10px] font-bold text-slate-500 mb-0.5 font-sans">일시 / 장소</span>
                     <input type="text" v-model="quoteData.scheduleText" class="w-full text-slate-900 bg-transparent border-b border-slate-200" />
-                    <div class="text-[11px] text-slate-500 font-sans mt-0.5">{{ quoteData.address || quoteData.region || '귀 기관 지정 공연장소' }}</div>
+                    <div class="text-[11px] text-slate-500 font-sans mt-0.5">{{ quoteData.address || quoteData.region || '귀 기관 지정 장소' }}</div>
                   </td>
                   <td class="border border-slate-300 py-2.5 px-3 sm:text-center font-bold block sm:table-cell">
                     <span class="sm:hidden text-[10px] font-bold text-slate-500 mr-1.5">러닝타임</span>{{ quoteData.runMin ? '약 ' + quoteData.runMin + '분' : runTimeText(quoteData.theme) }}
@@ -4087,7 +4087,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div>
             <div class="flex items-center space-x-2">
               <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-xs font-bold">{{ historyCustomer.custId }}</span>
-              <h3 class="text-base font-black text-white">📜 {{ historyCustomer.client }} · 공연 히스토리 ({{ customerHistoryList.length }}건)</h3>
+              <h3 class="text-base font-black text-white">📜 {{ historyCustomer.client }} · 진행 기록 ({{ customerHistoryList.length }}건)</h3>
             </div>
             <p class="text-xs text-slate-400 mt-0.5">
               누적 매출: <strong class="text-emerald-400 font-mono">₩{{ (historyCustomer.totalRev || 0).toLocaleString() }}</strong> ·
@@ -4144,7 +4144,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
           <div v-if="customerHistoryList.length === 0" class="py-8 text-center text-xs text-slate-400">
-            이 기관의 공연 기록이 없습니다.
+            이 기관의 진행 기록이 없습니다.
           </div>
         </div>
       </div>
@@ -4308,7 +4308,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           clearAllRecords();
           saveAllToStorage(false);
           firstRunOpen.value = false;
-          showToast('준비 끝! 위의 [＋ 새 공연]으로 첫 일정을 적어 보세요. 견적서 문구·문자 틀은 설정에서 고칠 수 있어요.', 9000);
+          showToast('준비 끝! 위의 [＋ 새 일정]으로 첫 일정을 적어 보세요. 견적서 문구·문자 틀은 설정에서 고칠 수 있어요.', 9000);
         };
         const startDemo = () => {
           const w = Object.assign({}, wiz.value);
@@ -4583,7 +4583,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
         const navItems = computed(() => [
           { id: 'overview', icon: '📊', label: '오늘의 브리핑', badge: (next5DaysShows.value.length + highPriorityTodos.value.length) > 0 ? '집중 ' + (next5DaysShows.value.length + highPriorityTodos.value.length) + '건' : '' },
-          { id: 'schedule', icon: '🗓️', label: '공연 스케줄 & 장부', badge: shows.value.length },
+          { id: 'schedule', icon: '🗓️', label: '일정 & 장부', badge: shows.value.length },
           { id: 'todo', icon: '✅', label: 'To-Do & 구매관리', badge: highPriorityTodos.value.length > 0 ? '긴급 ' + highPriorityTodos.value.length : (pendingTodosCount.value > 0 ? pendingTodosCount.value + '건' : '') },
           { id: 'finance', icon: '💰', label: '미수금 & 3.3% 정산', badge: unpaidShows.value.length > 0 ? unpaidShows.value.length + '건' : '' },
           { id: 'crm', icon: '🤝', label: '단골 고객(CRM)', badge: customers.value.length },
@@ -4878,7 +4878,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           });
           const crewChanged = !orig || JSON.stringify(orig.crew || []) !== JSON.stringify(crewList);
           if (okAmounts && settleAmt + crewSum > 0 && vStr(f.settleMode) !== '공연자 직접' && (changed('settleAmt') || changed('amount') || crewChanged)) {
-            if (settleAmt + crewSum > amount) warnings.push(`파트너 지급 합계(${(settleAmt + crewSum).toLocaleString()}원)가 공연 금액(${amount.toLocaleString()}원)보다 커요.`);
+            if (settleAmt + crewSum > amount) warnings.push(`파트너 지급 합계(${(settleAmt + crewSum).toLocaleString()}원)가 일정 금액(${amount.toLocaleString()}원)보다 커요.`);
           }
           if (okAmounts && settleAmt > 0 && vStr(f.settleTarget) === '' && (changed('settleAmt') || changed('settleTarget'))) {
             warnings.push('외부 정산금액은 있는데 "외부 정산대상"이 비어 있어요.');
@@ -5259,7 +5259,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const list = [];
           const in5 = addDaysToDateStr(today, 4);
           const noMemo = shows.value.filter(s => s.status !== '취소' && s.showDate >= today && s.showDate <= in5 && !memoFirstLine(s)).sort(byDateTime);
-          if (noMemo.length) list.push({ key: 'memo', icon: '⚠️', text: `협의 메모가 없는 공연 ${noMemo.length}건 (5일 이내)`, shows: noMemo });
+          if (noMemo.length) list.push({ key: 'memo', icon: '⚠️', text: `협의 메모가 없는 일정 ${noMemo.length}건 (5일 이내)`, shows: noMemo });
           const before30 = addDaysToDateStr(today, -30);
           // ★ v3.0: 입금 예정일이 있으면 예정일 기준, 없으면 예전처럼 공연 후 30일
           const payLate = unpaidShows.value.filter(s => payDueOf(s) && payDueOf(s) < today);
@@ -5268,7 +5268,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const paySoon = unpaidShows.value.filter(s => payDueOf(s) && payDueOf(s) >= today && payDueOf(s) <= in6);
           if (paySoon.length) list.push({ key: 'paysoon', icon: '📥', text: `이번 주 들어올 돈 ${paySoon.length}건 · ₩${paySoon.reduce((a, s) => a + amountDue(s), 0).toLocaleString()}`, go: 'unpaid' });
           const lateUnpaid = unpaidShows.value.filter(s => s.showDate && s.showDate <= before30 && !payDueOf(s));
-          if (lateUnpaid.length) list.push({ key: 'unpaid', icon: '💸', text: `입금 안 된 지난 공연 ${lateUnpaid.length}건 (30일 넘음) · ₩${lateUnpaid.reduce((a, s) => a + (Number(s.amount) || 0), 0).toLocaleString()}`, go: 'unpaid' });
+          if (lateUnpaid.length) list.push({ key: 'unpaid', icon: '💸', text: `입금 안 된 지난 일정 ${lateUnpaid.length}건 (30일 넘음) · ₩${lateUnpaid.reduce((a, s) => a + (Number(s.amount) || 0), 0).toLocaleString()}`, go: 'unpaid' });
           // ★ v2.9: 날짜가 지난 문의(미정) · 아직 못 받은 수수료
           const staleInquiry = shows.value.filter(s => isInquiry(s) && s.showDate && s.showDate < today);
           if (staleInquiry.length) list.push({ key: 'inquiry', icon: '🟡', text: `날짜가 지난 문의(미정) ${staleInquiry.length}건 → 확정 또는 취소로 정리`, shows: staleInquiry });
@@ -5295,14 +5295,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           if (holdOver.length) list.push({ key: 'holdover', icon: '📌', text: `날짜 홀드 마감이 지난 문의 ${holdOver.length}건 → 확정하거나 날짜 풀기`, shows: holdOver });
           const waitInq = shows.value.filter(s => isInquiry(s) && s.showDate && s.showDate >= today && s.reqDate && s.reqDate <= addDaysToDateStr(today, -3) && !holdOver.includes(s));
           if (waitInq.length) list.push({ key: 'waitinq', icon: '⏰', text: `답 기다리는 문의 ${waitInq.length}건 (3일 넘음) → 눌러서 안부 문자`, shows: waitInq, smsType: 'follow' });
-          if (lastYearAgain.value.length) list.push({ key: 'lastyear', icon: '🔁', text: `작년 이맘때 공연한 곳 ${lastYearAgain.value.length}곳 — 올해도 연락해 볼까요?`, go: 'lastyear' }); // ★ v3.0
+          if (lastYearAgain.value.length) list.push({ key: 'lastyear', icon: '🔁', text: `작년 이맘때 함께한 곳 ${lastYearAgain.value.length}곳 — 올해도 연락해 볼까요?`, go: 'lastyear' }); // ★ v3.0
           // ★ v3.0: 공연 다음 날(지난 3일) 서류·입금 안내 메일을 아직 안 보낸 곳 (고객 이메일이 있는 곳만)
           const mailDue = shows.value.filter(s => (s.status === '완료' || s.status === '확정') && s.showDate && s.showDate < today && s.showDate >= addDaysToDateStr(today, -3)
             && !isDirectSettle(s) && workTypeOf(s) !== '서브' && mailToOf(s) && !mailSentOf(s, 'after').length).sort(byDateTime);
-          if (mailDue.length) list.push({ key: 'mailafter', icon: '📧', text: `공연 다음 날 서류 메일 보낼 곳 ${mailDue.length}건 → 눌러서 메일 준비`, shows: mailDue, mailType: 'after' });
+          if (mailDue.length) list.push({ key: 'mailafter', icon: '📧', text: `일정 다음 날 서류 메일 보낼 곳 ${mailDue.length}건 → 눌러서 메일 준비`, shows: mailDue, mailType: 'after' });
           // ★ v3.0: 7일 안 공연 중 비·눈 소식
           const wetShows = weatherOn.value === '1' ? shows.value.filter(s => { const w = weatherOf(s); return w && w.wet; }).sort(byDateTime) : [];
-          if (wetShows.length) list.push({ key: 'rain', icon: '☔', text: `공연 날 비·눈 소식 ${wetShows.length}건 (7일 안 · 예보는 바뀔 수 있어요)`, shows: wetShows });
+          if (wetShows.length) list.push({ key: 'rain', icon: '☔', text: `일정 날 비·눈 소식 ${wetShows.length}건 (7일 안 · 예보는 바뀔 수 있어요)`, shows: wetShows });
           if (highPriorityTodos.value.length) list.push({ key: 'todo', icon: '🔥', text: `급한 할 일·구매 ${highPriorityTodos.value.length}건`, go: 'todo' });
           if (settleSummary.value.undecided > 0) list.push({ key: 'perf', icon: '❓', text: `정산할 파트너 중 개인/사업자 미정 ${settleSummary.value.undecided}건`, go: 'performers' });
           return list;
@@ -5439,7 +5439,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           unpaidShows.value.forEach(s => { if (isPastUnpaid(s)) { r.past += amountDue(s); r.pastN++; } else { r.plan += amountDue(s); r.planN++; } });
           return r;
         });
-        const unpaidGroupHead = (list, i) => (i === 0 || isPastUnpaid(list[i - 1]) !== isPastUnpaid(list[i])) ? (isPastUnpaid(list[i]) ? '⏰ 공연 끝남 · 받을 돈' : '📅 예정 공연 · 공연 뒤 받을 돈') : '';
+        const unpaidGroupHead = (list, i) => (i === 0 || isPastUnpaid(list[i - 1]) !== isPastUnpaid(list[i])) ? (isPastUnpaid(list[i]) ? '⏰ 일정 끝남 · 받을 돈' : '📅 예정 일정 · 일정 뒤 받을 돈') : '';
 
         const pendingPayables = computed(() => payables.value.filter(p => p.status !== '결제완료' && p.amount > 0));
         const totalPendingPayables = computed(() => pendingPayables.value.reduce((acc, p) => acc + (Number(p.amount) || 0), 0));
@@ -6696,7 +6696,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           isEditingShow.value = false;
           showModalMode.value = 'single';
           editingShowForm.value = copied;
-          showToast('일정 정보가 복사되었습니다! 공연일자만 변경 후 저장하세요.');
+          showToast('일정 정보가 복사되었습니다! 날짜만 변경 후 저장하세요.');
         };
 
         const duplicateShowQuick = (showItem) => {
@@ -6752,7 +6752,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           syncShowsAndCustomers(true);
           saveAllToStorage();
           nextTick(() => renderCharts());
-          if (isFeeShow(target)) showToast(`💰 원래 공연 금액 ₩${(Number(target.amount) || 0).toLocaleString()} → 위약금 ₩${(Number(target.cancelFee) || 0).toLocaleString()}으로 저장했어요. 매출·미수금은 위약금으로 계산돼요. (취소로 표시, 삭제 안 함)`, 7000); // ★ v3.0
+          if (isFeeShow(target)) showToast(`💰 원래 금액 ₩${(Number(target.amount) || 0).toLocaleString()} → 위약금 ₩${(Number(target.cancelFee) || 0).toLocaleString()}으로 저장했어요. 매출·미수금은 위약금으로 계산돼요. (취소로 표시, 삭제 안 함)`, 7000); // ★ v3.0
           else showToast(`'${target.client}' 일정이 [${cancelBadge(target)}]로 표시(보존)되었습니다. 삭제되지 않았어요.`);
         };
 
@@ -6847,7 +6847,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             showToast(`총 ${createdCount}건의 정기 공연 일정이 일괄 등록되었습니다!`);
           } else {
             shows.value.unshift({ ...stripRecordMeta({ ...editingShowForm.value }), uid: makeUid(), createdAt: nowStamp() });
-            showToast('새 공연 일정이 등록되고 단골고객과 동기화되었습니다.');
+            showToast('새 일정이 등록되고 단골고객과 동기화되었습니다.');
           }
           showModalOpen.value = false;
           syncShowsAndCustomers(true);
@@ -6855,7 +6855,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           nextTick(() => renderCharts());
           // ★ v3.0: 위약금 저장 안내 (원래 금액은 기록으로 남고, 매출·미수금은 위약금 기준)
           const fs = editingShowForm.value;
-          if (fs && isFeeShow(fs)) showToast(`💰 원래 공연 금액 ₩${(Number(fs.amount) || 0).toLocaleString()} → 위약금 ₩${(Number(fs.cancelFee) || 0).toLocaleString()}으로 저장했어요. 매출·미수금은 위약금으로 계산돼요.`, 7000);
+          if (fs && isFeeShow(fs)) showToast(`💰 원래 금액 ₩${(Number(fs.amount) || 0).toLocaleString()} → 위약금 ₩${(Number(fs.cancelFee) || 0).toLocaleString()}으로 저장했어요. 매출·미수금은 위약금으로 계산돼요.`, 7000);
         };
 
         // ★ FEATURE 3 & REQUEST 2: 단골 고객(CRM) 수정 및 사업자·이메일 즉시 입력 모달 ★
@@ -7230,7 +7230,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
         // ★ v3.0: 📧 메일 준비 — 받는 사람·제목·본문을 채워 각자 쓰는 메일(앱·네이버 등)로 넘기고, 붙일 서류 체크리스트와 '보냄' 기록을 남김
         //   메일은 대표님 메일에서 직접 보냄(설치·서버 없음). 서류 파일은 프로그램에 넣지 않음
-        const MAIL_TYPES = { quote: '견적서 보내기', after: '공연 다음 날 서류·입금 안내' };
+        const MAIL_TYPES = { quote: '견적서 보내기', after: '일정 다음 날 서류·입금 안내' };
         const DEFAULT_MAIL = {
           quote: { subject: '[{회사}] {기관} 「{공연}」 견적서 보내드립니다', body: '안녕하세요, {기관} {담당자}.\n{회사} {대표}입니다.\n\n문의 주신 {날짜} 「{공연}」 견적서와 서류를 보내드립니다.\n{서류목록}\n\n확인해 보시고 궁금한 점은 편하게 연락 주세요.\n감사합니다.\n\n{회사} {대표} 드림\n{연락처}' },
           after: { subject: '[{회사}] {날짜} 「{공연}」 감사 인사와 정산 서류 보내드립니다', body: '안녕하세요, {기관} {담당자}.\n{회사} {대표}입니다.\n\n{날짜} 「{공연}」에 함께해 주셔서 감사합니다.\n정산에 필요한 서류를 보내드립니다.\n{서류목록}\n\n{입금안내}\n\n다음 행사 때도 불러 주시면 정성껏 준비하겠습니다.\n감사합니다.\n\n{회사} {대표} 드림\n{연락처}' }
@@ -8184,7 +8184,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             kind: '사전 답사', startTime: '', endTime: '', place: s.address || s.venueName || s.client || '', showKey: k };
           setFold('todoAdd', true);
           nextTick(() => { const el = document.getElementById('todo-form'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
-          showToast('📅 날짜·시간을 고르고 [등록]을 눌러 주세요. 공연 날짜가 미리 들어가 있어요.');
+          showToast('📅 날짜·시간을 고르고 [등록]을 눌러 주세요. 일정 날짜가 미리 들어가 있어요.');
         };
 
         const priorityOrder = { '상': 1, '중': 2, '하': 3 };
@@ -8755,7 +8755,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
 
         const resetToOriginalData = () => {
           // ★ v3.0: 더 안전하게 — '지우기'를 직접 적어야 하고, 지우기 전에 백업 파일을 받고, 이 기기가 구글 시트를 덮어쓰지 못하게 함
-          const typed = prompt(`이 기기의 기록(공연 ${shows.value.length}건 등)을 모두 지울까요?\n지우려면 아래 칸에 '지우기'라고 적어 주세요.`);
+          const typed = prompt(`이 기기의 기록(일정 ${shows.value.length}건 등)을 모두 지울까요?\n지우려면 아래 칸에 '지우기'라고 적어 주세요.`);
           if (typed === null) return;
           if (String(typed).trim() !== '지우기') { showToast("'지우기'라고 적지 않아서 멈췄어요. 아무것도 지우지 않았어요."); return; }
           if (!takeSnapshot('모두 지우기 직전 자동 백업')) {
