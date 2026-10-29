@@ -484,6 +484,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <h3 class="text-sm sm:text-base font-black text-white">🎪 오늘 · 내일 공연</h3>
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold badge-nowrap">{{ todayShows.length + tomorrowShows.length }}건</span>
             </div>
+            <!-- ★ v3.0: 날씨 켜기(기기마다 처음 한 번) · 주의 문구 -->
+            <div v-if="weatherOn === ''" class="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/40 text-[11px] text-sky-200 space-y-1.5">
+              <div class="font-bold">☔ 공연 지역 날씨도 볼까요? (7일 안 공연)</div>
+              <div class="text-slate-300">무료 예보 서비스(Open-Meteo)에서 받아요. 공연 '지역' 칸으로 이 기기 안에서 위치를 찾고, 밖으로는 좌표만 보내요. 기관·고객 정보는 보내지 않아요.</div>
+              <div class="flex gap-2"><button type="button" @click="setWeatherOn(true)" class="px-3 py-1 rounded-lg bg-sky-600 text-white font-bold cursor-pointer">켜기</button><button type="button" @click="setWeatherOn(false)" class="px-3 py-1 rounded-lg bg-slate-800 text-slate-300 font-bold cursor-pointer">안 볼래요</button></div>
+            </div>
+            <div v-if="weatherOn === '1' && todayShows.concat(tomorrowShows).some(s => weatherOf(s))" class="text-[10px] text-slate-500">☔ {{ WX_NOTE }} <a href="https://www.weather.go.kr" target="_blank" rel="noopener" class="underline text-sky-300">날씨누리</a></div>
             <div v-for="g in dayGroups" :key="g.key" class="space-y-2">
               <div class="flex items-center gap-2 text-xs font-bold">
                 <span class="px-2 py-0.5 rounded-full" :class="g.key === 'today' ? 'bg-amber-500 text-black' : 'bg-indigo-600 text-white'">{{ g.label }}</span>
@@ -500,6 +507,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0" :class="getThemeBadgeClass(s.theme)">{{ s.theme }}</span><span v-if="s.status === '문의'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">문의</span><span v-if="workTypeOf(s) !== '공연'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">{{ workTypeOf(s) }}</span>
                   </span>
                   <span class="block text-[11px] text-slate-400 truncate">📍 {{ s.region || '지역미정' }} · 🎭 {{ s.performer || '파트너 미정' }}</span>
+                  <span v-if="weatherOf(s)" class="block text-[11px] font-bold truncate" :class="weatherOf(s).wet ? 'text-sky-300' : 'text-slate-300'">{{ weatherOf(s).text }}</span>
                   <span v-if="memoFirstLine(s)" class="block text-[11px] text-slate-300 truncate">📝 {{ memoFirstLine(s) }}</span>
                   <span v-else class="block text-[11px] text-amber-300">⚠️ 협의 메모 없음</span>
                 </span>
@@ -2327,6 +2335,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <!-- ★ v3.0: 달력 공휴일은 2026~2028년이 들어 있어요. 정부가 임시공휴일을 정하면 여기 더해요 -->
             <div><label class="text-slate-400 block mb-1">🎌 달력에 쉬는 날 더하기 (임시공휴일 등, 한 줄에 하나)</label>
               <textarea v-model="profile.defaults.extraHolidays" @change="saveProfile" rows="2" placeholder="예: 2026-10-02 임시공휴일" class="w-full px-3 py-2 rounded-xl border font-mono"></textarea>
+              <div class="mt-2 flex flex-wrap items-center gap-2"><span class="text-slate-400">☔ 공연 지역 날씨 (이 기기):</span>
+                <button type="button" @click="setWeatherOn(weatherOn !== '1')" class="px-3 py-1 rounded-lg font-bold cursor-pointer" :class="weatherOn === '1' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300'">{{ weatherOn === '1' ? '켜져 있어요 (누르면 끄기)' : '꺼져 있어요 (누르면 켜기)' }}</button>
+                <span class="text-[10px] text-slate-500">좌표만 보내요 · {{ WX_NOTE }}</span></div>
               <p class="text-[10px] text-slate-500 mt-0.5">설날·추석·대체공휴일 등 2026~2028년 공휴일은 이미 들어 있어요. 빨간 날짜로 보이고, 주말과 이어져 3일 이상 쉬면 연휴로 칠해져요.</p></div>
           </div>
 
@@ -2606,6 +2617,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <input type="number" min="0" step="5" v-model.number="editingShowForm.runMin" :placeholder="formTimeInfo.productRun ? '기본 ' + formTimeInfo.productRun : '분'" class="w-28 px-3 py-2 rounded-xl border font-mono" />
             <span class="text-slate-400">분</span>
             <span v-if="formTimeInfo.end" class="font-mono font-bold text-indigo-200">→ {{ editingShowForm.showTime }} ~ {{ formTimeInfo.end }}</span>
+            <span v-if="weatherOf(editingShowForm)" class="w-full text-[11px] font-bold" :class="weatherOf(editingShowForm).wet ? 'text-sky-300' : 'text-slate-300'">{{ weatherOf(editingShowForm).text }} <span class="font-normal text-slate-500">· {{ WX_NOTE }}</span></span>
             <span v-else class="text-[11px] text-slate-500">러닝타임을 적거나 '내 공연·상품'에 기본값을 넣으면 끝나는 시간이 나와요.</span>
           </div>
           <div v-if="formTimeInfo.others.length" class="sm:col-span-3 p-2.5 rounded-xl border text-[11px] space-y-1"
@@ -5215,6 +5227,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const waitInq = shows.value.filter(s => isInquiry(s) && s.showDate && s.showDate >= today && s.reqDate && s.reqDate <= addDaysToDateStr(today, -3) && !holdOver.includes(s));
           if (waitInq.length) list.push({ key: 'waitinq', icon: '⏰', text: `답 기다리는 문의 ${waitInq.length}건 (3일 넘음) → 눌러서 안부 문자`, shows: waitInq, smsType: 'follow' });
           if (lastYearAgain.value.length) list.push({ key: 'lastyear', icon: '🔁', text: `작년 이맘때 공연한 곳 ${lastYearAgain.value.length}곳 — 올해도 연락해 볼까요?`, go: 'lastyear' }); // ★ v3.0
+          // ★ v3.0: 7일 안 공연 중 비·눈 소식
+          const wetShows = weatherOn.value === '1' ? shows.value.filter(s => { const w = weatherOf(s); return w && w.wet; }).sort(byDateTime) : [];
+          if (wetShows.length) list.push({ key: 'rain', icon: '☔', text: `공연 날 비·눈 소식 ${wetShows.length}건 (7일 안 · 예보는 바뀔 수 있어요)`, shows: wetShows });
           if (highPriorityTodos.value.length) list.push({ key: 'todo', icon: '🔥', text: `급한 할 일·구매 ${highPriorityTodos.value.length}건`, go: 'todo' });
           if (settleSummary.value.undecided > 0) list.push({ key: 'perf', icon: '❓', text: `정산할 파트너 중 개인/사업자 미정 ${settleSummary.value.undecided}건`, go: 'performers' });
           return list;
@@ -5487,6 +5502,65 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           while (n < 15 && isOffDay(shiftDate(b, 1))) { b = shiftDate(b, 1); n++; if (holidayOf(b)) hol = true; }
           return hol && n >= 3;
         };
+
+        // ★ v3.0: 공연 지역 날씨 (7일 안). 지역·주소 글자로 이 PC 안의 표에서 위치를 찾고, 날씨 서비스(Open-Meteo)에는 좌표만 보냄
+        //   기관·고객 정보는 보내지 않음. 예보는 3시간 동안 이 기기에 보관. 기기마다 처음 한 번 켜기를 물어봄
+        const WX_PLACES = (() => { const m = {}; '서울 37.57 126.98|부산 35.18 129.08|대구 35.87 128.60|인천 37.46 126.71|광주 35.16 126.85|대전 36.35 127.38|울산 35.54 129.31|세종 36.48 127.29|수원 37.26 127.03|성남 37.42 127.13|고양 37.66 126.83|일산 37.66 126.77|분당 37.38 127.12|용인 37.24 127.18|부천 37.50 126.78|안산 37.32 126.83|안양 37.39 126.95|남양주 37.64 127.22|화성 37.20 126.83|동탄 37.20 127.07|평택 36.99 127.11|의정부 37.74 127.05|시흥 37.38 126.80|파주 37.76 126.78|김포 37.62 126.72|광명 37.48 126.86|경기광주 37.43 127.26|군포 37.36 126.94|하남 37.54 127.21|오산 37.15 127.08|이천 37.27 127.44|안성 37.01 127.28|구리 37.59 127.13|의왕 37.34 126.97|양주 37.79 127.05|포천 37.89 127.20|여주 37.30 127.64|동두천 37.90 127.06|과천 37.43 126.99|가평 37.83 127.51|양평 37.49 127.49|연천 38.10 127.07|춘천 37.88 127.73|원주 37.34 127.92|강릉 37.75 128.88|동해 37.52 129.11|속초 38.21 128.59|삼척 37.45 129.17|태백 37.16 128.99|홍천 37.69 127.89|횡성 37.49 127.98|평창 37.37 128.39|정선 37.38 128.66|철원 38.15 127.31|화천 38.11 127.71|양구 38.11 127.99|인제 38.07 128.17|강원고성 38.38 128.47|양양 38.08 128.62|영월 37.18 128.46|청주 36.64 127.49|충주 36.99 127.93|제천 37.13 128.19|보은 36.49 127.73|옥천 36.31 127.57|영동 36.18 127.78|증평 36.79 127.58|진천 36.86 127.44|괴산 36.81 127.79|음성 36.94 127.69|단양 36.98 128.37|천안 36.81 127.11|공주 36.45 127.12|보령 36.33 126.61|아산 36.79 127.00|서산 36.78 126.45|논산 36.19 127.10|계룡 36.27 127.25|당진 36.89 126.63|금산 36.11 127.49|부여 36.28 126.91|서천 36.08 126.69|청양 36.46 126.80|홍성 36.60 126.66|예산 36.68 126.85|태안 36.75 126.30|전주 35.82 127.15|군산 35.97 126.74|익산 35.95 126.96|정읍 35.57 126.86|남원 35.42 127.39|김제 35.80 126.88|완주 35.90 127.16|진안 35.79 127.42|무주 36.01 127.66|장수 35.65 127.52|임실 35.62 127.29|순창 35.37 127.14|고창 35.44 126.70|부안 35.73 126.73|목포 34.81 126.39|여수 34.76 127.66|순천 34.95 127.49|나주 35.02 126.71|광양 34.94 127.70|담양 35.32 126.99|곡성 35.28 127.29|구례 35.20 127.46|고흥 34.61 127.29|보성 34.77 127.08|화순 35.06 126.99|장흥 34.68 126.91|강진 34.64 126.77|해남 34.57 126.60|영암 34.80 126.70|무안 34.99 126.48|함평 35.07 126.52|영광 35.28 126.51|장성 35.30 126.79|완도 34.31 126.75|진도 34.49 126.26|신안 34.83 126.35|포항 36.02 129.34|경주 35.86 129.22|김천 36.14 128.11|안동 36.57 128.73|구미 36.12 128.34|영주 36.81 128.62|영천 35.97 128.94|상주 36.41 128.16|문경 36.59 128.19|경산 35.83 128.74|의성 36.35 128.70|청송 36.44 129.06|영양 36.67 129.11|영덕 36.42 129.37|청도 35.65 128.73|고령 35.73 128.26|성주 35.92 128.28|칠곡 35.99 128.40|예천 36.66 128.45|봉화 36.89 128.73|울진 36.99 129.40|울릉 37.48 130.91|창원 35.23 128.68|마산 35.21 128.58|진해 35.13 128.71|진주 35.18 128.11|통영 34.85 128.43|사천 35.00 128.06|김해 35.23 128.89|밀양 35.50 128.75|거제 34.88 128.62|양산 35.34 129.04|의령 35.32 128.26|함안 35.27 128.41|창녕 35.54 128.49|경남고성 34.97 128.32|남해 34.84 127.89|하동 35.07 127.75|산청 35.42 127.87|함양 35.52 127.73|거창 35.69 127.91|합천 35.57 128.17|제주 33.50 126.53|서귀포 33.25 126.56|기장 35.24 129.22|달성 35.77 128.43|강화 37.75 126.49|경기 37.27 127.03|강원 37.88 127.73|충북 36.64 127.49|충청북도 36.64 127.49|충남 36.60 126.66|충청남도 36.60 126.66|전북 35.82 127.15|전라북도 35.82 127.15|전남 34.99 126.48|전라남도 34.99 126.48|경북 36.57 128.73|경상북도 36.57 128.73|경남 35.23 128.68|경상남도 35.23 128.68'.split('|').forEach(x => { const [k, a, b] = x.trim().split(' '); if (k) m[k] = [Number(a), Number(b)]; }); return m; })();
+        const WX_KEYS = Object.keys(WX_PLACES).sort((a, b) => b.length - a.length);
+        const WX_KEY = 'itsshow_v23_weather', WX_ON_KEY = 'itsshow_v23_weather_on';
+        const weatherOn = ref((() => { try { return localStorage.getItem(WX_ON_KEY) || ''; } catch (e) { return ''; } })()); // '' 아직 안 물어봄 / '1' 켬 / '0' 끔
+        const weatherData = ref((() => { try { const v = JSON.parse(localStorage.getItem(WX_KEY) || '{}'); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } })());
+        const placeOf = (s) => {
+          const raw = String(((s && s.region) || '') + ' ' + ((s && s.address) || '')).replace(/\s+/g, '');
+          if (!raw) return null;
+          const t = raw.replace(/특별자치시|특별자치도|특별시|광역시/g, '');
+          if (/경기.*광주|광주시(?!광역)/.test(raw) && !/광주광역시/.test(raw)) return { name: '경기 광주', ll: WX_PLACES['경기광주'] };
+          if (/고성/.test(t)) return { name: '고성', ll: WX_PLACES[/경남|경상남도|통영|창원/.test(t) ? '경남고성' : '강원고성'] };
+          const k = WX_KEYS.find(x => !/^(경기광주|강원고성|경남고성)$/.test(x) && t.includes(x));
+          return k ? { name: k, ll: WX_PLACES[k] } : null;
+        };
+        const wxCellKey = (ll) => ll[0].toFixed(2) + ',' + ll[1].toFixed(2);
+        const weatherTargets = () => {
+          const today = referenceToday.value, end = shiftDate(today, 7);
+          return shows.value.filter(s => s.status !== '취소' && s.showDate >= today && s.showDate <= end).map(s => ({ s, p: placeOf(s) })).filter(x => x.p && x.p.ll);
+        };
+        const fetchWeather = async (force) => {
+          if (weatherOn.value !== '1' || typeof fetch !== 'function') return;
+          const cells = {};
+          weatherTargets().forEach(x => { cells[wxCellKey(x.p.ll)] = x.p.ll; });
+          const need = Object.keys(cells).filter(k => force || !weatherData.value[k] || Date.now() - (weatherData.value[k].at || 0) > 3 * 3600 * 1000);
+          if (!need.length) return;
+          const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + need.map(k => cells[k][0]).join(',') + '&longitude=' + need.map(k => cells[k][1]).join(',')
+            + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=precipitation_probability,temperature_2m,weather_code&timezone=Asia%2FSeoul&forecast_days=8';
+          try {
+            const r = await fetch(url); if (!r.ok) return;
+            let j = await r.json(); if (!Array.isArray(j)) j = [j];
+            const next = Object.assign({}, weatherData.value);
+            need.forEach((k, i) => { const d = j[i]; if (d && d.daily) next[k] = { at: Date.now(), daily: d.daily, hourly: d.hourly || null }; });
+            weatherData.value = next;
+            try { localStorage.setItem(WX_KEY, JSON.stringify(next)); } catch (e) {}
+          } catch (e) { /* 인터넷이 없으면 날씨만 비어 있음 */ }
+        };
+        const setWeatherOn = (v) => { weatherOn.value = v ? '1' : '0'; try { localStorage.setItem(WX_ON_KEY, weatherOn.value); } catch (e) {} if (v) fetchWeather(true); };
+        const WX_CODES = [[0, '☀️', '맑음'], [2, '🌤', '구름 조금'], [3, '☁️', '흐림'], [48, '🌫', '안개'], [57, '🌦', '이슬비'], [67, '🌧', '비'], [77, '🌨', '눈'], [82, '🌧', '소나기'], [86, '🌨', '눈'], [99, '⛈', '뇌우']];
+        const wxCode = (c) => { const n = Number(c); return WX_CODES.find(x => n <= x[0]) || WX_CODES[0]; };
+        const weatherOf = (s) => {
+          if (weatherOn.value !== '1' || !s || !s.showDate || s.status === '취소') return null;
+          const today = referenceToday.value; if (s.showDate < today || s.showDate > shiftDate(today, 7)) return null;
+          const p = placeOf(s); if (!p || !p.ll) return null;
+          const d = weatherData.value[wxCellKey(p.ll)]; if (!d || !d.daily || !Array.isArray(d.daily.time)) return null;
+          const i = d.daily.time.indexOf(s.showDate); if (i < 0) return null;
+          let pp = d.daily.precipitation_probability_max ? d.daily.precipitation_probability_max[i] : null, code = d.daily.weather_code ? d.daily.weather_code[i] : 0, at = '';
+          const hm = /^(\d{1,2}):/.exec(String(s.showTime || ''));
+          if (hm && d.hourly && Array.isArray(d.hourly.time)) {
+            const hi = d.hourly.time.indexOf(`${s.showDate}T${String(Number(hm[1])).padStart(2, '0')}:00`);
+            if (hi >= 0) { pp = d.hourly.precipitation_probability ? d.hourly.precipitation_probability[hi] : pp; code = d.hourly.weather_code ? d.hourly.weather_code[hi] : code; at = `${Number(hm[1])}시 `; }
+          }
+          const w = wxCode(code), lo = Math.round(d.daily.temperature_2m_min[i]), hi = Math.round(d.daily.temperature_2m_max[i]);
+          const wet = (pp != null && pp >= 60) || [61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99].includes(Number(code));
+          return { icon: w[1], wet, text: `${w[1]} ${p.name} ${at}${w[2]}${pp != null ? ' · 비 ' + pp + '%' : ''} · ${lo}°/${hi}°` };
+        };
+        const WX_NOTE = '예보는 바뀔 수 있어요. 참고용이니 중요한 결정은 기상청 날씨누리에서 한 번 더 확인해 주세요.';
         const calendarCells = computed(() => {
           const y = calendarYear.value;
           const m = calendarMonth.value;
@@ -8557,6 +8631,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           // ★ v2.6: 파트너 명부가 비어 있으면, 장부에 나온 파트너 이름으로 초안을 만듦 (구분은 '미정')
           if (performers.value.length === 0) seedPerformersFromShows(true);
           watch(() => showModalOpen.value, linkPerformerOnShowModalOpen);
+          fetchWeather(false); setInterval(() => fetchWeather(false), 30 * 60 * 1000); // ★ v3.0 날씨(켠 기기만)
           syncShowsAndCustomers(true);
           afterLoadSafety();
           runAutoBackup(false); // ★ v2.9: 자동 백업 폴더가 정해져 있으면 하루 한 번 저장
@@ -8588,7 +8663,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           addCompany, removeCompany, addProduct, removeProduct, moveProduct, addItem, removeItem,
           todoFilterType, todoFilterPriority, newTodoForm, highPriorityTodos, pendingTodosCount, totalPendingPurchaseCost, filteredTodos,
           DUE_RULES, SETTLE_RULES, dueRuleText, payDueOf, settleDueOf, payDueBadge, settleDueBadge, // ★ v3.0 예정일
-          scrollToCalendarTop, performerFilterField, FIELD_ORDER, fieldsOf, fieldClass, fieldLabelOf, toggleField, performerChoices, TASK_KINDS, taskIcon, showKeyOf, showByKey, editingTodoId, tasksOfShow, taskTimeText, taskShowChoices, onPickTaskShow, todoFormConflicts, tasksOnDate, resetTodoForm, editTodoItem, openTaskFromCalendar, addTaskForShow, holidayOf, longBreakOf, // ★ v3.0
+          scrollToCalendarTop, weatherOn, weatherOf, setWeatherOn, fetchWeather, WX_NOTE, performerFilterField, FIELD_ORDER, fieldsOf, fieldClass, fieldLabelOf, toggleField, performerChoices, TASK_KINDS, taskIcon, showKeyOf, showByKey, editingTodoId, tasksOfShow, taskTimeText, taskShowChoices, onPickTaskShow, todoFormConflicts, tasksOnDate, resetTodoForm, editTodoItem, openTaskFromCalendar, addTaskForShow, holidayOf, longBreakOf, // ★ v3.0
           addTodoItem, toggleTodoDone, deleteTodoItem,
           themeMode, isSidebarOpen, isMobile, activeTab, scheduleViewMode, financeSubTab, selectedYearMonth,
           referenceToday, setTodayToRealDate, isWithin5Days, getDdayLabel, next5DaysRangeLabel, next5DaysShows,
