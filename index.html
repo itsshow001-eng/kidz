@@ -6477,7 +6477,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
 
         // ===== v2.8 비슷한 고객 찾기 · 중복 합치기 (BEGIN CUSTOMER DEDUPE) =====
-        // 이름에서 '어린이집·유치원' 같은 흔한 단어를 빼고 핵심 이름만 비교 (예: '풍무어린이집' ↔ '장기어린이집'을 같다고 보지 않게)
+        // 이름에서 '어린이집·유치원' 같은 흔한 단어를 빼고 핵심 이름만 비교 (예: '가나어린이집' ↔ '다라어린이집'을 같다고 보지 않게)
         const COMMON_ORG_WORDS = ['국공립', '시립', '구립', '공립', '사립', '병설', '직장', '어린이집', '유치원', '초등학교', '중학교', '고등학교', '학교', '도서관', '주민센터', '복지관', '센터', '구청', '시청', '군청', '축제팀', '축제', '사무소', '본점', '지점'];
         const coreName = (name) => {
           let n = normalizeName(name).replace(/[()\[\]·.,\-_]/g, '');
@@ -6528,7 +6528,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           return customers.value
             .map(c => {
               let r = similarity({ client: q, phone: f.phone, bizNo: f.bizNo }, c);
-              // 치는 중인 글자가 고객 이름에 그대로 들어 있으면 추천 (예: '풍무' → '풍무어린이집')
+              // 치는 중인 글자가 고객 이름에 그대로 들어 있으면 추천 (예: '가나' → '가나어린이집')
               if (r.score < 60 && qn.length >= 2 && normalizeName(c.client).includes(qn)) r = { score: 60, reason: '이름에 포함' };
               return { c, ...r, count: showCountByCust.value[c.custId] || 0 };
             })
