@@ -4454,9 +4454,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
         // Toast
         const toastMsg = ref('');
+        let toastTimer = null; // ★ v3.0: 앞 알림의 타이머가 새 알림을 일찍 지우지 않게
         const showToast = (msg, ms = 3200) => {
           toastMsg.value = msg;
-          setTimeout(() => { toastMsg.value = ''; }, ms);
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => { toastMsg.value = ''; }, ms);
         };
 
         const activeShowsCount = computed(() => shows.value.filter(s => s.status !== '취소').length);
@@ -6551,7 +6553,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           syncShowsAndCustomers(true);
           saveAllToStorage();
           nextTick(() => renderCharts());
-          showToast(`'${target.client}' 일정이 [${cancelBadge(target)}]로 표시(보존)되었습니다. 삭제되지 않았어요.`);
+          if (isFeeShow(target)) showToast(`💰 원래 공연 금액 ₩${(Number(target.amount) || 0).toLocaleString()} → 위약금 ₩${(Number(target.cancelFee) || 0).toLocaleString()}으로 저장했어요. 매출·미수금은 위약금으로 계산돼요. (취소로 표시, 삭제 안 함)`, 7000); // ★ v3.0
+          else showToast(`'${target.client}' 일정이 [${cancelBadge(target)}]로 표시(보존)되었습니다. 삭제되지 않았어요.`);
         };
 
         const toggleCancelShow = (showItem) => {
