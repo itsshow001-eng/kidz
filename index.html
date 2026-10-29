@@ -29,7 +29,7 @@
     input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; display: block; box-sizing: border-box; }
     input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value, input[type="month"]::-webkit-date-and-time-value { text-align: left; }
   </style>
-  <title>이츠쇼타임 공연관리 v3.0</title>
+  <title>이츠쇼타임 행사관리 v3.0</title>
 <script>/* ★ v3.0: PC에서 파일로 열었는데 크롬이 아니면 (맥 사파리 등) 맨 위에 안내 — 브라우저마다 기록이 따로 저장되기 때문 */
 (function () { try {
   if (location.protocol !== 'file:') return;
@@ -297,8 +297,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
           <div class="min-w-0">
             <div class="flex items-center space-x-1.5">
-              <span class="text-sm sm:hidden font-black text-white tracking-tight truncate">공연관리</span>
-              <span class="hidden sm:inline text-base font-black text-white tracking-tight">{{ brandName }} 공연관리</span>
+              <span class="text-sm sm:hidden font-black text-white tracking-tight truncate">행사관리</span>
+              <span class="hidden sm:inline text-base font-black text-white tracking-tight">{{ brandName }} 행사관리</span>
               <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold shrink-0">v3.0</span>
             </div>
             <p class="text-[11px] text-slate-400 hidden md:block truncate"><b class="text-amber-300">이츠쇼타임 PREMIUM</b><template v-if="license"> · <b class="text-white">{{ license.name }}님 전용</b>{{ license.no ? ' · ' + license.no : '' }}</template><template v-else> · 스케줄 · 5일 브리핑 · 정산 · 단골 CRM</template></p>
@@ -309,7 +309,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <!-- ★ v3.0: 이츠쇼타임 프리미엄 · 세 프로그램 오가기 (PC) -->
       <nav class="itt-nav" aria-label="이츠쇼타임 프리미엄 프로그램">
         <span class="itt-mark">이츠쇼타임<b>PREMIUM</b></span>
-        <button type="button" class="itt-tab on" @click="switchTab('overview')">🗓️ 공연관리</button>
+        <button type="button" class="itt-tab on" @click="switchTab('overview')">🗓️ 행사관리</button>
         <button type="button" class="itt-tab" @click="goPremiumApp('sns')">📝 SNS</button>
         <button type="button" class="itt-tab" @click="goPremiumApp('shorts')">🎬 쇼츠</button>
       </nav>
@@ -2261,10 +2261,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div :class="foldCls('products')" @click="foldClick('products', $event)" class="rounded-2xl bg-slate-800/90 border border-slate-700/80 p-5 space-y-3">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-700/60">
               <div>
-                <h3 class="text-sm font-bold text-white">🎭 내 공연·상품</h3>
-                <p class="text-xs text-slate-400">새 일정의 '공연 테마' 목록과 견적서의 러닝타임·소개에 쓰여요. 이름을 바꾸면 지난 기록의 이름은 그대로 남아요.</p>
+                <h3 class="text-sm font-bold text-white">🎭 내 콘텐츠·상품</h3>
+                <p class="text-xs text-slate-400">새 일정의 '콘텐츠' 목록과 견적서의 러닝타임·소개에 쓰여요. 이름을 바꾸면 지난 기록의 이름은 그대로 남아요.</p>
               </div>
-              <button type="button" @click="addProduct" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer whitespace-nowrap">+ 공연·상품 추가</button>
+              <button type="button" @click="addProduct" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer whitespace-nowrap">+ 콘텐츠·상품 추가</button>
             </div>
             <div v-for="(x, xi) in profile.products" :key="'pr' + xi" class="rounded-xl border border-slate-700 p-3 space-y-2 text-xs">
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -2642,7 +2642,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <span class="text-slate-400">분</span>
             <span v-if="formTimeInfo.end" class="font-mono font-bold text-indigo-200">→ {{ editingShowForm.showTime }} ~ {{ formTimeInfo.end }}</span>
             <span v-if="weatherOf(editingShowForm)" class="w-full text-[11px] font-bold" :class="weatherOf(editingShowForm).wet ? 'text-sky-300' : 'text-slate-300'">{{ weatherOf(editingShowForm).text }} <span class="font-normal text-slate-500">· {{ WX_NOTE }}</span></span>
-            <span v-else class="text-[11px] text-slate-500">러닝타임을 적거나 '내 공연·상품'에 기본값을 넣으면 끝나는 시간이 나와요.</span>
+            <span v-else class="text-[11px] text-slate-500">러닝타임을 적거나 '내 콘텐츠·상품'에 기본값을 넣으면 끝나는 시간이 나와요.</span>
           </div>
           <div v-if="formTimeInfo.others.length" class="sm:col-span-3 p-2.5 rounded-xl border text-[11px] space-y-1"
             :class="formTimeInfo.others.some(o => o.level !== '여유') ? 'bg-rose-500/10 border-rose-500/40 text-rose-200' : 'bg-slate-900 border-slate-700 text-slate-300'">
@@ -3941,7 +3941,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         <div class="flex justify-center"><div class="itt-qr" v-html="phoneLinkSvg"></div></div>
         <ol class="space-y-1 text-[13px] text-slate-700" style="list-style: decimal; padding-left: 18px">
           <li>휴대폰 <b>기본 카메라</b>로 이 QR을 비추고, 뜨는 주소를 눌러요.</li>
-          <li>공연관리가 열리면서 <b>PC 기록을 저절로 불러와요.</b></li>
+          <li>행사관리가 열리면서 <b>PC 기록을 저절로 불러와요.</b></li>
           <li>갤럭시: 크롬 ⋮ → <b>[홈 화면에 추가]</b> / 아이폰: 사파리 공유 → <b>[홈 화면에 추가]</b></li>
         </ol>
         <p class="rounded-xl px-3 py-2 text-[12px] font-bold" style="background:#fff1f2;border:1px solid #fecdd3;color:#be123c">🔒 이 QR에는 내 기록의 열쇠(비밀키)가 들어 있어요. 내 휴대폰으로만 찍고, 사진으로 찍어 남에게 보내지 마세요.</p>
@@ -5392,7 +5392,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         // ★ v3.0: 미수금을 '공연 끝남'(오늘 전)과 '예정'(오늘 포함 앞으로)으로 나눠 보기
         const isPastUnpaid = (s) => !!s && String(s.showDate || '') < referenceToday.value;
         // ★ v3.0: 입금 예정일·지급 예정일. 규칙(공연 후 7일 등)으로 적어 두면 공연 날짜가 바뀌어도 따라감. 비우면 설정의 기본 규칙
-        const DUE_RULES = [{ v: 'd0', t: '공연 당일' }, { v: 'd7', t: '공연 후 7일' }, { v: 'd14', t: '공연 후 14일' }, { v: 'eom', t: '공연한 달 말일' }, { v: 'nextm10', t: '다음 달 10일' }, { v: 'nextmEnd', t: '다음 달 말일' }];
+        const DUE_RULES = [{ v: 'd0', t: '일정 당일' }, { v: 'd7', t: '일정 후 7일' }, { v: 'd14', t: '일정 후 14일' }, { v: 'eom', t: '일정한 달 말일' }, { v: 'nextm10', t: '다음 달 10일' }, { v: 'nextmEnd', t: '다음 달 말일' }];
         const SETTLE_RULES = DUE_RULES.concat([{ v: 'afterpay', t: '입금 받은 날' }]);
         const dueRuleText = (v) => ((SETTLE_RULES.find(r => r.v === v) || {}).t) || '';
         const ymdOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
