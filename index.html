@@ -4093,7 +4093,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     </div>
 
     <!-- ★ v3.0: 입금 확인 — 어느 통장으로 들어왔나요? -->
-    <div v-if="payAccPick" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" @click.self="payAccPick = null">
+    <div v-if="payAccPick" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" @click.self="closePaidAccount">
       <div class="bg-slate-900 border border-emerald-500/50 rounded-3xl max-w-md w-full p-5 space-y-3 shadow-2xl text-xs max-h-[90vh] overflow-y-auto">
         <h3 class="text-base font-black text-white">🏦 어느 통장으로 들어왔나요?</h3>
         <p class="text-slate-400">고르면 입금 완납으로 바뀌고, 그 통장의 '들어온 돈'에 더해져요. 잔액은 바뀌지 않아요.</p>
@@ -4111,7 +4111,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         </div>
         <div class="grid grid-cols-2 gap-2">
           <button type="button" @click="choosePaidAccount('')" class="py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold cursor-pointer">통장 안 적고 완납</button>
-          <button type="button" @click="payAccPick = null" class="py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold cursor-pointer">취소</button>
+          <button type="button" @click="closePaidAccount" class="py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold cursor-pointer">취소</button>
         </div>
       </div>
     </div>
@@ -4697,6 +4697,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           s.payStatus='미입금';
           ['payDate','paidAccount','payments','payAuto'].forEach(k=>delete s[k]);
         };
+        // SYS-05: 저장 자료와 분리한 대상별 입력 잠금 (고정된 업무 날짜와 무관한 단조 시계).
+        const actionLocks = new WeakMap();
+        const savedNewForms = new WeakSet();
+        const beginAction = (target, key) => {
+          if (!target || typeof target !== 'object') return null;
+          let locks=actionLocks.get(target); if(!locks) actionLocks.set(target,locks=new Map());
+          const old=locks.get(key), now=performance.now();
+          if(old && (old.busy || now-old.at<800)) return null;
+          const lock={busy:true,at:now}; locks.set(key,lock);
+          return () => {lock.busy=false;lock.at=performance.now();};
+        };
         const paymentDialog = ref(null);
         const paymentBusy = ref(false);
         const paymentForm = ref({amount:0,kind:'계약금'});
@@ -4733,6 +4744,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           if (!paymentDialog.value?.draft) saveAllToStorage();
         };
         const addPaymentRecord = async () => {
+          const releaseAction=beginAction(paymentForm.value,'payment'); if(!releaseAction) return;
+          try {
           if (paymentBusy.value || !FEATURES.depositRecords) return;
           paymentBusy.value=true; // 첫 클릭 즉시 잠금. 다음 렌더까지 중복 호출도 차단.
           try {
@@ -4750,6 +4763,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             paymentDialog.value=null;
             showToast('입금 기록을 저장했어요. 통장 합계는 완납 기준입니다.');
           } finally { await nextTick(); paymentBusy.value=false; }
+          } finally { releaseAction(); }
         };
         const cancelPaymentRecord = (s,id) => {
           if (!FEATURES.depositRecords || isDirectSettle(s)) return;
@@ -6354,12 +6368,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
 
         const toggleInvoiceRecv = (row) => {
+          const releaseAction=beginAction(row.t,"toggleInvoiceRecv"); if(!releaseAction) return;
+          try {
+          if(row.t.invoiceRecv === '수취완료' && !confirm('정말 미수취로 되돌릴까요?')) return;
           row.t.invoiceRecv = row.t.invoiceRecv === '수취완료' ? '미수취' : '수취완료';
           row.s.updatedAt = nowStamp();
           saveAllToStorage();
+          } finally { releaseAction(); }
         };
 
         const markSettlementPaid = (row) => {
+          if(row.t.settleStatus==='정산완료') return;
+          const releaseAction=beginAction(row.t,'settlement'); if(!releaseAction) return;
+          try {
           const s = row.s, t = row.t;
           const who = row.name + (row.role ? ` (${row.role})` : '');
           if (row.kind !== '개인' && row.kind !== '사업자') {
@@ -6377,7 +6398,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           if (!confirm(msg)) return;
           t.settleStatus = '정산완료';
           t.settlePaidDate = getBrowserTodayStr();
-          if (row.kind === '개인') {
+          const existingTax=taxRecords.value.find(r => (t.taxRecordId && r.id===t.taxRecordId) ||
+            ((s.uid ? r.showUid===s.uid : r.showNo===s.no) && r.name===row.name && r.gross===row.gross && r.memo===`${s.showDate} ${s.client} ${row.role === '서브' ? '서브 페이' : '페이'} (파트너 정산에서 자동 기록)`));
+          if(existingTax) t.taxRecordId=existingTax.id;
+          if (row.kind === '개인' && !existingTax) {
             const rec = {
               id: 'TAX-' + Date.now(),
               payDate: t.settlePaidDate,
@@ -6400,10 +6424,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           s.updatedAt = nowStamp();
           saveAllToStorage();
           showToast(row.kind === '개인' ? `✅ 지급완료! 3.3% 원천징수 장부에 기록했어요 (실지급 ₩${row.net.toLocaleString()}).` : `✅ 지급완료로 표시했어요 (₩${row.gross.toLocaleString()}).`, 5000);
+          } finally { releaseAction(); }
         };
 
         // 예전에 이미 지급(및 3.3% 기록)한 공연: 새 원천징수 기록 없이 '정산완료'로만 표시 (중복 기록 방지)
         const markSettlementAlreadyPaid = (row) => {
+          const releaseAction=beginAction(row.t,'settlement'); if(!releaseAction) return;
+          try {
           const s = row.s, t = row.t;
           const who = row.name + (row.role ? ` (${row.role})` : '');
           if (!confirm(`'${who}' ${s.showDate} ${s.client}\n\n예전에 이미 지급한 건으로 표시할까요?\n(3.3% 원천징수 장부에는 새로 기록하지 않아요)`)) return;
@@ -6412,9 +6439,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           s.updatedAt = nowStamp();
           saveAllToStorage();
           showToast('이미 지급한 건으로 표시했어요.');
+          } finally { releaseAction(); }
         };
 
         const undoSettlementPaid = (row) => {
+          const releaseAction=beginAction(row.t,'settlement'); if(!releaseAction) return;
+          try {
           const s = row.s, t = row.t;
           const who = row.name + (row.role ? ` (${row.role})` : '');
           const linked = t.taxRecordId ? taxRecords.value.find(r => r.id === t.taxRecordId) : null;
@@ -6426,12 +6456,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           s.updatedAt = nowStamp();
           saveAllToStorage();
           showToast('미지급으로 되돌렸어요.');
+          } finally { releaseAction(); }
         };
 
         // 3.3% 원천징수 장부: 신고 상태를 눌러서 바꿈 (신고대기 ↔ 신고완료)
         const toggleTaxReportStatus = (t) => {
+          const releaseAction=beginAction(t,"toggleTaxReportStatus"); if(!releaseAction) return;
+          try {
+          if(t.reportStatus === '신고완료' && !confirm('정말 신고대기로 되돌릴까요?')) return;
           t.reportStatus = t.reportStatus === '신고대기' ? '신고완료' : '신고대기';
           saveAllToStorage();
+          } finally { releaseAction(); }
         };
         // ===== v2.6 파트너 명부 (END PERFORMERS) =====
 
@@ -7090,6 +7125,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         // ★ FEATURE 5: 삭제 대신 취소 표시 보존 ★
         // 편집 창의 [취소 표시/해제] 버튼: 상태만 바꾸고, 취소 유형·사유는 아래 입력칸에서 적고 [저장]할 때 확정됩니다.
         const markCancelledInModal = () => {
+          const releaseAction=beginAction(editingShowForm.value,"markCancelledInModal"); if(!releaseAction) return;
+          try {
+          if(['완료','취소'].includes(editingShowForm.value.status) && !confirm('정말 완료·취소 표시를 바꿀까요?')) return;
           const f = editingShowForm.value;
           if (f.status === '취소') {
             f.status = f.cancelFrom || '확정';
@@ -7098,6 +7136,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             f.status = '취소';
             if (!f.cancelDate) f.cancelDate = referenceToday.value;
           }
+          } finally { releaseAction(); }
         };
 
         // 목록의 [취소] 버튼: 바로 취소하지 않고, 어떤 이유인지 물어보는 작은 창을 먼저 엽니다. (삭제는 절대 하지 않음)
@@ -7111,6 +7150,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           cancelModalOpen.value = true;
         };
         const confirmCancelShow = () => {
+          const releaseAction=beginAction(cancelForm.value,'cancel'); if(!releaseAction) return;
+          try {
           const target = shows.value.find(x => x.no === cancelTargetNo.value);
           if (!target) { cancelModalOpen.value = false; return; }
           const cf = cancelForm.value;
@@ -7126,9 +7167,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           nextTick(() => renderCharts());
           if (isFeeShow(target)) showToast(`💰 원래 금액 ₩${(Number(target.amount) || 0).toLocaleString()} → 위약금 ₩${(Number(target.cancelFee) || 0).toLocaleString()}으로 저장했어요. 매출·미수금은 위약금으로 계산돼요. (취소로 표시, 삭제 안 함)`, 7000); // ★ v3.0
           else showToast(`'${target.client}' 일정이 [${cancelBadge(target)}]로 표시(보존)되었습니다. 삭제되지 않았어요.`);
+          } finally { releaseAction(); }
         };
 
         const toggleCancelShow = (showItem) => {
+          const releaseAction=beginAction(showItem,"toggleCancelShow"); if(!releaseAction) return;
+          try {
+          if(showItem.status === '취소' && !confirm('정말 취소 표시를 해제할까요?')) return;
           if (showItem.status !== '취소') { openCancelModal(showItem); return; }
           applyRestore(showItem);
           reconcilePayments(showItem);
@@ -7137,6 +7182,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           saveAllToStorage();
           nextTick(() => renderCharts());
           showToast(`'${showItem.client}' 일정이 [${showItem.status}] 상태로 복구되었습니다. (취소 기록은 이력으로 보관)`);
+          } finally { releaseAction(); }
         };
 
         const mobileCopiedForms = new WeakSet();
@@ -7207,6 +7253,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
 
         const saveShowModal = () => {
+          if(!isEditingShow.value && savedNewForms.has(editingShowForm.value)) return;
+          const releaseAction=beginAction(editingShowForm.value,'save:'+JSON.stringify(editingShowForm.value)); if(!releaseAction) return;
+          try {
           if (isEditingShow.value) {
             const live=shows.value.find(s=>s.no===editingShowForm.value.no), f=editingShowForm.value;
             if(live) {
@@ -7319,6 +7368,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             shows.value.unshift({ ...stripRecordMeta({ ...editingShowForm.value }), uid: makeUid(), createdAt: nowStamp() });
             showToast('새 일정이 등록되고 단골고객과 동기화되었습니다.');
           }
+          if(!isEditingShow.value) savedNewForms.add(editingShowForm.value);
           showModalOpen.value = false;
           syncShowsAndCustomers(true);
           saveAllToStorage();
@@ -7326,6 +7376,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           // ★ v3.0: 위약금 저장 안내 (원래 금액은 기록으로 남고, 매출·미수금은 위약금 기준)
           const fs = editingShowForm.value;
           if (fs && isFeeShow(fs)) showToast(`💰 원래 금액 ₩${(Number(fs.amount) || 0).toLocaleString()} → 위약금 ₩${(Number(fs.cancelFee) || 0).toLocaleString()}으로 저장했어요. 매출·미수금은 위약금으로 계산돼요.`, 7000);
+          } finally { releaseAction(); }
         };
 
         // ★ FEATURE 3 & REQUEST 2: 단골 고객(CRM) 수정 및 사업자·이메일 즉시 입력 모달 ★
@@ -7684,10 +7735,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
         // ★ NEW FEATURE 1: 전자(세금)계산서 미발행/발행완료 원클릭 토글 & 홈택스 일괄발행 엑셀 다운로드 ★
         const toggleShowDocIssued = (showItem) => {
+          const releaseAction=beginAction(showItem,"toggleShowDocIssued"); if(!releaseAction) return;
+          try {
+          if(showItem.docIssued === '발행완료' && !confirm('정말 미발행으로 되돌릴까요?')) return;
           showItem.docIssued = showItem.docIssued === '발행완료' ? '미발행' : '발행완료';
           showItem.updatedAt = nowStamp();
           saveAllToStorage();
           showToast(`🧾 '${showItem.client}' 계산서 상태가 [${showItem.docIssued}]로 변경되었습니다.`);
+          } finally { releaseAction(); }
         };
 
         const exportHometaxInvoiceBatch = () => {
@@ -8096,8 +8151,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const resetNavApp = () => { navLastApp.value = ''; try { localStorage.removeItem(NAV_APP_KEY); } catch (e) {} showToast('다음부터 길찾기 때 앱을 다시 물어볼게요.'); };
 
         // ★ v3.0: 입금 확인 때 '어느 통장으로 들어왔나요?'를 고름 (통장이 없으면 예전처럼 바로 완납). 통장 잔액은 바꾸지 않고 기록만 함
+        let payAccOpenedAt=-Infinity;
+        const closePaidAccount = () => { if(performance.now()-payAccOpenedAt>=800) payAccPick.value=null; };
         const payAccPick = ref(null); // { no }
         const finishPaid = (target, accId) => {
+          if(target.payStatus==='완납') return;
+          const releaseAction=beginAction(target,'toggleShowPayStatus'); if(!releaseAction) return;
+          try {
           if (FEATURES.depositRecords) delete target.payAuto;
           target.payStatus = '완납';
           target.payDate = referenceToday.value;
@@ -8107,10 +8167,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           saveAllToStorage();
           const acc = accountOf(accId);
           showToast(`'${target.client}' (₩${amountDue(target).toLocaleString()}) 입금 완납 처리되었습니다!${acc ? ' 🏦 ' + acc.name : ''}`);
+          } finally { releaseAction(); }
         };
         const markShowPaid = (showItem) => {
           const target = shows.value.find(s => s.no === showItem.no);
           if (!target) { showToast('일정을 먼저 저장한 뒤 잔액 완납을 확인해 주세요.'); return; }
+          if(payAccPick.value || target.payStatus==='완납') return;
+          payAccOpenedAt=performance.now();
           payAccNewName.value = '';
           payAccPick.value = { no: target.no }; // 통장이 없어도 창을 띄워서 바로 추가할 수 있게
         };
@@ -8131,6 +8194,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
         const toggleShowPayStatus = (showItem) => {
           if (showItem.payStatus !== '완납') { markShowPaid(showItem); return; } // ★ v3.0: 완납으로 바꿀 때는 통장 고르기
+          const releaseAction=beginAction(showItem,"toggleShowPayStatus"); if(!releaseAction) return;
+          try {
+          if(showItem.payStatus === '완납' && !confirm('정말 미입금으로 되돌릴까요?')) return;
           if (undoPaymentBlocked(showItem)) { paymentUndoNotice(); return; }
           if (FEATURES.depositRecords) delete showItem.payAuto;
           showItem.payStatus = '미입금';
@@ -8138,12 +8204,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           showItem.updatedAt = nowStamp();
           saveAllToStorage();
           showToast(`'${showItem.client}' 입금상태가 [${showItem.payStatus}]으로 변경되었습니다.`);
+          } finally { releaseAction(); }
         };
 
         const togglePayableStatus = (p) => {
+          const releaseAction=beginAction(p,"togglePayableStatus"); if(!releaseAction) return;
+          try {
+          if(p.status === '결제완료' && !confirm('정말 결제대기로 되돌릴까요?')) return;
           p.status = p.status === '결제완료' ? '결제대기' : '결제완료';
           saveAllToStorage();
           showToast(`'${p.target}' 정산 상태가 [${p.status}]로 변경되었습니다.`);
+          } finally { releaseAction(); }
         };
 
         const goToUnpaidView = () => {
@@ -8753,9 +8824,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
 
         const toggleTodoDone = (item) => {
+          const releaseAction=beginAction(item,"toggleTodoDone"); if(!releaseAction) return;
+          try {
+          if(item.done && !confirm('정말 미완료로 되돌릴까요?')) return;
           item.done = !item.done;
           saveAllToStorage();
           showToast(item.done ? `✓ '${item.title}' 완료 처리되었습니다!` : `'${item.title}' 미완료 상태로 복구되었습니다.`);
+          } finally { releaseAction(); }
         };
 
         const deleteTodoItem = (id) => {
@@ -9345,7 +9420,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           filteredCustomers, recommendNextTheme,
           showModalOpen, showModalMode, isEditingShow, editingShowForm,
           weekdayOptions, bulkConfig, toggleBulkWeekday, bulkPreviewDates,
-          quickGuideOpen, editFirstOpen, editPaymentOpen, compactEdit, windowMobile, MOBILE_UX, openNewShowModal, openEditShowModal, copyFromEditModal, duplicateShowQuick, markCancelledInModal, toggleCancelShow, saveShowModal: saveShowModalWithMobile, saveShowModalWithMobile, afterSaveSmsTarget, viewAfterSaveSms, afterCompleteMemoTarget, viewAfterCompleteMemo,
+          closePaidAccount, quickGuideOpen, editFirstOpen, editPaymentOpen, compactEdit, windowMobile, MOBILE_UX, openNewShowModal, openEditShowModal, copyFromEditModal, duplicateShowQuick, markCancelledInModal, toggleCancelShow, saveShowModal: saveShowModalWithMobile, saveShowModalWithMobile, afterSaveSmsTarget, viewAfterSaveSms, afterCompleteMemoTarget, viewAfterCompleteMemo,
           showContactOptions, selectShowContact, addCustomerContact, removeCustomerContact,
           syncShowsAndCustomers, onSelectCustomerInShowModal, autoMatchCustomerForShowForm, openCustomerByCustId,
           hometaxModalOpen, hometaxPreviewList, hometaxSyncShowsToo, openHometaxModal, triggerHometaxFileSelect, handleHometaxFileUpload, applyHometaxImport, downloadSampleHometaxTemplate,
