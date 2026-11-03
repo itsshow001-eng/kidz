@@ -2731,11 +2731,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
           <div>
             <label class="text-slate-400 block mb-1">연락처</label>
-            <input type="text" v-model="editingShowForm.phone" placeholder="010-0000-0000" class="w-full px-3 py-2 rounded-xl border font-mono" />
+            <input type="text" :readonly="!!editingShowForm.contactId" v-model="editingShowForm.phone" placeholder="010-0000-0000" class="w-full px-3 py-2 rounded-xl border font-mono" />
           </div>
           <div>
             <label class="text-slate-400 block mb-1">담당자명</label>
-            <input type="text" v-model="editingShowForm.manager" placeholder="원장님, 주임님..." class="w-full px-3 py-2 rounded-xl border" />
+            <select v-model="editingShowForm.contactId" @change="selectShowContact" class="w-full px-3 py-2 rounded-xl border">
+              <option v-for="p in showContactOptions" :key="p.id" :value="p.id">{{ p.name || '(이름 없음)' }}{{ p.role ? ' · ' + p.role : '' }}</option>
+              <option v-if="editingShowForm.contactId && !showContactOptions.some(p => p.id === editingShowForm.contactId)" :value="editingShowForm.contactId">{{ editingShowForm.manager }} (보관된 담당자)</option>
+              <option value="">직접 입력</option>
+            </select>
+            <input v-if="!editingShowForm.contactId" type="text" v-model="editingShowForm.manager" placeholder="담당자 직접 입력" class="w-full px-3 py-2 rounded-xl border" />
           </div>
           <div>
             <label class="text-slate-400 block mb-1">지역</label>
@@ -3376,13 +3381,15 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </select>
           </div>
 
-          <div>
-            <label class="text-slate-400 block mb-1">담당자명</label>
-            <input type="text" v-model="editingCustomerForm.manager" placeholder="원장님, 실장님..." class="w-full px-3 py-2 rounded-xl border" />
-          </div>
-          <div>
-            <label class="text-slate-400 block mb-1">연락처</label>
-            <input type="text" v-model="editingCustomerForm.phone" placeholder="010-0000-0000" class="w-full px-3 py-2 rounded-xl border font-mono" />
+          <div class="sm:col-span-2 space-y-2">
+            <label class="text-slate-400 block mb-1">담당자 목록 (첫 담당자는 기본 담당자)</label>
+            <div v-for="(contact, index) in editingCustomerForm.contacts" :key="contact.id" class="space-y-1 border border-slate-700 rounded-xl p-2">
+              <label>이름<input type="text" v-model="contact.name" class="w-full px-3 py-2 rounded-xl border" /></label>
+              <label>직책/역할<input type="text" v-model="contact.role" class="w-full px-3 py-2 rounded-xl border" /></label>
+              <label>연락처<input type="text" v-model="contact.phone" placeholder="010-0000-0000" class="w-full px-3 py-2 rounded-xl border font-mono" /></label>
+              <button type="button" @click="removeCustomerContact(index)" class="text-rose-400 cursor-pointer">삭제</button>
+            </div>
+            <button type="button" @click="addCustomerContact" class="text-emerald-300 cursor-pointer">+ 담당자 추가</button>
           </div>
 
           <!-- ★ REQUEST 1 & 2: 사업자 정보 + 이메일 통합 입력 박스 (고객번호 기준으로 공연 스케줄 장부와 자동 동기화) ★ -->
@@ -6231,6 +6238,58 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           return `CUST-${String(maxNum + 1).padStart(4, '0')}`;
         };
 
+        // 고객 연락처: 기존 manager/phone은 첫 담당자의 호환용 사본입니다.
+        const newContact = () => ({ id: makeUid(), name: '', role: '', phone: '' });
+        const ensureContacts = c => {
+          if (!Array.isArray(c.contacts)) c.contacts = (c.manager || c.phone) ? [{ ...newContact(), name: c.manager || '', phone: c.phone || '' }] : [];
+          c.contacts.forEach(p => { if (!p.id) p.id = makeUid(); });
+          c.manager = c.contacts[0]?.name || '';
+          c.phone = c.contacts[0]?.phone || '';
+          return c.contacts;
+        };
+        const bindLegacyContact = (s, c) => {
+          const list = ensureContacts(c);
+          if (typeof s.contactId === 'undefined') {
+            const p = list.find(p => (p.name || '') === (s.manager || '') && (p.phone || '') === (s.phone || ''));
+            s.contactId = p?.id || list[0]?.id || '';
+          }
+        };
+        const applyContactToShow = (s, c) => {
+          bindLegacyContact(s, c);
+          if (s.status === '완료' || s.status === '취소') return false;
+          const p = c.contacts.find(p => p.id === s.contactId);
+          if (!p) return false; // 삭제된 담당자와 직접 입력 기록은 보존
+          const changed = s.manager !== (p.name || '') || s.phone !== (p.phone || '');
+          s.manager = p.name || ''; s.phone = p.phone || '';
+          return changed;
+        };
+        const showContactOptions = computed(() => {
+          const c = customers.value.find(c => c.custId === editingShowForm.value.custId);
+          return c ? ensureContacts(c) : [];
+        });
+        const selectShowContact = () => {
+          const f = editingShowForm.value;
+          const p = showContactOptions.value.find(p => p.id === f.contactId);
+          f.manager = p?.name || ''; f.phone = p?.phone || '';
+        };
+        const addCustomerContact = () => { editingCustomerForm.value.contacts.push(newContact()); };
+        const removeCustomerContact = index => { editingCustomerForm.value.contacts.splice(index, 1); ensureContacts(editingCustomerForm.value); };
+        const mergeContacts = (keep, other) => {
+          ensureContacts(keep); ensureContacts(other);
+          const idMap = new Map();
+          other.contacts.forEach(p => {
+            let dest = keep.contacts.find(q => q.name === p.name && (q.role || '') === (p.role || '') && q.phone === p.phone);
+            if (!dest) { dest = { ...p, id: keep.contacts.some(q => q.id === p.id) ? makeUid() : p.id }; keep.contacts.push(dest); }
+            idMap.set(p.id, dest.id);
+          });
+          [...shows.value, ...trash.value.map(t => t.show)].forEach(s => {
+            if (s.custId !== other.custId) return;
+            bindLegacyContact(s, other);
+            if (idMap.has(s.contactId)) s.contactId = idMap.get(s.contactId);
+          });
+          ensureContacts(keep);
+        };
+
         const BIZ_SYNC_FIELDS = ['email', 'bizName', 'bizNo', 'bizAddress']; // ★ v3.0 일정 ↔ 단골고객 사업자 정보
         const syncShowsAndCustomers = (silent = true) => {
           const custById = {};
@@ -6238,6 +6297,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const custByBizNo = {};
 
           customers.value.forEach(c => {
+            ensureContacts(c);
             if (!c.custId) c.custId = getNextCustId();
             if (typeof c.email === 'undefined') c.email = '';
             if (typeof c.bizName === 'undefined') c.bizName = '';
@@ -6268,6 +6328,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               matched = {
                 custId: newId,
                 client: s.client.trim(),
+                contacts: s.contactId === '' ? [] : undefined,
                 manager: s.manager || '',
                 phone: s.phone || '',
                 email: s.email || '',
@@ -6310,11 +6371,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               if (s.bizAddress && !matched.bizAddress) { matched.bizAddress = s.bizAddress; matched.isBiz = true; }
               else if (!s.bizAddress && matched.bizAddress) s.bizAddress = matched.bizAddress;
 
-              if (s.phone && !matched.phone) matched.phone = s.phone;
-              else if (!s.phone && matched.phone) s.phone = matched.phone;
-
-              if (s.manager && !matched.manager) matched.manager = s.manager;
-              else if (!s.manager && matched.manager) s.manager = matched.manager;
+              // Preserve event snapshots during loading and synchronization.
+              bindLegacyContact(s, matched);
 
               if (s.region && !matched.region) matched.region = s.region;
             }
@@ -6337,6 +6395,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           });
 
           customers.value.forEach(c => {
+            ensureContacts(c);
             const st = statsMap[c.custId];
             if (st && st.count > 0) {
               c.count = st.count;
@@ -6362,6 +6421,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           editingShowForm.value = {
             no: nextNo,
             custId: '',
+            contactId: '',
             reqDate: referenceToday.value,
             division: defaultIssuer(), // ★ v3.0: 기본값은 설정에서
             issuer: defaultIssuer(),
@@ -6419,6 +6479,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           isEditingShow.value = true;
           showFormOpen.value = { talk: true, perf: true, after: true, biz: true };
           showModalMode.value = 'single';
+          const linked = customers.value.find(c => c.custId === showItem.custId);
+          if (linked) bindLegacyContact(showItem, linked);
           const copy = JSON.parse(JSON.stringify(showItem));
           // Pull latest customer biz info if linked by custId
           if (copy.custId) {
@@ -6447,12 +6509,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         // When user selects a customer from dropdown in Show Modal
         const onSelectCustomerInShowModal = () => {
           const cid = editingShowForm.value.custId;
-          if (!cid) return;
+          if (!cid) { editingShowForm.value.contactId = ''; return; }
           const found = customers.value.find(c => c.custId === cid);
           if (!found) return;
           editingShowForm.value.client = found.client || editingShowForm.value.client;
-          if (found.manager) editingShowForm.value.manager = found.manager;
-          if (found.phone) editingShowForm.value.phone = found.phone;
+          ensureContacts(found);
+          editingShowForm.value.contactId = found.contacts[0]?.id || '';
+          selectShowContact();
           if (found.region) editingShowForm.value.region = found.region;
           if (found.email) editingShowForm.value.email = found.email;
           if (found.bizName) editingShowForm.value.bizName = found.bizName;
@@ -6540,7 +6603,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           editingShowForm.value.custId = c.custId;
           onSelectCustomerInShowModal();
         };
-        const unlinkCustomerInShowModal = () => { editingShowForm.value.custId = ''; };
+        const unlinkCustomerInShowModal = () => { editingShowForm.value.custId = ''; editingShowForm.value.contactId = ''; };
         const customersSorted = computed(() => customers.value.slice().sort((a, b) => String(a.client).localeCompare(String(b.client), 'ko')));
 
         // 저장 직전: 새 고객번호가 생기려 할 때 비슷한 고객이 있으면 먼저 물어봄 (확인=연결 / 취소=새 고객으로 등록)
@@ -6639,7 +6702,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             showToast('⚠️ 자동 백업을 만들지 못해 합치기를 멈췄어요. 설정 탭에서 JSON 백업을 먼저 받아 주세요.', 9000);
             return;
           }
+          ensureContacts(keep);
           others.forEach(o => {
+            mergeContacts(keep, o);
             MERGE_FILL_FIELDS.forEach(k => { if (!keep[k] && o[k]) keep[k] = o[k]; });
             if (o.isBiz) keep.isBiz = true;
             if ((VIP_RANK[o.vip] || 0) > (VIP_RANK[keep.vip] || 0)) keep.vip = o.vip;
@@ -6649,7 +6714,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             if (Array.isArray(o.notDupWith)) keep.notDupWith = [...new Set([...(keep.notDupWith || []), ...o.notDupWith])];
           });
           markExcluded();
-          shows.value.forEach(s => { if (others.some(o => o.custId === s.custId)) { s.custId = keepId; s.updatedAt = nowStamp(); } });
+          [...shows.value, ...trash.value.map(t => t.show)].forEach(s => { if (others.some(o => o.custId === s.custId)) { s.custId = keepId; s.updatedAt = nowStamp(); } });
           customers.value = customers.value.filter(c => !others.some(o => o.custId === c.custId));
           syncShowsAndCustomers(true); // 공연 횟수·매출 다시 계산
           saveAllToStorage();
@@ -6803,13 +6868,27 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
           // Push updated biz info from Show Modal directly to Customer CRM record if present
           const linkedCust = customers.value.find(c => c.custId === editingShowForm.value.custId);
+          if (!linkedCust && (editingShowForm.value.manager || editingShowForm.value.phone)) {
+            // 새 기관도 같은 추가 확인을 거칩니다. 거절한 직접 입력은 행사에만 보관합니다.
+            if (confirm('직접 입력한 담당자를 새 고객 담당자 목록에 추가할까요? (기본: 추가)')) delete editingShowForm.value.contactId;
+            else editingShowForm.value.contactId = '';
+          }
           if (linkedCust) {
             if (editingShowForm.value.email) linkedCust.email = editingShowForm.value.email;
             if (editingShowForm.value.bizName) { linkedCust.bizName = editingShowForm.value.bizName; linkedCust.isBiz = true; }
             if (editingShowForm.value.bizNo) { linkedCust.bizNo = formatBizNo(editingShowForm.value.bizNo); linkedCust.isBiz = true; }
             if (editingShowForm.value.bizAddress) { linkedCust.bizAddress = editingShowForm.value.bizAddress; linkedCust.isBiz = true; }
-            if (editingShowForm.value.phone) linkedCust.phone = editingShowForm.value.phone;
-            if (editingShowForm.value.manager) linkedCust.manager = editingShowForm.value.manager;
+            ensureContacts(linkedCust);
+            const f = editingShowForm.value;
+            if (!f.contactId && (f.manager || f.phone)) {
+              const same = linkedCust.contacts.find(p => p.name === (f.manager || '') && p.phone === (f.phone || ''));
+              if (same) f.contactId = same.id;
+              else if (confirm('직접 입력한 담당자를 고객 담당자 목록에 추가할까요? (기본: 추가)')) {
+                const p = { ...newContact(), name: f.manager || '', phone: f.phone || '' };
+                linkedCust.contacts.push(p); f.contactId = p.id;
+              } else f.contactId = '';
+            }
+            ensureContacts(linkedCust);
           }
 
           if (isEditingShow.value) {
@@ -6862,6 +6941,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const customerModalOpen = ref(false);
         const isEditingCustomer = ref(false);
         const editingCustomerForm = ref({});
+        watch(() => editingCustomerForm.value.contacts, () => {
+          if (Array.isArray(editingCustomerForm.value.contacts)) ensureContacts(editingCustomerForm.value);
+        }, { deep: true });
 
         const openNewCustomerModal = () => {
           isEditingCustomer.value = false;
@@ -6889,11 +6971,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             vip: '일반',
             memo: ''
           };
+          ensureContacts(editingCustomerForm.value);
+          if (!editingCustomerForm.value.contacts.length) addCustomerContact();
           customerModalOpen.value = true;
         };
 
         const openEditCustomerModal = (cust, focusBiz = false) => {
           isEditingCustomer.value = true;
+          ensureContacts(cust);
           const copy = JSON.parse(JSON.stringify(cust));
           if (typeof copy.email === 'undefined') copy.email = '';
           if (typeof copy.bizName === 'undefined') copy.bizName = '';
@@ -6932,6 +7017,15 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
 
         const saveCustomerModal = () => {
+          const form = editingCustomerForm.value;
+          ensureContacts(form);
+          for (const p of form.contacts) {
+            p.name = String(p.name || '').trim(); p.role = String(p.role || '').trim();
+            const ph = normalizePhoneInput(p.phone);
+            if (!ph.empty && !ph.ok && !confirm('담당자 연락처 "' + p.phone + '" 형식이 이상해요. 그대로 저장할까요?')) return;
+            p.phone = ph.value;
+          }
+          ensureContacts(form);
           // v2.3 입력 규칙: 저장 전에 검사
           const cvr = validateCustomerForm(editingCustomerForm.value, {
             original: isEditingCustomer.value ? (customers.value.find(c => c.custId === editingCustomerForm.value.custId) || null) : null
@@ -6958,9 +7052,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
           // Propagate updated Customer info to all Shows sharing the same custId!
           const cid = editingCustomerForm.value.custId;
-          let syncedShowsCount = 0;
+          let syncedShowsCount = 0, preservedDone = 0, preservedCancelled = 0;
+          const oldContacts = { ...prevCust };
+          ensureContacts(oldContacts);
           shows.value.forEach(s => {
-            if (s.custId === cid || normalizeName(s.client) === normalizeName(editingCustomerForm.value.client)) {
+            if (s.custId === cid) {
+              bindLegacyContact(s, oldContacts);
+              // Rename only events still using this customer's previous name.
+              const clientChanged = isEditingCustomer.value &&
+                prevCust.client !== editingCustomerForm.value.client &&
+                normalizeName(s.client) === normalizeName(prevCust.client) &&
+                s.client !== editingCustomerForm.value.client;
+              if (clientChanged) s.client = editingCustomerForm.value.client;
               s.custId = cid;
               // ★ v3.0: 사업자 정보는 단골고객이 기준 — 고친 값은 물론, 일부러 지운 칸도 일정에서 지움 (전에는 지워도 일정 값으로 다시 채워졌음)
               BIZ_SYNC_FIELDS.forEach(f => {
@@ -6968,16 +7071,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 if (v) s[f] = v;
                 else if (prevCust[f]) s[f] = '';
               });
-              if (editingCustomerForm.value.phone && !s.phone) s.phone = editingCustomerForm.value.phone;
-              if (editingCustomerForm.value.manager && !s.manager) s.manager = editingCustomerForm.value.manager;
-              syncedShowsCount++;
+              const contactChanged = applyContactToShow(s, editingCustomerForm.value);
+              if (s.status === '완료') preservedDone++;
+              else if (s.status === '취소') preservedCancelled++;
+              else if (clientChanged || contactChanged) syncedShowsCount++;
             }
           });
 
           customerModalOpen.value = false;
           syncShowsAndCustomers(true);
           saveAllToStorage();
-          showToast(`💾 '${editingCustomerForm.value.client}' 저장 완료! (연결된 공연 ${syncedShowsCount}건 자동 동기화)`);
+          showToast(`💾 '${editingCustomerForm.value.client}' 저장 완료! (예정 행사 ${syncedShowsCount}건 갱신 · 완료 행사 ${preservedDone}건 당시 기록 보존 · 취소 행사 ${preservedCancelled}건 담당자 기록 보존 · 사업자 정보 기존 규칙 반영)`);
         };
 
         // ★ REQUEST 3: 홈택스 거래처 목록 파일(.xls, .xlsx, .csv) 업로드 및 단골고객 일괄 매칭 엔진 ★
@@ -7128,8 +7232,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               if (item.bizAddress) existing.bizAddress = item.bizAddress;
               if (item.bizType) existing.bizType = item.bizType;
               if (item.email) existing.email = item.email;
-              if (item.phone && !existing.phone) existing.phone = item.phone;
-              if (item.manager && !existing.manager) existing.manager = item.manager;
+              ensureContacts(existing);
+              if (item.phone || item.manager) {
+                if (!existing.contacts.some(p => p.name === (item.manager || '') && p.phone === (item.phone || ''))) existing.contacts.push({ ...newContact(), name: item.manager || '', phone: item.phone || '' });
+              }
+              ensureContacts(existing);
               if (item.region && !existing.region) existing.region = item.region;
               updatedCount++;
             } else {
@@ -7161,6 +7268,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             }
           });
 
+          customers.value.forEach(ensureContacts);
           if (hometaxSyncShowsToo.value) {
             syncShowsAndCustomers(true);
           }
@@ -8841,6 +8949,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           showModalOpen, showModalMode, isEditingShow, editingShowForm,
           weekdayOptions, bulkConfig, toggleBulkWeekday, bulkPreviewDates,
           openNewShowModal, openEditShowModal, copyFromEditModal, duplicateShowQuick, markCancelledInModal, toggleCancelShow, saveShowModal,
+          showContactOptions, selectShowContact, addCustomerContact, removeCustomerContact,
           syncShowsAndCustomers, onSelectCustomerInShowModal, autoMatchCustomerForShowForm, openCustomerByCustId,
           hometaxModalOpen, hometaxPreviewList, hometaxSyncShowsToo, openHometaxModal, triggerHometaxFileSelect, handleHometaxFileUpload, applyHometaxImport, downloadSampleHometaxTemplate,
           customerModalOpen, isEditingCustomer, editingCustomerForm, openNewCustomerModal, openEditCustomerModal, saveCustomerModal,
