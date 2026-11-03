@@ -28,7 +28,53 @@
     /* ★ v2.9: 아이폰 사파리는 날짜·시간 칸에 고유 최소 너비가 있어 칸 밖으로 튀어나감 → 칸 너비에 맞추고 글자는 왼쪽 정렬 */
     input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; display: block; box-sizing: border-box; }
     input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value, input[type="month"]::-webkit-date-and-time-value { text-align: left; }
-  </style>
+  
+/* MOBILE_UX ③·④: same controls, mobile layout only. */
+@media (max-width:639px) {
+.ux-contact-list > div { display:flex; flex-direction:column; gap:8px; }
+.ux-contact-list label { display:block; min-width:0; }
+.ux-contact-list input,.ux-contact-list button,.ux-contacts [data-quick="contactId"] select,.ux-contacts [data-quick="contactId"] input,.ux-contacts [data-quick="phone"] input { min-height:44px; }
+.ux-contact-list button { min-width:44px; align-self:flex-start; padding:8px 12px; }
+.ux-quick .ux-first { display:flex; flex-direction:column; gap:6px; }
+.ux-quick .ux-first > div { order:30; min-width:0; }
+.ux-quick .ux-first input,.ux-quick .ux-first select { min-height:44px; }
+.ux-quick .ux-first label { margin-bottom:2px; }
+.ux-quick > div { padding:12px; }
+.ux-quick .ux-first > [data-quick="client"] {order:1}
+.ux-quick .ux-first > [data-quick="custId"] {order:2}
+.ux-quick .ux-first > [data-quick="contactId"] {order:3}
+.ux-quick .ux-first > [data-quick="phone"] {order:4}
+.ux-contacts:not(.ux-quick) .ux-first {display:flex;flex-wrap:wrap}
+.ux-contacts:not(.ux-quick) .ux-first > div {width:100%}
+.ux-contacts:not(.ux-quick) [data-quick="contactId"] {order:1}
+.ux-contacts:not(.ux-quick) [data-quick="phone"] {order:2}
+.ux-guide-closed {display:none}
+.ux-guide-toggle {min-height:44px;text-align:left}
+.ux-quick .ux-first > [data-quick="showDate"] {order:5}
+.ux-quick .ux-first > [data-quick="showTime"] {order:6}
+.ux-quick .ux-first > [data-quick="status"] {order:7}
+.ux-quick .ux-first > [data-quick="theme"] {order:8}
+.ux-quick .ux-first > [data-quick="amount"] {order:9}
+.ux-quick .ux-first > [data-quick="channel"] {order:10}
+}
+@media (max-width: 639px) {
+  /* Mobile padding is 12px; match sticky bar negative margins. */
+  .itt-mhead, .itt-mfoot { margin-left: -12px !important; margin-right: -12px !important; }
+  .ux-first > *, .ux-contact-list > *, .ux-contact-list label { min-width: 0; }
+  .ux-first input, .ux-first select { min-width: 0; max-width: 100%; }
+}
+@media (max-width:639px) {
+/* Keep the footer in normal flow: a shrinking keyboard viewport cannot pin it over inputs. */
+.ux-footer.itt-mfoot { position:static; gap:12px; }
+.ux-footer > div:first-child { width:100%; padding-bottom:12px; border-bottom:1px solid #475569; }
+.ux-footer button,.ux-footer summary { min-height:44px; }
+.ux-footer-more { position:relative; }
+.ux-footer-more summary { cursor:pointer; list-style:none; padding:12px; border:1px solid #64748b; border-radius:12px; font-size:12px; font-weight:700; }
+.ux-footer-menu { position:absolute; bottom:calc(100% + 6px); left:0; width:160px; padding:4px; background:#1e293b; color:#fff; border:1px solid #64748b; border-radius:12px; box-shadow:0 4px 16px #0006; z-index:10; }
+.ux-footer-menu button { display:block; width:100%; text-align:left; padding:10px; border-radius:8px; }
+.ux-footer-menu button:hover,.ux-footer-menu button:focus { background:#334155; }
+}
+</style>
   <title>이츠쇼타임 행사관리 v3.0</title>
 <script>/* ★ v3.0: PC에서 파일로 열었는데 크롬이 아니면 (맥 사파리 등) 맨 위에 안내 — 브라우저마다 기록이 따로 저장되기 때문 */
 (function () { try {
@@ -2063,11 +2109,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 </div>
                 <div class="lg:col-span-2">
                   <label class="text-[11px] text-slate-400 block mb-1">시작 시간</label>
-                  <input type="time" v-model="newTodoForm.startTime" class="w-full px-3 py-2 rounded-xl border font-mono" />
+                  <input data-ux-time type="time" v-model="newTodoForm.startTime" class="w-full px-3 py-2 rounded-xl border font-mono" />
                 </div>
                 <div class="lg:col-span-2">
                   <label class="text-[11px] text-slate-400 block mb-1">끝 시간 (선택)</label>
-                  <input type="time" v-model="newTodoForm.endTime" class="w-full px-3 py-2 rounded-xl border font-mono" />
+                  <input data-ux-time type="time" v-model="newTodoForm.endTime" class="w-full px-3 py-2 rounded-xl border font-mono" />
                 </div>
                 <div class="lg:col-span-3">
                   <label class="text-[11px] text-slate-400 block mb-1">어느 일정 건? (선택)</label>
@@ -2549,7 +2595,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <!-- ======================================================================= -->
     <!-- MODAL 1: 공연 신규 등록 (단건 / 정기 대량등록) & 수정 / 일정 복사 -->
     <!-- ======================================================================= -->
-    <div v-if="showModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" @click.self="showModalOpen = false">
+    <div v-if="showModalOpen" :class="{ 'ux-contacts': MOBILE_UX.contactsTouch, 'ux-quick': MOBILE_UX.quickEntryOrder && (isEditingShow || showModalMode === 'single') }" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" @click.self="showModalOpen = false">
       <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
         <div class="itt-mhead bg-slate-900 flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-3 gap-2">
           <div class="flex items-center space-x-2">
@@ -2590,7 +2636,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
             <div>
               <label class="text-slate-300 block mb-1">반복 시간</label>
-              <input type="text" v-model="editingShowForm.showTime" placeholder="13:00" class="w-full px-3 py-1.5 rounded-xl border font-mono" />
+              <input data-ux-time type="text" v-model="editingShowForm.showTime" placeholder="13:00" class="w-full px-3 py-1.5 rounded-xl border font-mono" />
             </div>
           </div>
           <div>
@@ -2616,17 +2662,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         <!-- ★ v2.9: 통화 순서대로 묶음. ① 첫 통화에서 묻는 것 → ② 추가 통화·협의 → ③ 파트너·정산 → ④ 공연 직후 · 계산서 정보 -->
         <div class="space-y-3 text-xs">
         <div class="p-3 rounded-2xl bg-indigo-950/30 border border-indigo-500/40 space-y-2">
-          <div class="font-bold text-indigo-200">① 첫 통화 <span class="font-normal text-[10px] text-slate-400">(문의 받으면 여기부터 적어요)</span></div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div v-if="isEditingShow || showModalMode === 'single'">
+          <button v-if="compactEdit()" type="button" @click="editFirstOpen = !editFirstOpen" class="w-full text-left font-bold text-indigo-200">{{ editingShowForm.status === '완료' ? '① 요약' : '① 첫 통화' }} · {{ editingShowForm.client }} · {{ editingShowForm.showDate }} {{ editingShowForm.showTime }} <span class="float-right">{{ editFirstOpen ? '접기 ▲' : '펼치기 ▼' }}</span></button>
+          <div v-else class="font-bold text-indigo-200">① 첫 통화 <span class="font-normal text-[10px] text-slate-400">(문의 받으면 여기부터 적어요)</span></div>
+        <div v-show="!compactEdit() || editFirstOpen" class="ux-first grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div data-quick="showDate" v-if="isEditingShow || showModalMode === 'single'">
             <label class="text-slate-400 block mb-1">날짜 *</label>
             <input type="date" v-model="editingShowForm.showDate" class="w-full px-3 py-2 rounded-xl border font-mono" />
           </div>
-          <div v-if="isEditingShow || showModalMode === 'single'">
+          <div data-quick="showTime" v-if="isEditingShow || showModalMode === 'single'">
             <label class="text-slate-400 block mb-1">시간</label>
-            <input type="text" v-model="editingShowForm.showTime" placeholder="10:30" class="w-full px-3 py-2 rounded-xl border font-mono" />
+            <input data-ux-time type="text" v-model="editingShowForm.showTime" placeholder="10:30" class="w-full px-3 py-2 rounded-xl border font-mono" />
           </div>
-          <div>
+          <div data-quick="status">
             <label class="text-slate-400 block mb-1">진행 상태 (취소 보존 지원)</label>
             <select v-model="editingShowForm.status" class="w-full px-3 py-2 rounded-xl border font-bold">
               <option value="문의">🟡 문의 (미정 · 날짜만 잡아 둠)</option>
@@ -2636,7 +2683,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </select>
           </div>
           <!-- ★ v3.0: 러닝타임 → 끝나는 시간, 같은 날 다른 일정과 간격 -->
-          <div class="sm:col-span-3 flex flex-wrap items-center gap-2">
+          <div data-quick="runMin" class="sm:col-span-3 flex flex-wrap items-center gap-2">
             <label class="text-slate-400">⏱️ 러닝타임</label>
             <input type="number" min="0" step="5" v-model.number="editingShowForm.runMin" :placeholder="formTimeInfo.productRun ? '기본 ' + formTimeInfo.productRun : '분'" class="w-28 px-3 py-2 rounded-xl border font-mono" />
             <span class="text-slate-400">분</span>
@@ -2652,24 +2699,24 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
           <!-- ★ v3.0: 통화 확인 문자에 들어가는 칸 -->
-          <div>
+          <div data-quick="audience">
             <label class="text-slate-400 block mb-1">대상 (연령)</label>
             <input type="text" v-model="editingShowForm.audience" placeholder="예: 5~7세, 초등 저학년" class="w-full px-3 py-2 rounded-xl border" />
           </div>
-          <div>
+          <div data-quick="headcount">
             <label class="text-slate-400 block mb-1">인원</label>
             <input type="text" v-model="editingShowForm.headcount" placeholder="예: 80명" class="w-full px-3 py-2 rounded-xl border" />
           </div>
-          <div v-if="editingShowForm.status === '문의'">
+          <div data-quick="holdUntil" v-if="editingShowForm.status === '문의'">
             <label class="text-amber-300 block mb-1">📌 날짜 먼저 잡아 두는 마감 (홀드)</label>
             <input type="date" v-model="editingShowForm.holdUntil" class="w-full px-3 py-2 rounded-xl border font-mono" />
           </div>
-          <div class="sm:col-span-3">
+          <div data-quick="clientNote" class="sm:col-span-3">
             <label class="text-slate-400 block mb-1">특이사항 (고객에게 보내는 확인 문자에 들어가요 · 협의 메모는 안 보내요)</label>
             <input type="text" v-model="editingShowForm.clientNote" placeholder="예: 강당 2층, 엘리베이터 있음" class="w-full px-3 py-2 rounded-xl border" />
           </div>
           <div v-if="editingShowForm.status === '문의'" class="sm:col-span-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-[11px] text-amber-200">
-            🟡 문의(미정)는 달력에 흐리게 보여 같은 날 겹치는 걸 막아 줘요. 매출·미수금·정산·블로그 글감에는 들어가지 않아요. 정해지면 [확정]으로 바꿔 주세요.
+            <button v-if="MOBILE_UX.quickEntryOrder && windowMobile()" type="button" class="ux-guide-toggle" @click="quickGuideOpen = !quickGuideOpen" :aria-expanded="quickGuideOpen">문의는 미정 일정으로 보관돼요 · {{ quickGuideOpen ? '접기' : '[자세히]' }}</button><span :class="{ 'ux-guide-closed': MOBILE_UX.quickEntryOrder && !quickGuideOpen }">🟡 문의(미정)는 달력에 흐리게 보여 같은 날 겹치는 걸 막아 줘요. 매출·미수금·정산·블로그 글감에는 들어가지 않아요. 정해지면 [확정]으로 바꿔 주세요.</span>
           </div>
           <!-- v2.3: 취소로 표시할 때만 보이는 칸 (왜 취소됐는지 남김 — 삭제 대신 기록) -->
           <div v-if="editingShowForm.status === '취소'" class="sm:col-span-3 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/40 grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -2697,7 +2744,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <input type="number" min="0" step="10000" v-model.number="editingShowForm.cancelFeePayout" class="w-full px-3 py-2 rounded-xl border font-mono" />
             </div>
           </div>
-          <div class="sm:col-span-2">
+          <div data-quick="client" class="sm:col-span-2">
             <label class="text-slate-400 block mb-1 flex items-center justify-between">
               <span>업체·기관명 *</span>
               <span v-if="editingShowForm.custId" class="text-[10px] font-mono text-indigo-300 font-bold">
@@ -2720,7 +2767,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </button>
             </div>
           </div>
-          <div>
+          <div data-quick="custId">
             <label class="text-indigo-300 block mb-1 font-bold">🤝 단골고객(고객번호) 불러오기</label>
             <select v-model="editingShowForm.custId" @change="onSelectCustomerInShowModal" class="w-full px-2.5 py-2 rounded-xl border text-xs cursor-pointer font-mono">
               <option value="">-- 신규 또는 기관명 자동매칭 --</option>
@@ -2729,11 +2776,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               </option>
             </select>
           </div>
-          <div>
+          <div data-quick="phone">
             <label class="text-slate-400 block mb-1">연락처</label>
-            <input type="text" :readonly="!!editingShowForm.contactId" v-model="editingShowForm.phone" placeholder="010-0000-0000" class="w-full px-3 py-2 rounded-xl border font-mono" />
+            <input :type="MOBILE_UX.contactsTouch && windowMobile() ? 'tel' : 'text'" :inputmode="MOBILE_UX.contactsTouch && windowMobile() ? 'tel' : null" :readonly="!!editingShowForm.contactId" v-model="editingShowForm.phone" placeholder="010-0000-0000" class="w-full px-3 py-2 rounded-xl border font-mono" />
           </div>
-          <div>
+          <div data-quick="contactId">
             <label class="text-slate-400 block mb-1">담당자명</label>
             <select v-model="editingShowForm.contactId" @change="selectShowContact" class="w-full px-3 py-2 rounded-xl border">
               <option v-for="p in showContactOptions" :key="p.id" :value="p.id">{{ p.name || '(이름 없음)' }}{{ p.role ? ' · ' + p.role : '' }}</option>
@@ -2742,11 +2789,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </select>
             <input v-if="!editingShowForm.contactId" type="text" v-model="editingShowForm.manager" placeholder="담당자 직접 입력" class="w-full px-3 py-2 rounded-xl border" />
           </div>
-          <div>
+          <div data-quick="region">
             <label class="text-slate-400 block mb-1">지역</label>
             <input type="text" v-model="editingShowForm.region" placeholder="서울, 경기, 충남..." class="w-full px-3 py-2 rounded-xl border" />
           </div>
-          <div>
+          <div data-quick="theme">
             <label class="text-slate-400 block mb-1">콘텐츠</label>
             <select v-model="editingShowForm.theme" class="w-full px-3 py-2 rounded-xl border">
               <option v-for="n in productNames.filter(x => x !== '기타')" :key="n" :value="n">{{ n }}{{ (productOf(n) || {}).runMin ? ' · ' + productOf(n).runMin + '분' : '' }}</option>
@@ -2754,11 +2801,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <option value="기타">기타</option>
             </select>
           </div>
-          <div>
+          <div data-quick="amount">
             <label class="text-slate-400 block mb-1">견적 금액 (원)</label>
             <input type="number" v-model.number="editingShowForm.amount" step="50000" class="w-full px-3 py-2 rounded-xl border font-mono font-bold text-white" />
           </div>
-          <div>
+          <div data-quick="channel">
             <label class="text-slate-400 block mb-1">문의 경로 * <span class="text-[10px] text-slate-500">(어디서 연락이 왔나요?)</span></label>
             <select v-model="editingShowForm.channel" class="w-full px-3 py-2 rounded-xl border" :class="!isEditingShow && !editingShowForm.channel ? 'border-amber-500/60' : ''">
               <option value="">-- 선택해 주세요 --</option>
@@ -2808,7 +2855,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <label class="text-slate-400 block mb-1">📝 협의 메모 <span class="text-[10px] text-slate-500">(시간·회차·준비물·주차 등 고객과 정한 것. 적으면 '협의 메모 없음' 알림이 사라져요)</span></label>
             <textarea v-model="editingShowForm.memo" rows="2" placeholder="예: 2회 공연(10:30, 11:30) · 강당 사용 · 주차 가능 · 마이크 기관 준비" class="w-full px-3 py-2 rounded-xl border"></textarea>
           </div>
-          <div>
+          <button v-if="compactEdit()" type="button" @click="editPaymentOpen = !editPaymentOpen" class="sm:col-span-3 w-full px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left">결제 · 서류 {{ editPaymentOpen ? '접기 ▲' : '펼치기 ▼' }}</button>
+          <div v-show="!compactEdit() || editPaymentOpen">
             <label class="text-slate-400 block mb-1">입금 상태</label>
             <select v-model="editingShowForm.payStatus" class="w-full px-3 py-2 rounded-xl border">
               <option value="미입금">🚨 미입금</option>
@@ -2830,14 +2878,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <p v-if="payDueBadge(editingShowForm)" class="text-[10px] mt-1 font-bold" :class="payDueBadge(editingShowForm).cls">→ {{ payDueOf(editingShowForm) }} · {{ payDueBadge(editingShowForm).text }}</p>
             </template>
           </div>
-          <div>
+          <div v-show="!compactEdit() || editPaymentOpen">
             <label class="text-slate-400 block mb-1">발행 사업자 구분</label>
             <select v-model="editingShowForm.issuer" class="w-full px-3 py-2 rounded-xl border">
               <option v-for="n in companyNames" :key="n" :value="n">{{ n }}</option>
               <option v-if="editingShowForm.issuer && editingShowForm.issuer !== 'ALL' && !companyNames.includes(editingShowForm.issuer)" :value="editingShowForm.issuer">{{ editingShowForm.issuer }}</option>
             </select>
           </div>
-          <div>
+          <div v-show="!compactEdit() || editPaymentOpen">
             <label class="text-slate-400 block mb-1">행정 서류 종류 & 발행 상태</label>
             <div class="grid grid-cols-2 gap-1.5">
               <select v-model="editingShowForm.adminDoc" class="w-full px-2 py-2 rounded-xl border text-xs">
@@ -2855,7 +2903,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
           <!-- ★ v3.0: 계산서 대행 — 개인 파트너가 계산서를 요청받아 아는 업체가 대신 발행하고, 업체를 거쳐 돈을 받는 경우 (기록만, 세금 판단 안 함) -->
-          <div v-if="isProxy(editingShowForm)" class="sm:col-span-3 p-3 rounded-2xl border border-sky-500/30 bg-slate-950/60 space-y-2 text-xs">
+          <div v-show="!compactEdit() || editPaymentOpen" v-if="isProxy(editingShowForm)" class="sm:col-span-3 p-3 rounded-2xl border border-sky-500/30 bg-slate-950/60 space-y-2 text-xs">
             <div class="font-bold text-sky-300">🧾 계산서 대행 <span class="font-normal text-[10px] text-slate-400">(고객 → 대행 업체 → 나. 업체가 뗀 몫은 그때그때 협의한 대로)</span></div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
@@ -2879,7 +2927,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div class="text-[10px] text-slate-500">홈택스 일괄발행 엑셀에서는 빠져요(업체가 발행). 이렇게 받는 구조가 괜찮은지는 세무사와 확인하세요.</div>
           </div>
           <!-- ★ v2.9: 일 종류 (공연 / 강연 / 서브) -->
-          <div>
+          <div v-show="!compactEdit() || editPaymentOpen">
             <label class="text-slate-400 block mb-1">내 역할 <span class="text-[10px] text-slate-500">(서브는 블로그 글감·다음 날 메일 알림에서 빠져요)</span></label>
             <select v-model="editingShowForm.workType" class="w-full px-3 py-2 rounded-xl border font-bold">
               <option value="공연">🙋 직접 진행 (우리 일)</option>
@@ -2887,11 +2935,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <option v-if="editingShowForm.workType === '강연'" value="강연">🎤 강연 (예전 기록)</option>
             </select>
           </div>
-          <div>
+          <div v-show="!compactEdit() || editPaymentOpen">
             <label class="text-slate-400 block mb-1">실제 행사처 <span class="text-[10px] text-slate-500">(기획사·협업업체를 거친 공연일 때, 현장에서 알게 되면 적기)</span></label>
             <input type="text" v-model="editingShowForm.venueName" placeholder="예: 햇살어린이집 · 롯데월드몰" class="w-full px-3 py-2 rounded-xl border" />
           </div>
-          <div>
+          <div v-show="!compactEdit() || editPaymentOpen">
             <label class="text-slate-400 block mb-1">행사 이름</label>
             <input type="text" v-model="editingShowForm.eventName" placeholder="예: 가을 운동회 · 크리스마스 파티" class="w-full px-3 py-2 rounded-xl border" />
           </div>
@@ -2917,7 +2965,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           </div>
           <div>
             <label class="text-slate-400 block mb-1">외부 정산금액 (원)</label>
-            <input type="number" v-model.number="editingShowForm.settleAmt" step="10000" class="w-full px-3 py-2 rounded-xl border font-mono" />
+            <input type="number" data-edit-field="settleAmt" v-model.number="editingShowForm.settleAmt" step="10000" class="w-full px-3 py-2 rounded-xl border font-mono" />
             <p v-if="showModalSettleHint" class="text-[10px] mt-1 leading-snug" :class="showModalSettleHint.cls">{{ showModalSettleHint.text }}</p>
           </div>
           <!-- ★ v3.0: 지급 예정일 (이 공연에서 줄 돈 모두. 브리핑에 '이번 주 지급할 돈'으로 뜸) -->
@@ -2939,7 +2987,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
               <span class="text-amber-300 font-bold">👥 함께한 사람 <span class="font-normal text-[10px] text-slate-400">(위 정산대상 말고 더 줄 사람 · 서브 인원 등 · 세전 페이)</span></span>
               <button type="button" @click="addCrewRow" class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-200 font-bold cursor-pointer border border-amber-500/40">+ 함께한 사람 추가</button>
             </div>
-            <div v-for="(c, i) in (editingShowForm.crew || [])" :key="c.id || i" class="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-slate-900/70 border border-slate-800">
+            <div v-for="(c, i) in (editingShowForm.crew || [])" :key="c.id || i" :data-edit-crew="i" class="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-slate-900/70 border border-slate-800">
               <select v-model="c.performerId" @change="onPickCrewPerformer(c)" :disabled="c.settleStatus === '정산완료'" class="flex-1 min-w-[8rem] px-2 py-2 rounded-xl border">
                 <option value="">✏️ 직접 입력</option>
                 <option v-for="p in performerChoices" :key="'cr-' + p.id" :value="p.id">{{ fieldLabelOf(p) }}{{ p.name }} · {{ performerKindLabel(p.kind) }}</option>
@@ -2980,7 +3028,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </div>
           </div>
         </div>
-        <button type="button" @click="showFormOpen.after = !showFormOpen.after" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left cursor-pointer">
+        <button data-field-memo-section type="button" @click="showFormOpen.after = !showFormOpen.after" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700 text-left cursor-pointer">
           <span class="flex-1 min-w-0 break-words font-bold text-slate-200">④ 일정 직후 기록 <span class="font-normal text-[10px] text-slate-400">(완료 후 현장 메모 · 피드백 · 사진)</span>
           </span>
           <span class="shrink-0 text-[11px] text-slate-400">{{ showFormOpen.after ? '접기 ▲' : '펼치기 ▼' }}</span>
@@ -3067,12 +3115,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         </div>
 
         <!-- ★ FEATURE 2 & 5: 일정 복사 버튼 & 취소 표시 보존 버튼 ★ -->
-        <div class="itt-mfoot bg-slate-900 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-800">
+        <div :class="{ 'ux-footer': MOBILE_UX.footerCompact }" class="itt-mfoot bg-slate-900 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-800">
           <div v-if="isEditingShow" class="flex flex-wrap items-center gap-2">
-            <button type="button" @click="copyFromEditModal" class="px-3.5 py-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-xs font-bold cursor-pointer border border-indigo-500/40">
+            <button type="button" v-if="!MOBILE_UX.footerCompact || !windowMobile()" @click="copyFromEditModal" class="px-3.5 py-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-xs font-bold cursor-pointer border border-indigo-500/40">
               📋 <span class="sm:hidden">복사</span><span class="hidden sm:inline">이 일정 복사하여 새로 등록</span>
             </button>
-            <button type="button" @click="openMailModal(editingShowForm)" class="px-3.5 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-600 text-sky-300 hover:text-white text-xs font-bold cursor-pointer border border-sky-500/40">📧 메일<span v-if="mailSentOf(editingShowForm).length"> ✓</span></button>
+            <button type="button" v-if="!MOBILE_UX.footerCompact || !windowMobile()" @click="openMailModal(editingShowForm)" class="px-3.5 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-600 text-sky-300 hover:text-white text-xs font-bold cursor-pointer border border-sky-500/40">📧 메일<span v-if="mailSentOf(editingShowForm).length"> ✓</span></button>
+            <details v-if="MOBILE_UX.footerCompact && windowMobile()" class="ux-footer-more" @keydown.esc="$event.currentTarget.open = false">
+              <summary>⋯ 더보기</summary>
+              <div class="ux-footer-menu">
+                <button type="button" @click="$event.currentTarget.closest('details').open = false; copyFromEditModal()">📋 일정 복사</button>
+                <button type="button" @click="$event.currentTarget.closest('details').open = false; openMailModal(editingShowForm)">📧 메일</button>
+              </div>
+            </details>
             <button type="button" @click="markCancelledInModal" class="px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer border"
               :class="editingShowForm.status === '취소' ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40'">
               <span class="sm:hidden">{{ editingShowForm.status === '취소' ? '🟢 취소 해제' : '🚫 취소 표시' }}</span><span class="hidden sm:inline">{{ editingShowForm.status === '취소' ? '🟢 취소 해제 (확정으로 복구)' : '🚫 취소된 일정으로 표시 (삭제안함)' }}</span>
@@ -3081,8 +3136,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <div v-else></div>
 
           <div class="flex items-center space-x-2 ml-auto">
-            <button type="button" @click="showModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold cursor-pointer">취소</button>
-            <button type="button" @click="saveShowModal" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer shadow-lg">
+            <button type="button" @click="showModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold cursor-pointer">{{ MOBILE_UX.footerCompact && windowMobile() ? '닫기' : '취소' }}</button>
+            <button type="button" @click="saveShowModalWithMobile" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer shadow-lg">
               {{ (!isEditingShow && showModalMode === 'bulk') ? ('🔁 ' + bulkPreviewDates.length + '건 일괄 등록하기') : '💾 저장하기' }}
             </button>
           </div>
@@ -3381,12 +3436,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             </select>
           </div>
 
-          <div class="sm:col-span-2 space-y-2">
+          <div :class="{ 'ux-contact-list': MOBILE_UX.contactsTouch }" class="sm:col-span-2 space-y-2">
             <label class="text-slate-400 block mb-1">담당자 목록 (첫 담당자는 기본 담당자)</label>
             <div v-for="(contact, index) in editingCustomerForm.contacts" :key="contact.id" class="space-y-1 border border-slate-700 rounded-xl p-2">
               <label>이름<input type="text" v-model="contact.name" class="w-full px-3 py-2 rounded-xl border" /></label>
               <label>직책/역할<input type="text" v-model="contact.role" class="w-full px-3 py-2 rounded-xl border" /></label>
-              <label>연락처<input type="text" v-model="contact.phone" placeholder="010-0000-0000" class="w-full px-3 py-2 rounded-xl border font-mono" /></label>
+              <label>연락처<input :type="MOBILE_UX.contactsTouch && windowMobile() ? 'tel' : 'text'" :inputmode="MOBILE_UX.contactsTouch && windowMobile() ? 'tel' : null" v-model="contact.phone" placeholder="010-0000-0000" class="w-full px-3 py-2 rounded-xl border font-mono" /></label>
               <button type="button" @click="removeCustomerContact(index)" class="text-rose-400 cursor-pointer">삭제</button>
             </div>
             <button type="button" @click="addCustomerContact" class="text-emerald-300 cursor-pointer">+ 담당자 추가</button>
@@ -3704,6 +3759,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
     <!-- MODAL 5: 💬 상황별 안내 문자 / 카카오톡 템플릿 1초 자동완성 & 발송 모달 -->
     <!-- ======================================================================= -->
+    <div v-if="afterCompleteMemoTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 sm:hidden" role="dialog" aria-modal="true" aria-label="완료 후 현장 기록 선택">
+      <div class="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700 p-4 grid gap-3 text-sm font-bold">
+        <button type="button" @click="viewAfterCompleteMemo" class="min-h-[48px] rounded-xl bg-indigo-600 text-white px-4 py-3">📝 현장 기록하기</button>
+        <button type="button" @click="afterCompleteMemoTarget = null" class="min-h-[48px] rounded-xl bg-slate-800 text-slate-200 px-4 py-3">나중에</button>
+      </div>
+    </div>
+    <div v-if="afterSaveSmsTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 sm:hidden" role="dialog" aria-modal="true" aria-label="저장 후 문자 선택">
+      <div class="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700 p-4 flex flex-col gap-3">
+        <button type="button" @click="viewAfterSaveSms" class="min-h-[48px] rounded-xl bg-indigo-600 text-white px-4 py-3">💬 통화 확인 문자 보기</button>
+        <button type="button" @click="afterSaveSmsTarget = null" class="min-h-[48px] rounded-xl bg-slate-800 text-slate-200 px-4 py-3">나중에</button>
+      </div>
+    </div>
+
     <div v-if="smsModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm" @click.self="smsModalOpen = false">
       <div class="bg-slate-900 border border-amber-500/50 rounded-3xl max-w-xl w-full p-4 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -4196,6 +4264,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   </script>
 
   <script>
+    const MOBILE_UX = { afterSaveSms: true, afterCompleteMemo: true, contactsTouch: true, quickEntryOrder: true, editSectionsCompact: true, footerCompact: true, stickySave: true, timeWheel: true, timeWheelPC: true }; // 모바일 UX 항목별 끄기 스위치
     const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 
     createApp({
@@ -4490,7 +4559,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         };
         const goPostFromModal = (k) => { // 입력창에서는 고친 내용을 먼저 저장하고 넘어감
           if (location.protocol !== 'file:') { goPostFor(k, editingShowForm.value); return; }
-          saveShowModal();
+          saveShowModalWithMobile();
           if (showModalOpen.value) return; // 저장하지 않았으면(확인 취소 등) 그대로
           goPostFor(k, editingShowForm.value);
         };
@@ -6477,7 +6546,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
         const openEditShowModal = (showItem) => {
           isEditingShow.value = true;
-          showFormOpen.value = { talk: true, perf: true, after: true, biz: true };
+          showFormOpen.value = MOBILE_UX.editSectionsCompact && windowMobile()
+            ? { talk: showItem.status === '확정', perf: false, after: showItem.status === '완료', biz: false }
+            : { talk: true, perf: true, after: true, biz: true };
+          editPaymentOpen.value = false;
+          editFirstOpen.value = showItem.status !== '완료';
           showModalMode.value = 'single';
           const linked = customers.value.find(c => c.custId === showItem.custId);
           if (linked) bindLegacyContact(showItem, linked);
@@ -6761,6 +6834,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           isEditingShow.value = false;
           showModalMode.value = 'single';
           editingShowForm.value = copied;
+          mobileCopiedForms.add(editingShowForm.value);
           showToast('일정 정보가 복사되었습니다! 날짜만 변경 후 저장하세요.');
         };
 
@@ -6778,6 +6852,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           isEditingShow.value = false;
           showModalMode.value = 'single';
           editingShowForm.value = copied;
+          mobileCopiedForms.add(editingShowForm.value);
           showModalOpen.value = true;
           showToast(`'${showItem.client}' 일정을 복사했습니다. 날짜를 지정해 저장하세요!`);
         };
@@ -6829,6 +6904,73 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           saveAllToStorage();
           nextTick(() => renderCharts());
           showToast(`'${showItem.client}' 일정이 [${showItem.status}] 상태로 복구되었습니다. (취소 기록은 이력으로 보관)`);
+        };
+
+        const mobileCopiedForms = new WeakSet();
+        const afterSaveSmsTarget = ref(null);
+        const quickGuideOpen = ref(false);
+        const editPaymentOpen = ref(false);
+        const editFirstOpen = ref(true);
+        const compactEdit = () => MOBILE_UX.editSectionsCompact && windowMobile() && isEditingShow.value;
+        const windowMobile = () => window.matchMedia('(max-width: 639px)').matches;
+        const afterCompleteMemoTarget = ref(null);
+        const viewAfterCompleteMemo = () => {
+          const target = afterCompleteMemoTarget.value;
+          afterCompleteMemoTarget.value = null;
+          if (!target) return;
+          openEditShowModal(target);
+          showFormOpen.value.after = true;
+          nextTick(() => document.querySelector('[data-field-memo-section]')?.scrollIntoView({ block: 'start' }));
+        };
+        const viewAfterSaveSms = () => {
+          const target = afterSaveSmsTarget.value;
+          afterSaveSmsTarget.value = null;
+          if (!target) return;
+          openSmsModal(target);
+          setSmsType(target.status === '문의' ? 'call_inquiry' : 'call_confirm');
+        };
+        // 저장·계산 함수는 그대로 호출하고, 그 동작의 전후 상태만 확인한다.
+        const saveShowModalWithMobile = () => {
+          afterSaveSmsTarget.value = null;
+          afterCompleteMemoTarget.value = null;
+          const form = editingShowForm.value;
+          const before = shows.value.find(s => s.no === form.no);
+          const eligible = MOBILE_UX.afterSaveSms && window.matchMedia('(max-width: 639px)').matches
+            && showModalOpen.value && !mobileCopiedForms.has(form)
+            && (isEditingShow.value ? before?.status === '문의' && form.status === '확정'
+              : !before && showModalMode.value === 'single' && ['문의', '확정'].includes(form.status));
+          const memoEligible = MOBILE_UX.afterCompleteMemo && window.matchMedia('(max-width: 639px)').matches
+            && showModalOpen.value && !mobileCopiedForms.has(form) && isEditingShow.value
+            && before && before.status !== '완료' && form.status === '완료';
+          saveShowModal();
+          if (showModalOpen.value && compactEdit()) {
+            const vr = validateShowForm(form, { isEditing: true, mode: showModalMode.value, original: before, shows: shows.value, today: referenceToday.value, bulkDates: bulkPreviewDates.value });
+            if (vr.errors.length) {
+              const error = vr.errors[0];
+              let selector = error.includes('외부 정산금액') ? '[data-edit-field="settleAmt"]' : null;
+              let section = selector ? 'perf' : null;
+              const firstField = error.includes('업체·기관명') ? 'client' : error.includes('공연일자') ? 'showDate' : error.includes('공연시간') ? 'showTime' : error.includes('견적/공연 금액') ? 'amount' : null;
+              if (firstField) { selector = '[data-quick="' + firstField + '"] input'; editFirstOpen.value = true; }
+              if (error.includes('함께한 사람')) {
+                section = 'perf';
+                const index = Number(error.match(/사람 (\d+)/)?.[1] || 1) - 1;
+                selector = '[data-edit-crew="' + index + '"] ' + (error.includes('이름') ? '[placeholder="이름"]' : '[placeholder="세전 페이"]');
+              }
+              if (selector) {
+                if (section) showFormOpen.value[section] = true;
+                nextTick(() => { const el = document.querySelector(selector); el?.scrollIntoView({ block: 'center' }); el?.focus({ preventScroll: true }); });
+              }
+            }
+          }
+          if ((!eligible && !memoEligible) || showModalOpen.value) return;
+          const saved = shows.value.find(s => s.no === form.no);
+          try {
+            const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')?.shows?.find(s => s.no === form.no);
+            if (saved && stored && JSON.stringify(stored) === JSON.stringify(saved)) {
+              if (memoEligible && saved.status === '완료') afterCompleteMemoTarget.value = saved;
+              else if (eligible) afterSaveSmsTarget.value = saved;
+            }
+          } catch (_) { /* 저장 실패·읽기 실패 때는 선택창을 열지 않는다. */ }
         };
 
         const saveShowModal = () => {
@@ -8948,7 +9090,7 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
           filteredCustomers, recommendNextTheme,
           showModalOpen, showModalMode, isEditingShow, editingShowForm,
           weekdayOptions, bulkConfig, toggleBulkWeekday, bulkPreviewDates,
-          openNewShowModal, openEditShowModal, copyFromEditModal, duplicateShowQuick, markCancelledInModal, toggleCancelShow, saveShowModal,
+          quickGuideOpen, editFirstOpen, editPaymentOpen, compactEdit, windowMobile, MOBILE_UX, openNewShowModal, openEditShowModal, copyFromEditModal, duplicateShowQuick, markCancelledInModal, toggleCancelShow, saveShowModal: saveShowModalWithMobile, saveShowModalWithMobile, afterSaveSmsTarget, viewAfterSaveSms, afterCompleteMemoTarget, viewAfterCompleteMemo,
           showContactOptions, selectShowContact, addCustomerContact, removeCustomerContact,
           syncShowsAndCustomers, onSelectCustomerInShowModal, autoMatchCustomerForShowForm, openCustomerByCustId,
           hometaxModalOpen, hometaxPreviewList, hometaxSyncShowsToo, openHometaxModal, triggerHometaxFileSelect, handleHometaxFileUpload, applyHometaxImport, downloadSampleHometaxTemplate,
@@ -8975,5 +9117,86 @@ ${naverTags} #어린이행사섭외 #도서관공연 #초등학교공연 #버블
       }
     }).mount('#app');
   </script>
+<style>
+@media(max-width:639px){
+.itt-mfoot.ux-save-fixed{position:fixed!important;left:var(--save-left);width:var(--save-width);bottom:var(--save-bottom,0px)!important;margin:0!important;box-sizing:border-box;z-index:60;padding:8px 12px max(8px,env(safe-area-inset-bottom))!important;gap:4px}
+.itt-mfoot.ux-save-fixed.ux-save-fallback{position:sticky!important;bottom:0!important;width:auto}
+.ux-save-fixed.ux-footer>div:first-child{padding-bottom:4px}
+.ux-time-overlay{position:fixed;inset:0;z-index:10000;background:#0009;display:flex;align-items:flex-end}
+.ux-time-sheet{width:100%;background:#121a33;color:#fff;border-radius:20px 20px 0 0;padding:16px 16px max(16px,env(safe-area-inset-bottom));box-sizing:border-box}
+.ux-time-wheels{display:flex;position:relative;gap:16px;margin:12px 0}
+.ux-time-wheels:before{content:'';position:absolute;top:88px;height:44px;left:0;right:0;border-block:1px solid #818cf8;background:#818cf822;pointer-events:none}
+.ux-time-column{height:220px;overflow-y:auto;scroll-snap-type:y mandatory;flex:1;overscroll-behavior:contain;padding-block:88px;box-sizing:border-box;scrollbar-width:none}
+.ux-time-option{height:44px;scroll-snap-align:center;text-align:center;font:700 24px/44px monospace}
+.ux-time-actions{display:flex;justify-content:space-between;gap:8px}
+.ux-time-actions button{min-height:44px;padding:8px 16px;border-radius:12px;background:#334155;color:white;font-weight:700}
+.ux-time-actions button:last-child{background:#4f46e5}
+}
+@media(min-width:640px){
+.ux-time-overlay.ux-time-pc{position:fixed;z-index:10000;width:280px}
+.ux-time-pc .ux-time-sheet{background:#121a33;color:white;border:1px solid #818cf8;border-radius:12px;padding:12px;box-shadow:0 8px 24px #0006}
+.ux-time-pc .ux-time-wheels{display:flex;position:relative;gap:12px;margin:8px 0}
+.ux-time-pc .ux-time-wheels:before{content:'';position:absolute;top:88px;height:44px;left:0;right:0;border-block:1px solid #818cf8;background:#818cf822;pointer-events:none}
+.ux-time-pc .ux-time-column{height:220px;overflow-y:auto;scroll-snap-type:y mandatory;flex:1;overscroll-behavior:contain;padding-block:88px;box-sizing:border-box;scrollbar-width:none;touch-action:none;cursor:grab}
+.ux-time-pc .ux-time-option{height:44px;scroll-snap-align:center;text-align:center;font:700 24px/44px monospace;user-select:none}
+.ux-time-pc .ux-time-actions{display:flex;justify-content:flex-end;gap:8px}
+.ux-time-pc button{padding:6px 16px;border-radius:8px;background:#334155;color:white}
+.ux-time-pc button:last-child{background:#4f46e5}
+.ux-time-pc [data-action=direct]{display:none}
+}
+</style>
+<script>
+/* Mobile presentation adapter: original bindings and business functions stay intact. */
+(()=>{
+const mobile=()=>matchMedia('(max-width:639px)').matches;
+const wheelEnabled=()=>mobile()?MOBILE_UX.timeWheel:MOBILE_UX.timeWheelPC;
+const timeSelector='input[data-ux-time]';
+let sheet=null,target=null,direct=null,frame=0;
+const saved=new Map(), inputs=new Map();
+function closeWheel(focus=true){if(!sheet)return;sheet.remove();sheet=null;if(focus&&target?.isConnected)target.focus();target=null;}
+function sync(){
+ frame=0;
+ const enabled=mobile()&&MOBILE_UX.stickySave;
+ for(const [f,spacer] of saved){if(!f.isConnected||!enabled){f.classList.remove('ux-save-fixed','ux-save-fallback');spacer.remove();saved.delete(f);}}
+ if(enabled)document.querySelectorAll('.itt-mfoot').forEach(f=>{
+ if(!f.getBoundingClientRect().width)return;
+ let spacer=saved.get(f);if(!spacer){spacer=document.createElement('div');spacer.setAttribute('aria-hidden','true');f.before(spacer);saved.set(f,spacer);}
+ const r=f.parentElement.getBoundingClientRect(),v=window.visualViewport;
+ f.style.setProperty('--save-left',r.left+'px');f.style.setProperty('--save-width',r.width+'px');
+ f.style.setProperty('--save-bottom',Math.max(0,innerHeight-(v?v.height+v.offsetTop:innerHeight))+'px');
+ f.classList.add('ux-save-fixed');f.classList.toggle('ux-save-fallback',!v);spacer.style.height=(v?f.getBoundingClientRect().height+24:24)+'px';
+ });
+ document.querySelectorAll(timeSelector).forEach(e=>{
+ if(!inputs.has(e))inputs.set(e,{readOnly:e.readOnly,mode:e.getAttribute('inputmode')});
+ const orig=inputs.get(e),on=mobile()&&MOBILE_UX.timeWheel&&e!==direct;
+ e.readOnly=on||orig.readOnly;if(on)e.setAttribute('inputmode','none');else if(orig.mode===null)e.removeAttribute('inputmode');else e.setAttribute('inputmode',orig.mode);
+ });
+ for(const e of inputs.keys())if(!e.isConnected)inputs.delete(e);
+ if(sheet&&(!wheelEnabled()||!target?.isConnected||sheet.classList.contains('ux-time-pc')===mobile()))closeWheel(false);
+}
+function schedule(){if(!frame)frame=requestAnimationFrame(sync);}
+function openWheel(e){
+ closeWheel(false);target=e;const pc=!mobile();if(!pc)e.blur();
+ sheet=document.createElement('div');sheet.className='ux-time-overlay'+(pc?' ux-time-pc':'');sheet.innerHTML='<section class="ux-time-sheet" role="dialog" aria-modal="true" aria-label="시간 선택"><strong>시간 선택 · 시 / 분</strong><div class="ux-time-wheels"></div><div class="ux-time-actions"><button type="button" data-action="direct">직접 입력</button><button type="button" data-action="cancel">취소</button><button type="button" data-action="confirm">확인</button></div></section>';
+ if(pc)sheet.querySelector('section').removeAttribute('aria-modal');
+ const cols=[];const m=/^(\d{1,2}):(\d{2})$/.exec(e.value);const total=m?Math.min(1435,Math.round((+m[1]*60+(+m[2]))/5)*5):600;
+ [24,12].forEach((count,index)=>{const col=document.createElement('div');col.className='ux-time-column';col.tabIndex=0;col.setAttribute('aria-label',index?'분':'시');for(let n=0;n<count;n++){const option=document.createElement('div');option.className='ux-time-option';option.textContent=String(index?n*5:n).padStart(2,'0');col.append(option);}sheet.querySelector('.ux-time-wheels').append(col);cols.push(col);
+ if(pc){let start=null,moved=false;col.addEventListener('pointerdown',event=>{if(event.button!==0)return;start={y:event.clientY,top:col.scrollTop};moved=false;col.setPointerCapture(event.pointerId);col.style.scrollSnapType='none';event.preventDefault();});col.addEventListener('pointermove',event=>{if(!start)return;const delta=event.clientY-start.y;if(Math.abs(delta)>3)moved=true;col.scrollTop=start.top-delta;});col.addEventListener('pointerup',event=>{if(!start)return;start=null;col.style.scrollSnapType='';if(moved){col.scrollTop=Math.round(col.scrollTop/44)*44;}else{const option=document.elementFromPoint(event.clientX,event.clientY)?.closest('.ux-time-option');if(option&&option.parentElement===col)col.scrollTop=[...col.children].indexOf(option)*44;}});col.addEventListener('pointercancel',()=>{start=null;col.style.scrollSnapType='';});col.addEventListener('wheel',event=>{event.preventDefault();col.scrollTop=Math.max(0,Math.min((count-1)*44,col.scrollTop+Math.sign(event.deltaY)*44));},{passive:false});col.addEventListener('click',event=>{const option=event.target.closest('.ux-time-option');if(option&&!moved)col.scrollTop=[...col.children].indexOf(option)*44;});}
+});
+ document.body.append(sheet);if(pc){const r=e.getBoundingClientRect();sheet.style.left=Math.max(0,Math.min(r.left,innerWidth-280))+'px';sheet.style.top=r.bottom+4+'px';}cols[0].scrollTop=Math.floor(total/60)*44;cols[1].scrollTop=(total%60)/5*44;
+ sheet.addEventListener('click',event=>{const action=event.target.dataset.action;if(!action){if(event.target===sheet)closeWheel();return;}if(action==='confirm'){e.value=String(Math.min(23,Math.round(cols[0].scrollTop/44))).padStart(2,'0')+':'+String(Math.min(11,Math.round(cols[1].scrollTop/44))*5).padStart(2,'0');e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));closeWheel();}else if(action==='direct'){direct=e;closeWheel(false);sync();e.focus();e.addEventListener('blur',()=>{if(direct===e){direct=null;schedule();}},{once:true});}else closeWheel();});
+ sheet.addEventListener('keydown',event=>{if(event.key==='Escape')closeWheel();if(!pc&&event.key==='Tab'){const nodes=[...sheet.querySelectorAll('button,[tabindex]')],i=nodes.indexOf(document.activeElement);if(event.shiftKey&&i===0){event.preventDefault();nodes.at(-1).focus();}else if(!event.shiftKey&&i===nodes.length-1){event.preventDefault();nodes[0].focus();}}});if(!pc)sheet.querySelector('button').focus();
+}
+ document.addEventListener('click',event=>{const e=event.target.closest(timeSelector);if(e&&wheelEnabled()&&e!==direct){if(mobile())event.preventDefault();openWheel(e);}},true);
+ document.addEventListener('pointerdown',event=>{if(sheet&&!mobile()&&!sheet.contains(event.target)&&event.target!==target)closeWheel(false);},true);
+ document.addEventListener('keydown',event=>{if(!sheet||mobile())return;if(event.key==='Escape'){event.preventDefault();closeWheel();}else if(event.key==='Tab'||event.target===target)closeWheel(false);},true);
+ document.addEventListener('input',event=>{if(sheet&&!mobile()&&event.target===target)closeWheel(false);},true);
+ document.addEventListener('scroll',event=>{if(sheet&&!mobile()&&!sheet.contains(event.target))closeWheel(false);},true);
+ document.addEventListener('focusout',event=>{if(event.target===direct){direct=null;schedule();}});
+ new MutationObserver(schedule).observe(document.getElementById('app'),{childList:true,subtree:true});
+ window.addEventListener('resize',schedule);window.visualViewport?.addEventListener('resize',schedule);window.visualViewport?.addEventListener('scroll',schedule);sync();
+})();
+</script>
+
 </body>
 </html>
