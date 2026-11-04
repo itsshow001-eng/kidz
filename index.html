@@ -637,8 +637,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <div @click="switchTab('settings')" class="rounded-2xl bg-slate-800/90 border border-emerald-500/40 p-3 space-y-0.5 cursor-pointer hover:border-emerald-400 transition-all">
               <div class="text-[11px] font-bold text-emerald-300">통장 잔고 합계</div>
               <div class="text-lg font-black text-emerald-400 font-mono">₩{{ totalCashBalance.toLocaleString() }}</div>
-              <div v-if="FEATURES.briefingCompact" class="text-[10px] text-slate-400 font-mono">정산 후 가용자금 ₩{{ projectedNetCash.toLocaleString() }}</div>
-              <div class="text-[10px] text-slate-400 font-mono">받을 돈 − 줄 돈 반영 시 ₩{{ (totalCashBalance + totalUnpaidAmount - totalPendingPayables - settleSummary.total).toLocaleString() }}</div>
+              <div v-if="FEATURES.briefingCompact" class="text-[10px] text-slate-400 font-mono">예상 가용자금(받을 돈 포함) ₩{{ projectedNetCash.toLocaleString() }}</div>
+              <div v-else class="text-[10px] text-slate-400 font-mono">받을 돈 − 줄 돈 반영 시 ₩{{ (totalCashBalance + totalUnpaidAmount - totalPendingPayables - settleSummary.total).toLocaleString() }}</div>
             </div>
           </div>
 
@@ -952,8 +952,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             <!-- KPI 4: 현재 가용 현금 & 예상 순자산 -->
             <div @click="switchTab('settings')" class="rounded-2xl bg-slate-800/90 border border-emerald-500/40 p-5 space-y-1.5 cursor-pointer hover:border-emerald-400 transition-all">
               <div class="flex justify-between items-center text-xs text-slate-400">
-                <span class="font-bold text-emerald-300">정산 후 최종 예상 가용자금</span>
-                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[11px]">현금+미수-미지급</span>
+                <span class="font-bold text-emerald-300">예상 가용자금(받을 돈 포함)</span>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[11px]">통장+받을 돈−줄 돈</span>
               </div>
               <div class="text-2xl font-black text-emerald-400 font-mono">₩ {{ projectedNetCash.toLocaleString() }}</div>
               <div class="text-xs text-emerald-300 font-medium">{{ formatKoreanCurrency(projectedNetCash) }}</div>
@@ -961,6 +961,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 <span>현재 통장잔고 합계:</span>
                 <strong class="text-white">₩{{ totalCashBalance.toLocaleString() }}</strong>
               </div>
+              <div class="text-[11px] text-slate-400 font-mono">받을 돈 +₩{{ totalUnpaidAmount.toLocaleString() }} · 기타 지급예정 −₩{{ totalPendingPayables.toLocaleString() }} · 파트너 미지급 −₩{{ settleSummary.total.toLocaleString() }}</div>
             </div>
           </div>
 
@@ -5793,7 +5794,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           });
           return r;
         });
-        const projectedNetCash = computed(() => totalCashBalance.value + totalUnpaidAmount.value - totalPendingPayables.value);
+        const projectedNetCash = computed(() => totalCashBalance.value + totalUnpaidAmount.value - totalPendingPayables.value - settleSummary.value.total);
 
         const upcomingShows = computed(() => {
           return shows.value
