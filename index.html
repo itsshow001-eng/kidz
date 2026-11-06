@@ -4835,8 +4835,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
         // Calendar & Mobile Filter State (v2.0)
         const mobileFilterOpen = ref(false);
-        const calendarYear = ref(2026);
-        const calendarMonth = ref(10);
+        // ★ v3.0 (2026-11-06): 처음 여는 달 = 오늘(기준일) 달. 예전엔 2026년 10월로 고정돼 있었음
+        const calendarYear = ref(Number(String(referenceToday.value).slice(0, 4)) || new Date().getFullYear());
+        const calendarMonth = ref(Number(String(referenceToday.value).slice(5, 7)) || (new Date().getMonth() + 1));
         const selectedCalendarDate = ref(referenceToday.value);
 
         const selectCalendarDate = (dateStr) => {
